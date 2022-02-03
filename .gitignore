@@ -1,0 +1,15 @@
+.gitignore
+!/.gitignore
+\#*#
+*~
+target
+.classpath
+.project
+.settings
+build.properties
+*.iml
+*.ipr
+.launch
+.*launch
+.idea
+
