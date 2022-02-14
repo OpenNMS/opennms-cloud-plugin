@@ -1,4 +1,4 @@
-# OpenNMS Cloud Plugin
+# OpenNMS Cloud Plugin [![CircleCI](https://circleci.com/gh/OpenNMS/opennms-cloud-plugin.svg?style=svg)](https://circleci.com/gh/OpenNMS/opennms-cloud_plugin)
 
 The OpenNMS Cloud Plugin enables OpenNMS to store data in the cloud.
 Initially it will provide storage for time series data.
