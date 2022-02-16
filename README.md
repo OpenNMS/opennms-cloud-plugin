@@ -12,12 +12,12 @@ mvn clean install
 
 From the OpenNMS Karaf shell:
 ```
-feature:repo-add mvn:org.opennms/karaf-features/1.0.0-SNAPSHOT/xml
-feature:install opennms-plugins-tsaas-poc
+feature:repo-add mvn:org.opennms.plugins.cloud/karaf-features/1.0.0-SNAPSHOT/xml
+feature:install opennms-plugins-cloud
 ```
 Configure:
 ```
-config:edit org.opennms.plugins.tsaas
+config:edit opennms-plugins-cloud
 property-set host grpc-server.7760e3a2553b4cc7ac31.eastus.aksapp.io
 property-set port 443
 config:update

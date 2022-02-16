@@ -45,10 +45,10 @@ import org.opennms.integration.api.v1.timeseries.Tag;
 import org.opennms.integration.api.v1.timeseries.TagMatcher;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesFetchRequest;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
+import org.opennms.plugins.tsaas.grpc.GrpcObjectMapper;
+import org.opennms.plugins.tsaas.grpc.comp.ZStdCodecRegisterUtil;
 import org.opennms.tsaas.TimeseriesGrpc;
 import org.opennms.tsaas.Tsaas;
-import org.opennms.tsaas.grpc.GrpcObjectMapper;
-import org.opennms.tsaas.grpc.comp.ZStdCodecRegisterUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<features name="openmms-plugins-tsaas-poc-features" xmlns="http://karaf.apache.org/xmlns/features/v1.4.0">
-    <feature name="opennms-plugins-tsaas-poc" description="OpenNMS :: Plugins :: TSaaS" version="${project.version}">
+<features name="openmms-plugins-cloud-features" xmlns="http://karaf.apache.org/xmlns/features/v1.4.0">
+    <feature name="opennms-plugins-cloud" description="OpenNMS :: Plugins :: Cloud" version="${project.version}">
         <feature dependency="true">aries-blueprint</feature>
         <feature dependency="true">shell</feature>
         <feature version="${opennms.api.version}" dependency="true">opennms-integration-api</feature>
-        <feature version="${project.version}" dependency="true">tsaas-guava</feature>
-        <feature version="${project.version}" dependency="true">tsaas-grpc</feature>
+        <feature version="${project.version}" dependency="true">cloud-guava</feature>
+        <feature version="${project.version}" dependency="true">cloud-grpc</feature>
         <bundle dependency="true">mvn:com.github.luben/zstd-jni/${zstd.version}</bundle>
-        <bundle>mvn:org.opennms.tsaas/grpc-java/${project.version}</bundle>
-        <bundle>mvn:org.opennms/tsaas-poc-plugin/${project.version}</bundle>
+        <bundle>mvn:org.opennms.tsaas/tsaas-grpc/${grpcClientVersion}</bundle>
+        <bundle>mvn:org.opennms.plugins.cloud/cloud-plugin/${project.version}</bundle>
     </feature>
-    <feature name="tsaas-guava" description="guava" version="${project.version}">
+    <feature name="cloud-guava" description="guava" version="${project.version}">
         <bundle dependency="true">mvn:com.google.guava/failureaccess/${failureAccessVersion}</bundle>
         <bundle dependency="true">mvn:com.google.guava/guava/${guavaVersion}</bundle>
     </feature>
-    <feature name="tsaas-grpc" description="grpc" version="${project.version}">
+    <feature name="cloud-grpc" description="grpc" version="${project.version}">
         <bundle dependency="true">mvn:com.google.protobuf/protobuf-java/${protobufVersion}</bundle>
-        <bundle>mvn:org.opennms.tsaas.wrap/grpc/${project.version}</bundle>
+        <bundle>mvn:org.opennms.plugins.cloud.wrap/grpc/${project.version}</bundle>
     </feature>
 </features>

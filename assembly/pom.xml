@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <groupId>org.opennms</groupId>
-        <artifactId>org.opennms.plugins.tsaas</artifactId>
+        <groupId>org.opennms.plugins.cloud</groupId>
+        <artifactId>cloud-parent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>assembly</artifactId>
-    <name>OpenNMS :: Plugins :: TSaaS-poc :: Assembly</name>
+    <name>OpenNMS :: Plugins :: Cloud Plugin :: Assembly</name>
     <packaging>pom</packaging>
     <modules>
         <module>kar</module>
