@@ -7,7 +7,7 @@
         <feature version="${project.version}" dependency="true">cloud-guava</feature>
         <feature version="${project.version}" dependency="true">cloud-grpc</feature>
         <bundle dependency="true">mvn:com.github.luben/zstd-jni/${zstd.version}</bundle>
-        <bundle>mvn:org.opennms.tsaas/tsaas-grpc/${grpcClientVersion}</bundle>
+        <bundle>mvn:org.opennms.tsaas/tsaas-grpc/${grpcClientVersion}</bundle><!-- the grpc client to talk to Tsaas -->
         <bundle>mvn:org.opennms.plugins.cloud/cloud-plugin/${project.version}</bundle>
     </feature>
     <feature name="cloud-guava" description="guava" version="${project.version}">

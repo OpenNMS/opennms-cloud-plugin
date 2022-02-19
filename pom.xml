@@ -11,7 +11,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <hamcrest.version>1.3</hamcrest.version>
-        <grpcClientVersion>1.0-20220215.182609-1</grpcClientVersion>
+        <tsaasClientVersion>1.0-SNAPSHOT</tsaasClientVersion>
         <java.version>1.8</java.version>
         <zstd.version>1.4.9-1</zstd.version>
         <junit.version>4.12</junit.version>
@@ -23,7 +23,7 @@
         <slf4j-api.version>1.7.32</slf4j-api.version>
         <protobufVersion>3.19.4</protobufVersion>
         <grpcVersion>1.44.0</grpcVersion>
-        <guavaVersion>28.2-jre</guavaVersion>
+        <guavaVersion>30.1-jre</guavaVersion>
         <failureAccessVersion>1.0.1</failureAccessVersion>
     </properties>
 

@@ -71,7 +71,7 @@
                             <goal>verify</goal>
                         </goals>
                         <configuration>
-                            <javase>1.8</javase>
+                            <javase>11</javase>
                             <descriptors>
                                 <descriptor>mvn:org.apache.karaf.features/framework/${karaf.version}/xml/features</descriptor>
                                 <descriptor>mvn:org.apache.karaf.features/standard/${karaf.version}/xml/features</descriptor>
@@ -142,7 +142,7 @@
         <dependency>
             <groupId>org.opennms.tsaas</groupId>
             <artifactId>tsaas-grpc</artifactId>
-            <version>${grpcClientVersion}</version>
+            <version>${tsaasClientVersion}</version>
             <scope>provided</scope>
         </dependency>
 </dependencies>

@@ -22,36 +22,6 @@
 
     <build>
         <plugins>
-            <!-- Generate the gRPC and Protos as part of the build -->
-            <!--plugin>
-                <groupId>com.github.os72</groupId>
-                <artifactId>protoc-jar-maven-plugin</artifactId>
-                <version>3.11.4</version>
-                <executions>
-                    <execution>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <addProtoSources>all</addProtoSources>
-                            <includeMavenTypes>direct</includeMavenTypes>
-                            <inputDirectories>
-                                <include>../../grpc</include>
-                            </inputDirectories>
-                            <outputTargets>
-                                <outputTarget>
-                                    <type>java</type>
-                                </outputTarget>
-                                <outputTarget>
-                                    <type>grpc-java</type>
-                                    <pluginArtifact>io.grpc:protoc-gen-grpc-java:1.33.1</pluginArtifact>
-                                </outputTarget>
-                            </outputTargets>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin-->
             <!-- Bundle-ize the JAR -->
             <plugin>
                 <groupId>org.apache.felix</groupId>
@@ -97,9 +67,14 @@
             <artifactId>common</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.opennms.plugins.cloud.wrap</groupId>
+            <artifactId>grpc</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.opennms.tsaas</groupId>
             <artifactId>tsaas-grpc</artifactId>
-            <version>${grpcClientVersion}</version>
+            <version>${tsaasClientVersion}</version>
         </dependency>
         <dependency>
             <groupId>com.google.protobuf</groupId>
