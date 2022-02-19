@@ -11,7 +11,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <hamcrest.version>1.3</hamcrest.version>
-        <tsaasClientVersion>1.0-SNAPSHOT</tsaasClientVersion>
+        <tsaasClientVersion>1.0-20220219.232122-3</tsaasClientVersion>
         <java.version>1.8</java.version>
         <zstd.version>1.4.9-1</zstd.version>
         <junit.version>4.12</junit.version>
