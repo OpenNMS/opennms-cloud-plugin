@@ -1,4 +1,4 @@
-package org.opennms.plugins.tsaas.grpc;
+package org.opennms.plugins.cloud.tsaas.grpc;
 
 import static org.opennms.tsaas.Tsaas.Aggregation.MAX;
 import static org.opennms.tsaas.Tsaas.Aggregation.MIN;

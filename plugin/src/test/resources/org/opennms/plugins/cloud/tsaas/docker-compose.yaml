@@ -1,0 +1,22 @@
+---
+version: '3'
+
+volumes:
+  data-cortex: {}
+
+services:
+  cortex:
+    image: docker.io/cortexproject/cortex:v1.11.0
+    volumes:
+      - "data-cortex:/tmp/cortex"
+      - "./cortex.yaml:/etc/cortex.yaml"
+    command: [ "-config.file=/etc/cortex.yaml" ]
+    ports:
+      - "9009:9009/tcp"
+      - "9095:9095/tcp"
+
+  tsaas:
+    image: opennms/tsaas-gateway
+    # hostname: tsaas
+    ports:
+      - "5001:5001/tcp"

@@ -1,4 +1,4 @@
-package org.opennms.plugins.tsaas.shell;
+package org.opennms.plugins.cloud.tsaas.shell;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
