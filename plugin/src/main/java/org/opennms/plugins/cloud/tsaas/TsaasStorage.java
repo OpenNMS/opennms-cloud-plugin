@@ -1,8 +1,8 @@
 /*******************************************************************************
  * This file is part of OpenNMS(R).
  *
- * Copyright (C) 2020 The OpenNMS Group, Inc.
- * OpenNMS(R) is Copyright (C) 1999-2020 The OpenNMS Group, Inc.
+ * Copyright (C) 2022 The OpenNMS Group, Inc.
+ * OpenNMS(R) is Copyright (C) 1999-2022 The OpenNMS Group, Inc.
  *
  * OpenNMS(R) is a registered trademark of The OpenNMS Group, Inc.
  *
@@ -26,7 +26,7 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.tsaas;
+package org.opennms.plugins.cloud.tsaas;
 
 import java.time.Instant;
 import java.util.Collection;
@@ -45,8 +45,8 @@ import org.opennms.integration.api.v1.timeseries.Tag;
 import org.opennms.integration.api.v1.timeseries.TagMatcher;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesFetchRequest;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
-import org.opennms.plugins.tsaas.grpc.GrpcObjectMapper;
-import org.opennms.plugins.tsaas.grpc.comp.ZStdCodecRegisterUtil;
+import org.opennms.plugins.cloud.tsaas.grpc.GrpcObjectMapper;
+import org.opennms.plugins.cloud.tsaas.grpc.comp.ZStdCodecRegisterUtil;
 import org.opennms.tsaas.TimeseriesGrpc;
 import org.opennms.tsaas.Tsaas;
 import org.slf4j.Logger;

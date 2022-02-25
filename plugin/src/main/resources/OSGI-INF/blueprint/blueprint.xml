@@ -15,7 +15,7 @@
         </cm:default-properties>
     </cm:property-placeholder>
 
-    <bean id="timeSeriesStorage" class="org.opennms.plugins.tsaas.TsaasStorage" destroy-method="destroy">
+    <bean id="timeSeriesStorage" class="org.opennms.plugins.cloud.tsaas.TsaasStorage" destroy-method="destroy">
         <argument value="${host}"/>
         <argument value="${port}"/>
         <argument value="${token}"/>

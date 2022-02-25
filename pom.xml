@@ -14,7 +14,7 @@
         <tsaasClientVersion>1.0-20220219.232122-3</tsaasClientVersion>
         <java.version>1.8</java.version>
         <zstd.version>1.4.9-1</zstd.version>
-        <junit.version>4.12</junit.version>
+        <junit.version>4.13.1</junit.version>
         <karaf.version>4.3.6</karaf.version>
         <log4j.version>2.13.3</log4j.version>
         <mockito.version>2.18.0</mockito.version>
@@ -47,7 +47,6 @@
                 <version>${slf4j-api.version}</version>
             </dependency>
 
-            <!-- Test -->
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>

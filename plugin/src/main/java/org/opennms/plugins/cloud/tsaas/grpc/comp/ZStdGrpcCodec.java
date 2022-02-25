@@ -1,4 +1,4 @@
-package org.opennms.plugins.tsaas.grpc.comp;
+package org.opennms.plugins.cloud.tsaas.grpc.comp;
 
 import java.io.IOException;
 import java.io.InputStream;
