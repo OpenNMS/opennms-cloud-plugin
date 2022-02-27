@@ -43,6 +43,7 @@ public class TsaasStorageTest extends AbstractStorageIntegrationTest {
 
   private final static String HOST = "localhost";
   private final static int PORT = 5001;
+  private final static String CLIENT_TOKEN = "my-client";
 
   private TsaasStorage storage;
   private TsaasServer server;
@@ -50,8 +51,7 @@ public class TsaasStorageTest extends AbstractStorageIntegrationTest {
   @Before
   public void setUp() throws Exception {
 
-    String clientToken = "my-client";
-    storage = new TsaasStorage(HOST, PORT, clientToken);
+    storage = new TsaasStorage(HOST, PORT, CLIENT_TOKEN);
 
     TimeseriesGrpcImpl timeseriesService = new TimeseriesGrpcImpl(new InMemoryStorage());
     server = new TsaasServer(timeseriesService, PORT, new TsassServerInterceptor());

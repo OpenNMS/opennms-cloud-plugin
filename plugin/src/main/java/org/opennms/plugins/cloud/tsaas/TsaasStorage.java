@@ -193,7 +193,7 @@ public class TsaasStorage implements TimeSeriesStorage {
                 .setMetric(toMetric(request.getMetric()))
                 .setStart(toTimestamp(request.getStart()))
                 .setEnd(toTimestamp(request.getEnd()))
-                .setStep(request.getStep().toMillis())
+                .setStep(request.getStep().toSeconds())
                 .setAggregation(Tsaas.Aggregation.valueOf(request.getAggregation().name()))
                 .build();
         LOG.trace("Getting timeseries for request: {}", fetchRequest);

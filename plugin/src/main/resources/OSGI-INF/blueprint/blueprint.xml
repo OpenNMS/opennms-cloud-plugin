@@ -10,7 +10,7 @@
                              update-strategy="reload">
         <cm:default-properties>
             <cm:property name="host" value="localhost"/>
-            <cm:property name="port" value="1234"/>
+            <cm:property name="port" value="5001"/>
             <cm:property name="token" value="TOKEN"/>
         </cm:default-properties>
     </cm:property-placeholder>
