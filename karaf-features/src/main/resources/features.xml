@@ -5,17 +5,14 @@
         <feature dependency="true">shell</feature>
         <feature version="${opennms.api.version}" dependency="true">opennms-integration-api</feature>
         <feature version="${project.version}" dependency="true">cloud-guava</feature>
-        <feature version="${project.version}" dependency="true">cloud-grpc</feature>
         <bundle dependency="true">mvn:com.github.luben/zstd-jni/${zstd.version}</bundle>
         <bundle>mvn:org.opennms.tsaas/tsaas-grpc/${tsaasClientVersion}</bundle><!-- the grpc client to talk to Tsaas -->
+        <bundle>mvn:com.google.protobuf/protobuf-java/${protobufVersion}</bundle>
         <bundle>mvn:org.opennms.plugins.cloud/cloud-plugin/${project.version}</bundle>
+        <bundle>mvn:org.opennms.plugins.cloud.wrap/grpc/${project.version}</bundle>
     </feature>
     <feature name="cloud-guava" description="guava" version="${project.version}">
         <bundle dependency="true">mvn:com.google.guava/failureaccess/${failureAccessVersion}</bundle>
         <bundle dependency="true">mvn:com.google.guava/guava/${guavaVersion}</bundle>
-    </feature>
-    <feature name="cloud-grpc" description="grpc" version="${project.version}">
-        <bundle dependency="true">mvn:com.google.protobuf/protobuf-java/${protobufVersion}</bundle>
-        <bundle>mvn:org.opennms.plugins.cloud.wrap/grpc/${project.version}</bundle>
     </feature>
 </features>

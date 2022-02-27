@@ -71,7 +71,7 @@
                             <goal>verify</goal>
                         </goals>
                         <configuration>
-                            <javase>11</javase>
+                            <javase>${java.version}</javase>
                             <descriptors>
                                 <descriptor>mvn:org.apache.karaf.features/framework/${karaf.version}/xml/features</descriptor>
                                 <descriptor>mvn:org.apache.karaf.features/standard/${karaf.version}/xml/features</descriptor>
@@ -85,7 +85,6 @@
                             <features>
                                 <feature>opennms-plugins-cloud</feature>
                                 <feature>cloud-guava</feature>
-                                <feature>cloud-grpc</feature>
                             </features>
                         </configuration>
                     </execution>
