@@ -67,6 +67,8 @@ public class GrpcObjectMapper {
                         .map(GrpcObjectMapper::toTag).collect(Collectors.toSet()))
                 .addAllMetaTags(metric.getMetaTags().stream()
                         .map(GrpcObjectMapper::toTag).collect(Collectors.toSet()))
+                .addAllExternalTags(metric.getExternalTags().stream()
+                        .map(GrpcObjectMapper::toTag).collect(Collectors.toSet()))
                 .build();
     }
 
@@ -78,6 +80,9 @@ public class GrpcObjectMapper {
         metric.getMetaTagsList().stream()
                 .map(GrpcObjectMapper::toTag)
                 .forEach(builder::metaTag);
+        metric.getExternalTagsList().stream()
+            .map(GrpcObjectMapper::toTag)
+            .forEach(builder::externalTag);
         return builder.build();
     }
 
