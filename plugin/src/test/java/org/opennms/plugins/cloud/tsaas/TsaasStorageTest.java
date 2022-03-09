@@ -28,10 +28,10 @@
 
 package org.opennms.plugins.cloud.tsaas;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.opennms.integration.api.v1.timeseries.AbstractStorageIntegrationTest;
 import org.opennms.integration.api.v1.timeseries.InMemoryStorage;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
@@ -48,7 +48,7 @@ public class TsaasStorageTest extends AbstractStorageIntegrationTest {
   private TsaasStorage storage;
   private TsaasServer server;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
 
     storage = new TsaasStorage(HOST, PORT, CLIENT_TOKEN);
@@ -59,7 +59,7 @@ public class TsaasStorageTest extends AbstractStorageIntegrationTest {
     super.setUp();
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     if (storage != null) {
       storage.destroy();
@@ -75,7 +75,7 @@ public class TsaasStorageTest extends AbstractStorageIntegrationTest {
   }
 
   @Test
-  @Ignore
+  @Disabled
   @Override
   public void shouldDeleteMetrics() throws Exception {
     // we don't support delete...
