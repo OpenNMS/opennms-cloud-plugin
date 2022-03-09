@@ -15,7 +15,7 @@
         <tsaasClientVersion>LATEST</tsaasClientVersion>
         <java.version>1.8</java.version>
         <zstd.version>1.4.9-1</zstd.version>
-        <junit.version>5.8.1</junit.version>
+        <junit.version>4.13.2</junit.version>
         <karaf.version>4.3.6</karaf.version>
         <log4j.version>2.13.3</log4j.version>
         <mockito.version>2.18.0</mockito.version>
@@ -55,14 +55,8 @@
             </dependency>
 
             <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter</artifactId>
-                <version>${junit.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter-engine</artifactId>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
                 <version>${junit.version}</version>
                 <scope>test</scope>
             </dependency>

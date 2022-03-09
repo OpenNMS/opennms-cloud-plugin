@@ -3,10 +3,10 @@ package org.opennms.plugins.cloud.tsaas;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.time.Duration;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.DockerComposeContainer;
@@ -24,8 +24,8 @@ public class TsaasStorageIT {
   public static DockerComposeContainer<?> environment;
   private KarafShell karafShell;
 
-  @BeforeAll
-  static void beforeAll() {
+  @BeforeClass
+  public static void beforeAll() {
     environment = new DockerComposeContainer<>(new File("src/test/resources/docker-compose.yaml"))
         .withEnv("USER_HOME", System.getProperty("user.home"))
         .withTailChildContainers(true)
@@ -36,7 +36,7 @@ public class TsaasStorageIT {
     environment.start();
   }
 
-  @BeforeEach
+  @Before
   public void setUp() {
     this.karafShell = new KarafShell(InetSocketAddress.createUnresolved("localhost", 8101));
   }
@@ -52,8 +52,8 @@ public class TsaasStorageIT {
     karafShell.runCommand("feature:list | grep opennms-plugins-cloud", output -> output.contains("Started"));
   }
 
-  @AfterAll
-  static void afterAll() {
+  @AfterClass
+  public static void afterAll() {
     if (environment != null) {
       environment.stop();
     }
