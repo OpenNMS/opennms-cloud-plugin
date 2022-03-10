@@ -14,8 +14,10 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 /**
- * This test checks if the plugin can be successfully installed in OpenNMS: It starts a opennms container and installs the plugin into it. => The Osgi
- * wiring / dependencies are checked. It does NOT test the functionality of the plugin itself.
+ * This test checks if the plugin can be successfully installed in OpenNMS:
+ * It starts a opennms container and installs the plugin into it.
+ * => The Osgi wiring / dependencies are checked.
+ * It does NOT test the functionality of the plugin itself.
  */
 public class TsaasStorageIT {
 
