@@ -35,7 +35,12 @@ services:
       TZ: ${TIMEZONE:-America/New_York}
     volumes:
       # we overlay local maven repo in the container. It contains the plugin jars and dependencies:
-      - ${USER_HOME}/.m2/repository:/opt/opennms/system
+      - ${USER_HOME}/.m2/repository/org/opennms/plugins/cloud:/opt/opennms/system/org/opennms/plugins/cloud
+      - ${USER_HOME}/.m2/repository/com/google/guava/failureaccess:/opt/opennms/system/com/google/guava/failureaccess
+      - ${USER_HOME}/.m2/repository/com/google/guava/guava:/opt/opennms/system/com/google/guava/guava
+      - ${USER_HOME}/.m2/repository/com/github./luben/zstd-jni:/opt/opennms/system/com/github./luben/zstd-jni
+      - ${USER_HOME}/.m2/repository/org/opennms/tsaas/tsaas-grpc:/opt/opennms/system/org/opennms/tsaas/tsaas-grpc
+      - ${USER_HOME}/.m2/repository/com/google/protobuf/protobuf-java:/opt/opennms/system/com/google/protobuf/protobuf-java
     command: ["-s"]
     ports:
       - "8101:8101/tcp" # ssh port for karaf cosole
