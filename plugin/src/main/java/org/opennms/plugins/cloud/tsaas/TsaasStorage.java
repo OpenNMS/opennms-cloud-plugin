@@ -28,6 +28,15 @@
 
 package org.opennms.plugins.cloud.tsaas;
 
+import io.grpc.netty.shaded.io.grpc.netty.NegotiationType;
+import io.grpc.netty.shaded.io.netty.handler.ssl.ClientAuth;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.InputStream;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
@@ -35,6 +44,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLException;
 
 import org.opennms.integration.api.v1.timeseries.Aggregation;
@@ -75,7 +85,7 @@ public class TsaasStorage implements TimeSeriesStorage {
     private static final Logger LOG = LoggerFactory.getLogger(TsaasStorage.class);
     private static final String TOKEN_KEY = "token";
     private final TimeseriesGrpc.TimeseriesBlockingStub clientStub;
-    private final String clientToken;
+    private final TsaasConfig config;
 
     private final ManagedChannel managedChannel;
 
@@ -86,23 +96,30 @@ public class TsaasStorage implements TimeSeriesStorage {
             return new ForwardingClientCall.SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
                 @Override
                 public void start(final Listener<RespT> responseListener, final Metadata headers) {
-                    headers.put(Metadata.Key.of(TOKEN_KEY, Metadata.ASCII_STRING_MARSHALLER), clientToken);
+                    headers.put(Metadata.Key.of(TOKEN_KEY, Metadata.ASCII_STRING_MARSHALLER), config.getClientToken());
                     super.start(responseListener, headers);
                 }
             };
         }
     }
 
-    public TsaasStorage(String host, int port, String clientToken) {
-        this.clientToken = clientToken;
-        LOG.debug("Starting with host {} and port {}", host, port);
+    public TsaasStorage(TsaasConfig config) {
+        this.config = config;
+        LOG.debug("Starting with host {} and port {}", config.getHost(), config.getPort());
         try {
-            final NettyChannelBuilder builder = NettyChannelBuilder.forAddress(host, port);
-            // FIXME: HACKZ: Need more elegant way of enabling/disabling SSL
-            if (port == 443) {
+            final NettyChannelBuilder builder = NettyChannelBuilder.forAddress(config.getHost(), config.getPort());
+            if (config.isMtlsEnabled()) {
                 builder.useTransportSecurity()
                         // FIXE: HACKZ: Disabling cert checks should be optional
-                        .sslContext(GrpcSslContexts.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).build());
+            //             .sslContext(GrpcSslContexts.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).build());
+
+                // .negotiationType(NegotiationType.TLS)
+                    .sslContext(
+                        GrpcSslContexts.configure(GrpcSslContexts.forClient(), SslProvider.OPENSSL)
+                        .trustManager(new File("/home/patrick/apps/git/opennms/opennms-cloud-plugin/plugin/src/test/resources/cert/clienttruststore.pem"))
+                    .clientAuth(ClientAuth.REQUIRE).build());
+
+
             } else {
                 builder.usePlaintext();
             }
@@ -116,6 +133,13 @@ public class TsaasStorage implements TimeSeriesStorage {
         } catch (SSLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private X509Certificate convertPEMToX509Cert(String certificate) throws Exception{
+        InputStream targetStream = new ByteArrayInputStream(certificate.getBytes());
+        return (X509Certificate) CertificateFactory
+            .getInstance("X509")
+            .generateCertificate(targetStream);
     }
 
     private static Tsaas.Tag toTag(Tag tag) {

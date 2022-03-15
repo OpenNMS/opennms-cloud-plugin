@@ -19,7 +19,8 @@ The default configuration has the following settings:
 ```
 host=localhost
 port=5001
-toke=TOKEN
+token=TOKEN
+mtlsEnabled=false
 ```
 
 Change configuration via Karaf shell:

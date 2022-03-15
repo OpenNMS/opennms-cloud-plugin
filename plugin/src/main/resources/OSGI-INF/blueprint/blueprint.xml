@@ -12,6 +12,7 @@
             <cm:property name="host" value="localhost"/>
             <cm:property name="port" value="5001"/>
             <cm:property name="token" value="TOKEN"/>
+            <cm:property name="mtlsEnabled" value="false"/>
         </cm:default-properties>
     </cm:property-placeholder>
 
@@ -19,6 +20,7 @@
         <argument value="${host}"/>
         <argument value="${port}"/>
         <argument value="${token}"/>
+        <argument value="${mtlsEnabled}"/>
     </bean>
 
     <service ref="timeSeriesStorage" interface="org.opennms.integration.api.v1.timeseries.TimeSeriesStorage">
