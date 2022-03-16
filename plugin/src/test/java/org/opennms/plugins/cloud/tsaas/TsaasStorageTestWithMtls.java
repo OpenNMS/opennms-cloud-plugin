@@ -44,7 +44,10 @@ public class TsaasStorageTestWithMtls extends AbstractStorageIntegrationTest {
 
   @Before
   public void setUp() throws Exception {
-    TsaasConfig config = TsaasConfig.builder().mtlsEnabled(true).build();
+    TsaasConfig config = TsaasConfig.builder()
+        .mtlsEnabled(true)
+        .certificateDir("src/test/resources/cert/")
+        .build();
     storage = new TsaasStorage(config);
     server = new TsaasServer(config, new TsassServerInterceptor());
     server.startServer();

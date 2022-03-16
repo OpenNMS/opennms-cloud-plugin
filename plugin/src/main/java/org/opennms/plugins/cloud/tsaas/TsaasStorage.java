@@ -28,9 +28,18 @@
 
 package org.opennms.plugins.cloud.tsaas;
 
-import io.grpc.netty.shaded.io.grpc.netty.NegotiationType;
+import com.google.protobuf.Timestamp;
+import io.grpc.CallOptions;
+import io.grpc.Channel;
+import io.grpc.ClientCall;
+import io.grpc.ClientInterceptor;
+import io.grpc.ForwardingClientCall;
+import io.grpc.ManagedChannel;
+import io.grpc.Metadata;
+import io.grpc.MethodDescriptor;
+import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
+import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.ClientAuth;
-import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -43,10 +52,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLException;
-
 import org.opennms.integration.api.v1.timeseries.Aggregation;
 import org.opennms.integration.api.v1.timeseries.Metric;
 import org.opennms.integration.api.v1.timeseries.Sample;
@@ -61,20 +67,6 @@ import org.opennms.tsaas.TimeseriesGrpc;
 import org.opennms.tsaas.Tsaas;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.protobuf.Timestamp;
-
-import io.grpc.CallOptions;
-import io.grpc.Channel;
-import io.grpc.ClientCall;
-import io.grpc.ClientInterceptor;
-import io.grpc.ForwardingClientCall;
-import io.grpc.ManagedChannel;
-import io.grpc.Metadata;
-import io.grpc.MethodDescriptor;
-import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
-import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
-import io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 
 /**
  * The OpenNMS Time series as-a-service storage plugin implementation.
@@ -109,14 +101,12 @@ public class TsaasStorage implements TimeSeriesStorage {
         try {
             final NettyChannelBuilder builder = NettyChannelBuilder.forAddress(config.getHost(), config.getPort());
             if (config.isMtlsEnabled()) {
-                builder.useTransportSecurity()
-                        // FIXE: HACKZ: Disabling cert checks should be optional
-            //             .sslContext(GrpcSslContexts.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).build());
-
-                // .negotiationType(NegotiationType.TLS)
+                builder
                     .sslContext(
                         GrpcSslContexts.configure(GrpcSslContexts.forClient(), SslProvider.OPENSSL)
-                        .trustManager(new File("/home/patrick/apps/git/opennms/opennms-cloud-plugin/plugin/src/test/resources/cert/clienttruststore.pem"))
+                        .trustManager(new File(config.getCertificateDir() + "clienttruststore.pem"))
+                        .keyManager(new File(config.getCertificateDir() + "client.crt"),
+                            new File(config.getCertificateDir() + "client_pkcs8_key.pem"))
                     .clientAuth(ClientAuth.REQUIRE).build());
 
 
