@@ -32,10 +32,6 @@ jobs:
     executor: build-executor
     steps:
       - checkout
-      - run:
-          name: Install openssl
-          command: |
-            sudo apt-get install openssl
       - restore_cache:
           keys:
             - v1-dependencies-{{ checksum "pom.xml" }}
