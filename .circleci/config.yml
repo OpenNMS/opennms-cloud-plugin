@@ -32,10 +32,6 @@ jobs:
     executor: build-executor
     steps:
       - checkout
-      - run:
-          name: Install openssl
-          command: |
-            sudo apt-get install openssl
       - restore_cache:
           keys:
             - v1-dependencies-{{ checksum "pom.xml" }}
@@ -60,6 +56,10 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
+      - run:
+          name: Install openssl
+          command: |
+            sudo apt-get install openssl
       - run:
           name: Run system test with docker-compose
           command: |
