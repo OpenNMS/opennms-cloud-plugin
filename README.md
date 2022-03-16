@@ -21,13 +21,17 @@ host=localhost
 port=5001
 token=TOKEN
 mtlsEnabled=false
+certificatePath=${OPENNMS_HOME}/etc
 ```
 
 Change configuration via Karaf shell:
 ```
 config:edit opennms-plugins-cloud
-property-set host grpc-server.7760e3a2553b4cc7ac31.eastus.aksapp.io
-property-set port 443
+property-set host localhost
+property-set port 5001
+property-set token TOKEN
+property-set mtlsEnabled false
+property-set certificatePath /etc/bla
 config:update
 ```
 
