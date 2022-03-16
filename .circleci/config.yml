@@ -33,8 +33,8 @@ jobs:
     steps:
       - checkout
       - run:
-          - name: Install openssl
-          - command: |
+          name: Install openssl
+          command: |
               apt-get install openssl
       - restore_cache:
           keys:
