@@ -32,7 +32,8 @@ jobs:
     executor: build-executor
     steps:
       - checkout
-      - install_openssl:
+      - run:
+          - name: Install openssl
           - command: |
               apt-get install openssl
       - restore_cache:
