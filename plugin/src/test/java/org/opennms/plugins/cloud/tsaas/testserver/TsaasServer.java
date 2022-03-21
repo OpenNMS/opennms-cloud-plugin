@@ -31,12 +31,16 @@ package org.opennms.plugins.cloud.tsaas.testserver;
 import static org.awaitility.Awaitility.await;
 
 import io.grpc.Server;
+import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
+import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import org.opennms.integration.api.v1.timeseries.InMemoryStorage;
+import org.opennms.plugins.cloud.tsaas.TsaasConfig;
 import org.opennms.plugins.cloud.tsaas.grpc.comp.ZStdCodecRegisterUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,31 +54,42 @@ public class TsaasServer {
 
     private static final Logger LOG = LoggerFactory.getLogger(TsaasServer.class);
 
-    private final int port;
+    private final TsaasConfig config;
     private Server server;
-    private TimeseriesGrpcImpl timeseriesService;
-    private TsassServerInterceptor serverInterceptor;
+    private final TimeseriesGrpcImpl timeseriesService;
+    private final TsassServerInterceptor serverInterceptor;
 
 
-    public TsaasServer(final TimeseriesGrpcImpl timeseriesService,
-                       Integer port, TsassServerInterceptor serverInterceptor) {
-        this.timeseriesService = Objects.requireNonNull(timeseriesService);
-        this.port = Objects.requireNonNull(port);
+    public TsaasServer(final TsaasConfig config,
+        final TsassServerInterceptor serverInterceptor) {
+        this.timeseriesService = new TimeseriesGrpcImpl(new InMemoryStorage());
+        this.config = config;
         this.serverInterceptor = serverInterceptor;
     }
 
     @PostConstruct
     public void startServer() {
         try {
-            server = NettyServerBuilder
-                    .forPort(port)
+            NettyServerBuilder builder = NettyServerBuilder
+                    .forPort(config.getPort())
                     .addService(timeseriesService)
                     .decompressorRegistry(ZStdCodecRegisterUtil.createDecompressorRegistry())
                     .compressorRegistry(ZStdCodecRegisterUtil.createCompressorRegistry())
-                    .intercept(serverInterceptor)
-                    .build()
-                    .start();
-            LOG.info("Grpc Server started, listening on {}", port);
+                    .intercept(serverInterceptor);
+            if(this.config.isMtlsEnabled()) {
+                File keyCertChainFile = new File(config.getCertificateDir() + "server.crt"); // an X.509 certificate chain file in PEM format
+                File privateKeyFile = new File(config.getCertificateDir() + "server_pkcs8_key.pem");
+                builder.sslContext(
+                    GrpcSslContexts
+                        .forServer(keyCertChainFile, privateKeyFile)
+                        .trustManager(new File(config.getCertificateDir() + "servertruststore.pem"))
+                        .build());
+            }
+            server = builder
+                .build()
+                .start();
+
+            LOG.info("Grpc Server started, listening on {}", config.getPort());
             CompletableFuture.runAsync(() -> {
                 try {
                     server.awaitTermination();

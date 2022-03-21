@@ -57,7 +57,11 @@ jobs:
       - attach_workspace:
           at: ~/
       - run:
-          name: Run system test with docker-compose
+          name: Install openssl
+          command: |
+            sudo apt-get install openssl
+      - run:
+          name: Run unit and integration tests
           command: |
             mvn -DskipITs=false -DskipTests=false clean install test integration-test
       - run:

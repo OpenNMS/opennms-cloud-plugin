@@ -1,6 +1,6 @@
 package org.opennms.plugins.cloud.tsaas.testserver;
 
-import org.opennms.integration.api.v1.timeseries.InMemoryStorage;
+import org.opennms.plugins.cloud.tsaas.TsaasConfig;
 
 /**
  * Starts a mock server to simulate the serverside of the grpc gateway.
@@ -12,8 +12,8 @@ public class TestserverMain {
   private final static int PORT = 5001;
 
   public static void main(String[] args) throws InterruptedException {
-    TimeseriesGrpcImpl timeseriesService = new TimeseriesGrpcImpl(new InMemoryStorage());
-    TsaasServer server = new TsaasServer(timeseriesService, PORT, new TsassServerInterceptor());
+    TsaasConfig config = TsaasConfig.builder().build();
+    TsaasServer server = new TsaasServer(config, new TsassServerInterceptor());
     server.startServer();
     Thread.sleep(Long.MAX_VALUE); // wait till the end of time.
   }

@@ -12,13 +12,21 @@
             <cm:property name="host" value="localhost"/>
             <cm:property name="port" value="5001"/>
             <cm:property name="token" value="TOKEN"/>
+            <cm:property name="mtlsEnabled" value="false"/>
+            <cm:property name="certificatePath" value="${OPENNMS_HOME}/etc"/>
         </cm:default-properties>
     </cm:property-placeholder>
 
-    <bean id="timeSeriesStorage" class="org.opennms.plugins.cloud.tsaas.TsaasStorage" destroy-method="destroy">
+    <bean id="tsaasConfig" class="org.opennms.plugins.cloud.tsaas.TsaasConfig" >
         <argument value="${host}"/>
         <argument value="${port}"/>
         <argument value="${token}"/>
+        <argument value="${mtlsEnabled}"/>
+        <argument value="${certificatePath}"/>
+    </bean>
+
+    <bean id="timeSeriesStorage" class="org.opennms.plugins.cloud.tsaas.TsaasStorage" destroy-method="destroy">
+        <argument ref="tsaasConfig"/>
     </bean>
 
     <service ref="timeSeriesStorage" interface="org.opennms.integration.api.v1.timeseries.TimeSeriesStorage">
