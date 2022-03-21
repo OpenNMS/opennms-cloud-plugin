@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<features name="openmms-plugins-cloud-features" xmlns="http://karaf.apache.org/xmlns/features/v1.4.0">
-    <feature name="opennms-plugins-cloud" description="OpenNMS :: Plugins :: Cloud" version="${project.version}">
+<features name="openmms-cloud-plugin-features" xmlns="http://karaf.apache.org/xmlns/features/v1.4.0">
+    <feature name="opennms-cloud-plugin" description="OpenNMS :: Plugins :: Cloud" version="${project.version}">
         <feature dependency="true">aries-blueprint</feature>
         <feature dependency="true">shell</feature>
         <feature version="${opennms.api.version}" dependency="true">opennms-integration-api</feature>
