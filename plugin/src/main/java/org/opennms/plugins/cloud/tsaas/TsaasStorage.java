@@ -75,7 +75,6 @@ import org.slf4j.LoggerFactory;
  */
 public class TsaasStorage implements TimeSeriesStorage {
     private static final Logger LOG = LoggerFactory.getLogger(TsaasStorage.class);
-    private static final String TOKEN_KEY = "token";
     private final TimeseriesGrpc.TimeseriesBlockingStub clientStub;
     private final TsaasConfig config;
 
@@ -88,7 +87,7 @@ public class TsaasStorage implements TimeSeriesStorage {
             return new ForwardingClientCall.SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
                 @Override
                 public void start(final Listener<RespT> responseListener, final Metadata headers) {
-                    headers.put(Metadata.Key.of(TOKEN_KEY, Metadata.ASCII_STRING_MARSHALLER), config.getClientToken());
+                    headers.put(Metadata.Key.of(config.getTokenKey(), Metadata.ASCII_STRING_MARSHALLER), config.getTokenValue());
                     super.start(responseListener, headers);
                 }
             };
@@ -207,7 +206,7 @@ public class TsaasStorage implements TimeSeriesStorage {
                 .setMetric(toMetric(request.getMetric()))
                 .setStart(toTimestamp(request.getStart()))
                 .setEnd(toTimestamp(request.getEnd()))
-                .setStep(request.getStep().toSeconds())
+                .setStep(request.getStep().getSeconds())
                 .setAggregation(Tsaas.Aggregation.valueOf(request.getAggregation().name()))
                 .build();
         LOG.trace("Getting timeseries for request: {}", fetchRequest);

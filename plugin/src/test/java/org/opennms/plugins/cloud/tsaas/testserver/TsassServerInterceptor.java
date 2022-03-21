@@ -39,7 +39,7 @@ import io.grpc.Status;
 public class TsassServerInterceptor implements ServerInterceptor {
 
     protected static final Context.Key<String> CLIENT_ID = Context.key("clientID");
-    private static final Metadata.Key<String> TOKEN = Metadata.Key.of("token", Metadata.ASCII_STRING_MARSHALLER);
+    private static final Metadata.Key<String> TOKEN = Metadata.Key.of("x-scope-orgid", Metadata.ASCII_STRING_MARSHALLER);
 
     @Override
     public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> serverCall, Metadata metadata, ServerCallHandler<ReqT, RespT> serverCallHandler) {
