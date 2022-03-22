@@ -19,7 +19,8 @@ The default configuration has the following settings:
 ```
 host=localhost
 port=5001
-token=TOKEN
+tokenKey=x-scope-orgid
+tokenValue=acme
 mtlsEnabled=false
 certificatePath=${OPENNMS_HOME}/etc
 ```
@@ -29,7 +30,8 @@ Change configuration via Karaf shell:
 config:edit opennms-plugins-cloud
 property-set host localhost
 property-set port 5001
-property-set token TOKEN
+property-set tokenKey x-scope-orgid
+property-set tokenValue acme
 property-set mtlsEnabled false
 property-set certificatePath /etc/bla
 config:update

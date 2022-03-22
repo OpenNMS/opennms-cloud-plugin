@@ -6,14 +6,21 @@ public class TsaasConfig {
 
   private final String host;
   private final int port;
-  private final String clientToken;
+  private final String tokenKey;
+  private final String tokenValue;
   private final boolean mtlsEnabled;
   private final String certificateDir;
 
-  public TsaasConfig(final String host, final int port, final String clientToken, final boolean mtlsEnabled, final String certificateDir) {
+  public TsaasConfig(final String host,
+      final int port,
+      final String tokenKey,
+      final String tokenValue,
+      final boolean mtlsEnabled,
+      final String certificateDir) {
     this.host = Objects.requireNonNull(host);
     this.port = requirePositiveNumber(port);
-    this.clientToken = Objects.requireNonNull(clientToken);
+    this.tokenKey = Objects.requireNonNull(tokenKey);
+    this.tokenValue = Objects.requireNonNull(tokenValue);
     this.mtlsEnabled = mtlsEnabled;
     this.certificateDir = this.mtlsEnabled ? Objects.requireNonNull(certificateDir) : certificateDir;
   }
@@ -33,8 +40,12 @@ public class TsaasConfig {
     return port;
   }
 
-  public String getClientToken() {
-    return clientToken;
+  public String getTokenKey() {
+    return tokenKey;
+  }
+
+  public String getTokenValue() {
+    return tokenValue;
   }
 
   public boolean isMtlsEnabled() {
@@ -53,7 +64,8 @@ public class TsaasConfig {
     private Builder() {}
     private String host = "localhost";
     private int port = 5001;
-    private String clientToken = "TOKEN";
+    private String tokenKey = "x-scope-orgid";
+    private String tokenValue = "acme";
     private boolean mtlsEnabled = false;
     private String certificateDir;
 
@@ -61,7 +73,8 @@ public class TsaasConfig {
       return new TsaasConfig(
           host,
           port,
-          clientToken,
+          tokenKey,
+          tokenValue,
           mtlsEnabled,
           certificateDir);
     }
@@ -76,8 +89,13 @@ public class TsaasConfig {
       return this;
     }
 
-    public Builder clientToken(final String clientToken) {
-      this.clientToken = clientToken;
+    public Builder tokenKey(final String tokenKey) {
+      this.tokenKey = tokenKey;
+      return this;
+    }
+
+    public Builder tokenValue(final String tokenValue) {
+      this.tokenValue = tokenValue;
       return this;
     }
 
