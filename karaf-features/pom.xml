@@ -83,7 +83,7 @@
                                 <feature>framework</feature>
                             </framework>
                             <features>
-                                <feature>opennms-plugins-cloud</feature>
+                                <feature>opennms-cloud-plugin</feature>
                                 <feature>cloud-guava</feature>
                             </features>
                         </configuration>

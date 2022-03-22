@@ -5,8 +5,8 @@
                 http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0
                 http://aries.apache.org/schemas/blueprint-cm/blueprint-cm-1.1.0.xsd">
 
-    <!-- Configuration stored in $OPENNMS_HOME/etc/org.opennms.plugins.tsaas.cfg file -->
-    <cm:property-placeholder id="tsaas-pocPluginProperties" persistent-id="org.opennms.plugins.tsaas"
+    <!-- Configuration stored in $OPENNMS_HOME/etc/org.opennms.plugins.cloud.cfg file -->
+    <cm:property-placeholder id="tsaas-pocPluginProperties" persistent-id="org.opennms.plugins.cloud"
                              update-strategy="reload">
         <cm:default-properties>
             <cm:property name="host" value="localhost"/>

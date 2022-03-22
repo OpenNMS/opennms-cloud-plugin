@@ -48,10 +48,10 @@ public class TsaasStorageIT {
 
     // install plugin
     karafShell.runCommand("feature:repo-add mvn:org.opennms.plugins.cloud/karaf-features/1.0.0-SNAPSHOT/xml");
-    karafShell.runCommand("feature:install opennms-plugins-cloud");
+    karafShell.runCommand("feature:install opennms-cloud-plugin");
 
     // check if plugin has been started, if so we assume the installation worked well.
-    karafShell.runCommand("feature:list | grep opennms-plugins-cloud", output -> output.contains("Started"));
+    karafShell.runCommand("feature:list | grep opennms-cloud-plugin", output -> output.contains("Started"));
   }
 
   @AfterClass
