@@ -40,12 +40,10 @@ import io.grpc.MethodDescriptor;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.ClientAuth;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.InputStream;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
@@ -97,38 +95,41 @@ public class TsaasStorage implements TimeSeriesStorage {
     public TsaasStorage(TsaasConfig config) {
         this.config = config;
         LOG.debug("Starting with host {} and port {}", config.getHost(), config.getPort());
+
+        final NettyChannelBuilder builder = NettyChannelBuilder.forAddress(config.getHost(), config.getPort());
+        if (config.isMtlsEnabled()) {
+            builder.sslContext(createSslContext());
+        } else {
+            builder.usePlaintext();
+        }
+        managedChannel = builder
+            .compressorRegistry(ZStdCodecRegisterUtil.createCompressorRegistry())
+            .decompressorRegistry(ZStdCodecRegisterUtil.createDecompressorRegistry())
+            .build();
+        clientStub = TimeseriesGrpc.newBlockingStub(managedChannel)
+            .withCompression("gzip") // ZStdGrpcCodec.ZSTD
+            .withInterceptors(new TokenAddingInterceptor());
+
+    }
+
+    private SslContext createSslContext() {
+
         try {
-            final NettyChannelBuilder builder = NettyChannelBuilder.forAddress(config.getHost(), config.getPort());
-            if (config.isMtlsEnabled()) {
-                builder
-                    .sslContext(
-                        GrpcSslContexts.configure(GrpcSslContexts.forClient(), SslProvider.OPENSSL)
-                        .trustManager(new File(config.getCertificateDir() + "clienttruststore.pem"))
-                        .keyManager(new File(config.getCertificateDir() + "client.crt"),
-                            new File(config.getCertificateDir() + "client_pkcs8_key.pem"))
-                    .clientAuth(ClientAuth.REQUIRE).build());
-
-
+            SslContextBuilder context = GrpcSslContexts.configure(GrpcSslContexts.forClient(), SslProvider.OPENSSL);
+            File truststore = new File(config.getCertificateDir() + "clienttruststore.pem");
+            if (truststore.canRead()) {
+                LOG.info("Will use truststore {}.", truststore.getAbsolutePath());
+                context.trustManager(truststore);
             } else {
-                builder.usePlaintext();
+                LOG.info("Will use jvm truststore.");
             }
-            managedChannel = builder
-                    .compressorRegistry(ZStdCodecRegisterUtil.createCompressorRegistry())
-                    .decompressorRegistry(ZStdCodecRegisterUtil.createDecompressorRegistry())
-                    .build();
-            clientStub = TimeseriesGrpc.newBlockingStub(managedChannel)
-                    .withCompression("gzip") // ZStdGrpcCodec.ZSTD
-                    .withInterceptors(new TokenAddingInterceptor());
+            context.keyManager(new File(config.getCertificateDir() + "client.crt"),
+                    new File(config.getCertificateDir() + "client_pkcs8_key.pem"))
+                .clientAuth(ClientAuth.REQUIRE);
+            return context.build();
         } catch (SSLException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private X509Certificate convertPEMToX509Cert(String certificate) throws Exception{
-        InputStream targetStream = new ByteArrayInputStream(certificate.getBytes());
-        return (X509Certificate) CertificateFactory
-            .getInstance("X509")
-            .generateCertificate(targetStream);
     }
 
     private static Tsaas.Tag toTag(Tag tag) {
@@ -160,7 +161,6 @@ public class TsaasStorage implements TimeSeriesStorage {
 
     private static Timestamp toTimestamp(Instant instant) {
         return Timestamp.newBuilder()
-                // TODO: Is this the correct way to craft a proto timestamp from an instant?
                 .setSeconds(instant.getEpochSecond())
                 .setNanos(instant.getNano())
                 .build();
@@ -168,7 +168,6 @@ public class TsaasStorage implements TimeSeriesStorage {
 
     @Override
     public void store(List<Sample> samples) throws StorageException {
-        // TODO: The client is responsible for ensuring the message is fully-formed
         List<Tsaas.Sample> mappedSamples = samples.stream()
                 .map(TsaasStorage::toSample)
                 .collect(Collectors.toList());
@@ -186,7 +185,6 @@ public class TsaasStorage implements TimeSeriesStorage {
             throw new IllegalArgumentException("at least one TagMatcher is required.");
         }
 
-        // TODO: The client is responsible for ensuring the message is fully-formed
         List<Tsaas.TagMatcher> mappedTags = tagMatchers.stream()
                 .map(GrpcObjectMapper::toTagMatcher)
                 .collect(Collectors.toList());
@@ -200,7 +198,6 @@ public class TsaasStorage implements TimeSeriesStorage {
 
     @Override
     public List<Sample> getTimeseries(TimeSeriesFetchRequest request) throws StorageException {
-        // TODO: The client is responsible for ensuring the message is fully-formed
         Objects.requireNonNull(request.getMetric());
         Tsaas.FetchRequest fetchRequest = Tsaas.FetchRequest.newBuilder()
                 .setMetric(toMetric(request.getMetric()))
