@@ -48,6 +48,7 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.net.ssl.SSLException;
@@ -75,8 +76,8 @@ public class TsaasStorage implements TimeSeriesStorage {
     private static final Logger LOG = LoggerFactory.getLogger(TsaasStorage.class);
     private final TimeseriesGrpc.TimeseriesBlockingStub clientStub;
     private final TsaasConfig config;
-
     private final ManagedChannel managedChannel;
+    private final ConcurrentLinkedDeque<Tsaas.Sample> queue; // holds samples to be batched
 
     private class TokenAddingInterceptor implements ClientInterceptor {
         @Override
@@ -95,7 +96,7 @@ public class TsaasStorage implements TimeSeriesStorage {
     public TsaasStorage(TsaasConfig config) {
         this.config = config;
         LOG.debug("Starting with host {} and port {}", config.getHost(), config.getPort());
-
+        queue = new ConcurrentLinkedDeque<>();
         final NettyChannelBuilder builder = NettyChannelBuilder.forAddress(config.getHost(), config.getPort());
         if (config.isMtlsEnabled()) {
             builder.sslContext(createSslContext());
@@ -168,14 +169,25 @@ public class TsaasStorage implements TimeSeriesStorage {
 
     @Override
     public void store(List<Sample> samples) throws StorageException {
-        List<Tsaas.Sample> mappedSamples = samples.stream()
+
+        // convert given samples to grpc
+        samples.stream()
                 .map(TsaasStorage::toSample)
-                .collect(Collectors.toList());
-        Tsaas.Samples samplesMessage = Tsaas.Samples.newBuilder()
-                .addAllSamples(mappedSamples)
-                .build();
-        LOG.trace("Storing the following samples: {}", samplesMessage);
-        clientStub.store(samplesMessage);
+                .forEach(this.queue::add);
+
+        // send batched messages while the queue is fuller than batch size
+        while(this.queue.size() >= this.config.getBatchSize()) {
+            Tsaas.Samples.Builder builder = Tsaas.Samples.newBuilder();
+            for (int i = 0; i < this.config.getBatchSize(); i++) {
+                Tsaas.Sample next = this.queue.poll();
+                if (next != null) {
+                    builder.addSamples(next);
+                } else {
+                    break; // queue is empty => nothing more to do. This can happen since we are in a multithreaded environment.
+                }
+            }
+            clientStub.store(builder.build());
+        }
     }
 
     @Override
