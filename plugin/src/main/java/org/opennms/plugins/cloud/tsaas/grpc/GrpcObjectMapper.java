@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.opennms.integration.api.v1.timeseries.Aggregation;
+import org.opennms.integration.api.v1.timeseries.IntrinsicTagNames;
+import org.opennms.integration.api.v1.timeseries.MetaTagNames;
 import org.opennms.integration.api.v1.timeseries.Metric;
 import org.opennms.integration.api.v1.timeseries.Sample;
 import org.opennms.integration.api.v1.timeseries.Tag;
@@ -24,8 +26,12 @@ import org.opennms.integration.api.v1.timeseries.immutables.ImmutableTimeSeriesF
 import org.opennms.tsaas.Tsaas;
 
 import com.google.protobuf.Timestamp;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GrpcObjectMapper {
+
+    private static final Logger LOG = LoggerFactory.getLogger(GrpcObjectMapper.class);
 
     public static Collection<Tag> toTags(Collection<Tsaas.Tag> tags) {
         return tags.stream()
@@ -86,6 +92,23 @@ public class GrpcObjectMapper {
         return builder.build();
     }
 
+    // Checks if a metric contains all required tags for OpenNMS
+    public static boolean isValid(final Metric metric) {
+        if (metric.getFirstTagByKey(MetaTagNames.mtype) == null) {
+            LOG.warn("tag mtype is missing in metric, will ignore it: {}", metric);
+            return false;
+        }
+        if (metric.getFirstTagByKey(IntrinsicTagNames.resourceId) == null ) {
+            LOG.warn("tag resourceId is missing in metric, will ignore it: {}", metric);
+            return false;
+        }
+        if (metric.getFirstTagByKey(IntrinsicTagNames.name) == null ) {
+            LOG.warn("tag name is missing in metric, will ignore it: {}", metric);
+            return false;
+        }
+        return true;
+    }
+
     public static Tsaas.Metrics toMetrics(List<Metric> metrics) {
         List<Tsaas.Metric> grpcMetrics = metrics
                 .stream()
@@ -96,9 +119,10 @@ public class GrpcObjectMapper {
 
     public static List<Metric> toMetrics(final Tsaas.Metrics metrics) {
         return metrics.getMetricsList()
-                .stream()
-                .map(GrpcObjectMapper::toMetric)
-                .collect(Collectors.toList());
+            .stream()
+            .map(GrpcObjectMapper::toMetric)
+            .filter(GrpcObjectMapper::isValid) // we want only valid Metrics otherwise there will be a problem in OpenNMS
+            .collect(Collectors.toList());
     }
 
     public static Tsaas.Sample toSample(Sample sample) {
@@ -119,10 +143,11 @@ public class GrpcObjectMapper {
 
     public static List<Sample> toSamples(Tsaas.Samples samples) {
         return samples
-                .getSamplesList()
-                .stream()
-                .map(GrpcObjectMapper::toSample)
-                .collect(Collectors.toList());
+            .getSamplesList()
+            .stream()
+            .map(GrpcObjectMapper::toSample)
+            .filter(s -> isValid(s.getMetric())) // we want only valid Metrics otherwise there will be a problem in OpenNMS)
+            .collect(Collectors.toList());
     }
 
     private static Timestamp toTimestamp(Instant instant) {
