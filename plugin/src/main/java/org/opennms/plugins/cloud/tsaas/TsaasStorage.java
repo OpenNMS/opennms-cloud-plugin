@@ -78,6 +78,7 @@ public class TsaasStorage implements TimeSeriesStorage {
     private final TsaasConfig config;
     private final ManagedChannel managedChannel;
     private final ConcurrentLinkedDeque<Tsaas.Sample> queue; // holds samples to be batched
+    private final Instant lastBatchSentTs;
 
     private class TokenAddingInterceptor implements ClientInterceptor {
         @Override
@@ -97,6 +98,7 @@ public class TsaasStorage implements TimeSeriesStorage {
         this.config = config;
         LOG.debug("Starting with host {} and port {}", config.getHost(), config.getPort());
         queue = new ConcurrentLinkedDeque<>();
+        lastBatchSentTs = Instant.now();
         final NettyChannelBuilder builder = NettyChannelBuilder.forAddress(config.getHost(), config.getPort());
         if (config.isMtlsEnabled()) {
             builder.sslContext(createSslContext());
@@ -176,7 +178,8 @@ public class TsaasStorage implements TimeSeriesStorage {
                 .forEach(this.queue::add);
 
         // send batched messages while the queue is fuller than batch size
-        while(this.queue.size() >= this.config.getBatchSize()) {
+        while(this.queue.size() >= this.config.getBatchSize() ||
+            this.queue.size() > 0 && this.lastBatchSentTs.plusMillis(config.getMaxBatchWaitTimeInMilliSeconds()).isBefore(Instant.now())) {
             Tsaas.Samples.Builder builder = Tsaas.Samples.newBuilder();
             for (int i = 0; i < this.config.getBatchSize(); i++) {
                 Tsaas.Sample next = this.queue.poll();
