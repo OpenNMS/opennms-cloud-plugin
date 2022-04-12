@@ -78,7 +78,7 @@ public class TsaasStorage implements TimeSeriesStorage {
     private final TsaasConfig config;
     private final ManagedChannel managedChannel;
     private final ConcurrentLinkedDeque<Tsaas.Sample> queue; // holds samples to be batched
-    private final Instant lastBatchSentTs;
+    private Instant lastBatchSentTs;
 
     private class TokenAddingInterceptor implements ClientInterceptor {
         @Override
@@ -190,6 +190,7 @@ public class TsaasStorage implements TimeSeriesStorage {
                 }
             }
             clientStub.store(builder.build());
+            lastBatchSentTs = Instant.now();
         }
     }
 
@@ -221,7 +222,7 @@ public class TsaasStorage implements TimeSeriesStorage {
                 .setStep(request.getStep().getSeconds())
                 .setAggregation(Tsaas.Aggregation.valueOf(request.getAggregation().name()))
                 .build();
-        LOG.trace("Getting timeseries for request: {}", fetchRequest);
+        LOG.trace("Getting time series for request: {}", fetchRequest);
         Tsaas.Samples samples = clientStub.getTimeseries(fetchRequest);
         return GrpcObjectMapper.toSamples(samples);
     }

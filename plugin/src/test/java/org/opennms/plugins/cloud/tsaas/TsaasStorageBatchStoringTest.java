@@ -30,6 +30,7 @@ package org.opennms.plugins.cloud.tsaas;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -80,6 +81,20 @@ public class TsaasStorageBatchStoringTest {
         .build();
     TsaasStorage plugin = new TsaasStorage(config);
 
+    // store 2 samples. The batch size is 10 => should only call server when 10 samples are reached or maxBatchWaitTime has passed:
+    plugin.store(createSamples());
+    plugin.store(createSamples());
+    verify(serverStorage, never()).store(any());
+
+    // let's wait until maxBatchWaitTime time has passed
+    Thread.sleep(config.getMaxBatchWaitTimeInMilliSeconds() + 10);
+    plugin.store(createSamples());
+
+    // we expect 3 samples, one from each call:
+    verify(serverStorage, times(1)).store(argThat(l -> l.size() == 3));
+    clearInvocations(serverStorage);
+
+    // do a second run to see if a second batch is  sent:
     // store 2 samples. The batch size is 10 => should only call server when 10 samples are reached or maxBatchWaitTime has passed:
     plugin.store(createSamples());
     plugin.store(createSamples());
