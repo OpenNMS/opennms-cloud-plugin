@@ -33,6 +33,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.opennms.integration.api.v1.timeseries.AbstractStorageIntegrationTest;
+import org.opennms.integration.api.v1.timeseries.InMemoryStorage;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.plugins.cloud.tsaas.testserver.TsaasServer;
 import org.opennms.plugins.cloud.tsaas.testserver.TsassServerInterceptor;
@@ -44,9 +45,11 @@ public class TsaasStorageTest extends AbstractStorageIntegrationTest {
 
   @Before
   public void setUp() throws Exception {
-    TsaasConfig config = TsaasConfig.builder().build();
+    TsaasConfig config = TsaasConfig.builder()
+        .batchSize(1) // set to 1 so that samples are not held back in the queue
+        .build();
     storage = new TsaasStorage(config);
-    server = new TsaasServer(config, new TsassServerInterceptor());
+    server = new TsaasServer(config, new TsassServerInterceptor(), new InMemoryStorage());
     server.startServer();
     super.setUp();
   }

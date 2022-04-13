@@ -10,19 +10,25 @@ public class TsaasConfig {
   private final String tokenValue;
   private final boolean mtlsEnabled;
   private final String certificateDir;
+  private final int batchSize;
+  private final long maxBatchWaitTimeInMilliSeconds;
 
   public TsaasConfig(final String host,
       final int port,
       final String tokenKey,
       final String tokenValue,
       final boolean mtlsEnabled,
-      final String certificateDir) {
+      final String certificateDir,
+      final int batchSize,
+      final long maxBatchWaitTimeInMilliSeconds) {
     this.host = Objects.requireNonNull(host);
     this.port = requirePositiveNumber(port);
     this.tokenKey = Objects.requireNonNull(tokenKey);
     this.tokenValue = Objects.requireNonNull(tokenValue);
     this.mtlsEnabled = mtlsEnabled;
     this.certificateDir = this.mtlsEnabled ? Objects.requireNonNull(certificateDir) : certificateDir;
+    this.batchSize = batchSize;
+    this.maxBatchWaitTimeInMilliSeconds = maxBatchWaitTimeInMilliSeconds;
   }
 
   private int requirePositiveNumber(int value) {
@@ -56,6 +62,14 @@ public class TsaasConfig {
     return this.certificateDir;
   }
 
+  public int getBatchSize() {
+    return this.batchSize;
+  }
+
+  public long getMaxBatchWaitTimeInMilliSeconds() {
+    return this.maxBatchWaitTimeInMilliSeconds;
+  }
+
   public static Builder builder() {
     return new Builder();
   }
@@ -68,6 +82,8 @@ public class TsaasConfig {
     private String tokenValue = "acme";
     private boolean mtlsEnabled = false;
     private String certificateDir;
+    private int batchSize = 1000;
+    private long maxBatchWaitTimeInMilliSeconds = 5000;
 
     public TsaasConfig build() {
       return new TsaasConfig(
@@ -76,7 +92,9 @@ public class TsaasConfig {
           tokenKey,
           tokenValue,
           mtlsEnabled,
-          certificateDir);
+          certificateDir,
+          batchSize,
+          maxBatchWaitTimeInMilliSeconds);
     }
 
     public Builder host(final String host) {
@@ -107,6 +125,16 @@ public class TsaasConfig {
 
     public Builder certificateDir(final String certificateDir) {
       this.certificateDir = certificateDir;
+      return this;
+    }
+
+    public Builder batchSize(int batchSize) {
+      this.batchSize = batchSize;
+      return this;
+    }
+
+    public Builder maxBatchWaitTimeInMilliSeconds(long maxBatchWaitTimeInMilliSeconds) {
+      this.maxBatchWaitTimeInMilliSeconds = maxBatchWaitTimeInMilliSeconds;
       return this;
     }
   }

@@ -35,11 +35,10 @@ import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
 import java.io.File;
 import java.io.IOException;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import org.opennms.integration.api.v1.timeseries.InMemoryStorage;
+import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.plugins.cloud.tsaas.TsaasConfig;
 import org.opennms.plugins.cloud.tsaas.grpc.comp.ZStdCodecRegisterUtil;
 import org.slf4j.Logger;
@@ -61,8 +60,9 @@ public class TsaasServer {
 
 
     public TsaasServer(final TsaasConfig config,
-        final TsassServerInterceptor serverInterceptor) {
-        this.timeseriesService = new TimeseriesGrpcImpl(new InMemoryStorage());
+        final TsassServerInterceptor serverInterceptor,
+        final TimeSeriesStorage storage) {
+        this.timeseriesService = new TimeseriesGrpcImpl(storage);
         this.config = config;
         this.serverInterceptor = serverInterceptor;
     }
