@@ -15,6 +15,7 @@ feature:install opennms-cloud-plugin
 ```
 **Configure**
 
+***Properties***
 The default configuration has the following settings:
 ```
 host=localhost
@@ -22,7 +23,6 @@ port=5001
 tokenKey=x-scope-orgid
 tokenValue=acme
 mtlsEnabled=false
-certificatePath=${OPENNMS_HOME}/etc
 ```
 
 Change configuration via Karaf shell:
@@ -33,9 +33,19 @@ property-set port 5001
 property-set tokenKey x-scope-orgid
 property-set tokenValue acme
 property-set mtlsEnabled false
-property-set certificatePath /etc/bla
 config:update
 ```
+
+***Import Certificates***
+
+Before mtls can be enabled, we need to import the certificates via OpenNMS Karaf shell:
+```
+opennms-tsaas:import-cert --type=publickey --file=/path/to/file/client.crt
+opennms-tsaas:import-cert --type=privatekey --file=/path/to/file/client_pkcs8_key.pem
+opennms-tsaas:import-cert --type=truststore -file=/path/to/file/truststore.pem
+```
+The private and public keys are mandatory.
+The truststore file is optional, if not supplied, the default java truststore is used.
 
 **Update bundle** automatically (only relevant for development):
 ```

@@ -28,10 +28,13 @@
 
 package org.opennms.plugins.cloud.tsaas;
 
+import static org.mockito.Mockito.mock;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
 import org.opennms.integration.api.v1.timeseries.AbstractStorageIntegrationTest;
 import org.opennms.integration.api.v1.timeseries.InMemoryStorage;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
@@ -48,7 +51,7 @@ public class TsaasStorageTest extends AbstractStorageIntegrationTest {
     TsaasConfig config = TsaasConfig.builder()
         .batchSize(1) // set to 1 so that samples are not held back in the queue
         .build();
-    storage = new TsaasStorage(config);
+    storage = new TsaasStorage(config, mock(SecureCredentialsVault.class));
     server = new TsaasServer(config, new TsassServerInterceptor(), new InMemoryStorage());
     server.startServer();
     super.setUp();

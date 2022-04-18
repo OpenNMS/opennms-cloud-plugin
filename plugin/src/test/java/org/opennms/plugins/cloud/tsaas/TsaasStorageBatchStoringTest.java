@@ -31,6 +31,7 @@ package org.opennms.plugins.cloud.tsaas;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -42,6 +43,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
 import org.opennms.integration.api.v1.timeseries.IntrinsicTagNames;
 import org.opennms.integration.api.v1.timeseries.Sample;
 import org.opennms.integration.api.v1.timeseries.StorageException;
@@ -79,7 +81,7 @@ public class TsaasStorageBatchStoringTest {
         .batchSize(10)
         .maxBatchWaitTimeInMilliSeconds(500)
         .build();
-    TsaasStorage plugin = new TsaasStorage(config);
+    TsaasStorage plugin = new TsaasStorage(config, mock(SecureCredentialsVault.class));
 
     // store 2 samples. The batch size is 10 => should only call server when 10 samples are reached or maxBatchWaitTime has passed:
     plugin.store(createSamples());

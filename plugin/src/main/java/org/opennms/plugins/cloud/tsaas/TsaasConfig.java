@@ -9,7 +9,6 @@ public class TsaasConfig {
   private final String tokenKey;
   private final String tokenValue;
   private final boolean mtlsEnabled;
-  private final String certificateDir;
   private final int batchSize;
   private final long maxBatchWaitTimeInMilliSeconds;
 
@@ -18,7 +17,6 @@ public class TsaasConfig {
       final String tokenKey,
       final String tokenValue,
       final boolean mtlsEnabled,
-      final String certificateDir,
       final int batchSize,
       final long maxBatchWaitTimeInMilliSeconds) {
     this.host = Objects.requireNonNull(host);
@@ -26,7 +24,6 @@ public class TsaasConfig {
     this.tokenKey = Objects.requireNonNull(tokenKey);
     this.tokenValue = Objects.requireNonNull(tokenValue);
     this.mtlsEnabled = mtlsEnabled;
-    this.certificateDir = this.mtlsEnabled ? Objects.requireNonNull(certificateDir) : certificateDir;
     this.batchSize = batchSize;
     this.maxBatchWaitTimeInMilliSeconds = maxBatchWaitTimeInMilliSeconds;
   }
@@ -56,10 +53,6 @@ public class TsaasConfig {
 
   public boolean isMtlsEnabled() {
     return mtlsEnabled;
-  }
-
-  public String getCertificateDir() {
-    return this.certificateDir;
   }
 
   public int getBatchSize() {
@@ -92,7 +85,6 @@ public class TsaasConfig {
           tokenKey,
           tokenValue,
           mtlsEnabled,
-          certificateDir,
           batchSize,
           maxBatchWaitTimeInMilliSeconds);
     }
@@ -119,12 +111,6 @@ public class TsaasConfig {
 
     public Builder mtlsEnabled(final boolean mtlsEnabled) {
       this.mtlsEnabled = mtlsEnabled;
-      return this;
-    }
-
-
-    public Builder certificateDir(final String certificateDir) {
-      this.certificateDir = certificateDir;
       return this;
     }
 

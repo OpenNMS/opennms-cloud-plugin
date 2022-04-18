@@ -28,13 +28,26 @@
 
 package org.opennms.plugins.cloud.tsaas;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil.SCV_ALIAS;
+
+import com.google.common.base.Charsets;
+import com.google.common.io.CharStreams;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
+import org.opennms.integration.api.v1.scv.immutables.ImmutableCredentials;
 import org.opennms.integration.api.v1.timeseries.AbstractStorageIntegrationTest;
 import org.opennms.integration.api.v1.timeseries.InMemoryStorage;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
+import org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil.Type;
 import org.opennms.plugins.cloud.tsaas.testserver.TsaasServer;
 import org.opennms.plugins.cloud.tsaas.testserver.TsassServerInterceptor;
 
@@ -48,13 +61,26 @@ public class TsaasStorageWithMtlsTest extends AbstractStorageIntegrationTest {
   public void setUp() throws Exception {
     TsaasConfig config = TsaasConfig.builder()
         .mtlsEnabled(true)
-        .certificateDir("src/test/resources/cert/")
         .batchSize(1) // set to 1 so that samples are not held back in the queue
         .build();
-    storage = new TsaasStorage(config);
+
+    Map<String, String> attributes = new HashMap<>();
+    attributes.put(Type.truststore.name(), getCert("clienttruststore.pem"));
+    attributes.put(Type.publickey.name(), getCert("client.crt"));
+    attributes.put(Type.privatekey.name(), getCert("client_pkcs8_key.pem"));
+
+    SecureCredentialsVault scv = mock(SecureCredentialsVault.class);
+    when(scv.getCredentials(SCV_ALIAS)).thenReturn(new ImmutableCredentials("", "", attributes));
+
+    storage = new TsaasStorage(config, scv);
     server = new TsaasServer(config, new TsassServerInterceptor(), new InMemoryStorage());
     server.startServer();
     super.setUp();
+  }
+
+  private String getCert(String filename) throws IOException {
+    return CharStreams.toString(new InputStreamReader(
+        this.getClass().getResourceAsStream("/cert/" + filename), Charsets.UTF_8));
   }
 
   @After
