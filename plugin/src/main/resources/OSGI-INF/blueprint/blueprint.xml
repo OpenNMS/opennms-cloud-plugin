@@ -14,7 +14,6 @@
             <cm:property name="tokenKey" value="x-scope-orgid"/>
             <cm:property name="tokenValue" value="acme"/>
             <cm:property name="mtlsEnabled" value="false"/>
-            <cm:property name="certificatePath" value="${OPENNMS_HOME}/etc"/>
             <cm:property name="batchSize" value="1000"/>
             <cm:property name="maxBatchWaitTimeInMilliSeconds" value="5000" />
         </cm:default-properties>
@@ -26,7 +25,6 @@
         <argument value="${tokenKey}"/>
         <argument value="${tokenValue}"/>
         <argument value="${mtlsEnabled}"/>
-        <argument value="${certificatePath}"/>
         <argument value="${batchSize}"/>
         <argument value="${maxBatchWaitTimeInMilliSeconds}"/>
     </bean>

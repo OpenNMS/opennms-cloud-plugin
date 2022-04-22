@@ -27,7 +27,7 @@ mtlsEnabled=false
 
 Change configuration via Karaf shell:
 ```
-config:edit opennms-cloud-plugin
+config:edit org.opennms.plugins.cloud
 property-set host localhost
 property-set port 5001
 property-set tokenKey x-scope-orgid

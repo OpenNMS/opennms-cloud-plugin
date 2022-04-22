@@ -77,12 +77,12 @@ public class TsaasServer {
                     .compressorRegistry(ZStdCodecRegisterUtil.createCompressorRegistry())
                     .intercept(serverInterceptor);
             if(this.config.isMtlsEnabled()) {
-                File keyCertChainFile = new File("src/test/resources/cert/server.crt"); // an X.509 certificate chain file in PEM format
-                File privateKeyFile = new File("src/test/resources/cert/server_pkcs8_key.pem");
+                File keyCertChainFile = new File("plugin/src/test/resources/cert/server.crt"); // an X.509 certificate chain file in PEM format
+                File privateKeyFile = new File("plugin/src/test/resources/cert/server_pkcs8_key.pem");
                 builder.sslContext(
                     GrpcSslContexts
                         .forServer(keyCertChainFile, privateKeyFile)
-                        .trustManager(new File("src/test/resources/cert/servertruststore.pem"))
+                        .trustManager(new File("plugin/src/test/resources/cert/servertruststore.pem"))
                         .build());
             }
             server = builder

@@ -74,7 +74,6 @@ public class TsaasConfig {
     private String tokenKey = "x-scope-orgid";
     private String tokenValue = "acme";
     private boolean mtlsEnabled = false;
-    private String certificateDir;
     private int batchSize = 1000;
     private long maxBatchWaitTimeInMilliSeconds = 5000;
 

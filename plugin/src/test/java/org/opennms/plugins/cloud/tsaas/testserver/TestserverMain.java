@@ -10,8 +10,6 @@ import org.opennms.plugins.cloud.tsaas.TsaasConfig;
  */
 public class TestserverMain {
 
-  private final static int PORT = 5001;
-
   public static void main(String[] args) throws InterruptedException {
     TsaasConfig config = TsaasConfig.builder().build();
     TsaasServer server = new TsaasServer(config, new TsassServerInterceptor(), new InMemoryStorage());
