@@ -191,6 +191,11 @@ public class TsaasStorage implements TimeSeriesStorage {
             }
             // Make call (only if we have anything to send):
             if (builder.getSamplesCount() > 0) {
+                try {
+                    Thread.sleep(10); // simulate RPC call
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 // clientStub.store(builder.build());
                 lastBatchSentTs = Instant.now();
             }
