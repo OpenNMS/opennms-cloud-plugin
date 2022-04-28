@@ -40,6 +40,7 @@ import java.util.Collections;
 import java.util.List;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.opennms.integration.api.v1.timeseries.IntrinsicTagNames;
@@ -51,6 +52,7 @@ import org.opennms.integration.api.v1.timeseries.immutables.ImmutableSample;
 import org.opennms.plugins.cloud.tsaas.testserver.TsaasServer;
 import org.opennms.plugins.cloud.tsaas.testserver.TsassServerInterceptor;
 
+@Ignore
 public class TsaasStorageBatchStoringTest {
 
   private TsaasServer server;

@@ -38,6 +38,7 @@ import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.plugins.cloud.tsaas.testserver.TsaasServer;
 import org.opennms.plugins.cloud.tsaas.testserver.TsassServerInterceptor;
 
+@Ignore
 public class TsaasStorageTest extends AbstractStorageIntegrationTest {
 
   private TsaasStorage storage;
