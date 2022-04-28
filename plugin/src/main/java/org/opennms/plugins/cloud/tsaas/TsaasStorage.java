@@ -189,8 +189,11 @@ public class TsaasStorage implements TimeSeriesStorage {
                     break; // queue is empty => nothing more to do. This can happen since we are in a multithreaded environment.
                 }
             }
-            clientStub.store(builder.build());
-            lastBatchSentTs = Instant.now();
+            // Make call (only if we have anything to send):
+            if (builder.getSamplesCount() > 0) {
+                clientStub.store(builder.build());
+                lastBatchSentTs = Instant.now();
+            }
         }
     }
 
