@@ -19,7 +19,7 @@ feature:install opennms-cloud-plugin
 
 Before mtls can be enabled, we need to import the certificates via OpenNMS Karaf shell:
 ```
-opennms-tsaas:import-cert /path/to/credentials/credentials.zip
+opennms-cloud:import-cert /path/to/credentials/credentials.zip
 ```
 The zip will be deleted automatically after a successful import.
 

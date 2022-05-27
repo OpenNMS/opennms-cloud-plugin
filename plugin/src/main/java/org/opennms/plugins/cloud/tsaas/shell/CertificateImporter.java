@@ -49,11 +49,11 @@ import org.opennms.integration.api.v1.scv.immutables.ImmutableCredentials;
 import org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil;
 import org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil.Type;
 
-@Command(scope = "opennms-tsaas", name = "import-cert",
-    description = "Imports certificates to be used with tsaas.",
-    detailedDescription= "Imports certificates to be used with tsaas."
+@Command(scope = "opennms-cloud", name = "import-cert",
+    description = "Imports certificates to be used with cloud tsaas.",
+    detailedDescription= "Imports certificates to be used with cloud tsaas."
         + "If mtls is enabled in the properties at least publickey and privatekey must be supplied."
-        + "After all certificates are imported the plugin needs to be restarted to be in effect.")
+        + "After all certificates are imported, the plugin needs to be restarted to be in effect.")
 @Service
 public class CertificateImporter implements Action {
 
