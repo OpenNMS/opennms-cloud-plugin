@@ -28,6 +28,7 @@
 
 package org.opennms.plugins.cloud.tsaas;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil.SCV_ALIAS;
@@ -36,6 +37,8 @@ import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.After;
@@ -48,6 +51,7 @@ import org.opennms.integration.api.v1.timeseries.AbstractStorageIntegrationTest;
 import org.opennms.integration.api.v1.timeseries.InMemoryStorage;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil.Type;
+import org.opennms.plugins.cloud.tsaas.shell.ConfigZipExtractor;
 import org.opennms.plugins.cloud.tsaas.testserver.TsaasServer;
 import org.opennms.plugins.cloud.tsaas.testserver.TsassServerInterceptor;
 
@@ -64,10 +68,14 @@ public class TsaasStorageWithMtlsTest extends AbstractStorageIntegrationTest {
         .batchSize(1) // set to 1 so that samples are not held back in the queue
         .build();
 
+    Path pathToZipFile = Path.of("src/test/resources/cert/credentials.zip");
+    assertTrue(Files.exists(pathToZipFile));
+    ConfigZipExtractor certs = new ConfigZipExtractor(pathToZipFile);
     Map<String, String> attributes = new HashMap<>();
+    attributes.put(Type.publickey.name(), certs.getPublicKey());
+    attributes.put(Type.privatekey.name(), certs.getPrivateKey());
+    // we have self signed certs, so we do need to provide a trust store with our ca:
     attributes.put(Type.truststore.name(), getCert("clienttruststore.pem"));
-    attributes.put(Type.publickey.name(), getCert("client.crt"));
-    attributes.put(Type.privatekey.name(), getCert("client_pkcs8_key.pem"));
 
     SecureCredentialsVault scv = mock(SecureCredentialsVault.class);
     when(scv.getCredentials(SCV_ALIAS)).thenReturn(new ImmutableCredentials("", "", attributes));

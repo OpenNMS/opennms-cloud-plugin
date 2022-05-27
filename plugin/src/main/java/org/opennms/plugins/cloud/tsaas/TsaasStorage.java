@@ -85,6 +85,7 @@ public class TsaasStorage implements TimeSeriesStorage {
 
     private final TimeseriesGrpc.TimeseriesBlockingStub clientStub;
     private final TsaasConfig config;
+    private final SecureCredentialsVaultUtil scv;
     private final ManagedChannel managedChannel;
     private final ConcurrentLinkedDeque<Tsaas.Sample> queue; // holds samples to be batched
     private Instant lastBatchSentTs;
@@ -96,7 +97,10 @@ public class TsaasStorage implements TimeSeriesStorage {
             return new ForwardingClientCall.SimpleForwardingClientCall<>(next.newCall(method, callOptions)) {
                 @Override
                 public void start(final Listener<RespT> responseListener, final Metadata headers) {
-                    headers.put(Metadata.Key.of(config.getTokenKey(), Metadata.ASCII_STRING_MARSHALLER), config.getTokenValue());
+                    String token = scv.getCredentials()
+                            .map(c -> c.getAttribute(Type.token.name()))
+                            .orElse("--not defined--");
+                    headers.put(Metadata.Key.of(config.getTokenKey(), Metadata.ASCII_STRING_MARSHALLER), token);
                     super.start(responseListener, headers);
                 }
             };
@@ -105,12 +109,12 @@ public class TsaasStorage implements TimeSeriesStorage {
 
     public TsaasStorage(TsaasConfig config, SecureCredentialsVault scv) {
         this.config = Objects.requireNonNull(config);
+        this.scv = new SecureCredentialsVaultUtil(scv);
         LOG.debug("Starting with host {} and port {}", config.getHost(), config.getPort());
 
         final NettyChannelBuilder builder = NettyChannelBuilder.forAddress(config.getHost(), config.getPort());
         if (config.isMtlsEnabled()) {
-            Objects.requireNonNull(scv);
-            builder.sslContext(createSslContext(scv));
+            builder.sslContext(createSslContext());
         } else {
             builder.usePlaintext();
         }
@@ -125,10 +129,9 @@ public class TsaasStorage implements TimeSeriesStorage {
         lastBatchSentTs = Instant.now();
     }
 
-    private SslContext createSslContext(SecureCredentialsVault scv) {
+    private SslContext createSslContext() {
         Objects.requireNonNull(scv);
-        Credentials credentials = new SecureCredentialsVaultUtil(scv)
-            .getCredentials()
+        Credentials credentials = scv.getCredentials()
             .orElseThrow(() -> new NullPointerException(
                 String.format("Could no find credentials in SecureCredentialsVault for %s. Please import via Karaf shell: opennms-tsaas:import-cert", SCV_ALIAS)));
 

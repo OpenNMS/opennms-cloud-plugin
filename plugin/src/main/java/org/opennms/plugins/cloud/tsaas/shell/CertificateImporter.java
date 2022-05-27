@@ -1,17 +1,46 @@
+/*******************************************************************************
+ * This file is part of OpenNMS(R).
+ *
+ * Copyright (C) 2022 The OpenNMS Group, Inc.
+ * OpenNMS(R) is Copyright (C) 1999-2022 The OpenNMS Group, Inc.
+ *
+ * OpenNMS(R) is a registered trademark of The OpenNMS Group, Inc.
+ *
+ * OpenNMS(R) is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * OpenNMS(R) is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with OpenNMS(R).  If not, see:
+ *      http://www.gnu.org/licenses/
+ *
+ * For more information contact:
+ *     OpenNMS(R) Licensing <license@opennms.org>
+ *     http://www.opennms.org/
+ *     http://www.opennms.com/
+ *******************************************************************************/
+
+
 package org.opennms.plugins.cloud.tsaas.shell;
 
 import static org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil.SCV_ALIAS;
 
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+
 import org.apache.karaf.shell.api.action.Action;
+import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
-import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.opennms.integration.api.v1.scv.Credentials;
@@ -24,16 +53,11 @@ import org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil.Type;
     description = "Imports certificates to be used with tsaas.",
     detailedDescription= "Imports certificates to be used with tsaas."
         + "If mtls is enabled in the properties at least publickey and privatekey must be supplied."
-        + "After all certificates are imported the plugin needs to be restarted to be in effect:"
-        + "feature:restart cloud-plugin TODO Patrick")
+        + "After all certificates are imported the plugin needs to be restarted to be in effect.")
 @Service
 public class CertificateImporter implements Action {
 
-  @Option(name = "-t", aliases = { "--type" }, description = "Type of file, possible values = 'truststore', 'clientcert', 'clientkey'",
-      required = true)
-  String type;
-
-  @Option(name="f", aliases = { "--file" }, description = "Path to file.",
+  @Argument(name="certificateFilePath", description = "Path to file.",
       required = true)
   String fileParam;
 
@@ -44,10 +68,6 @@ public class CertificateImporter implements Action {
   public Object execute() throws Exception {
 
     // Validate
-    if (!Type.isValid(type)) {
-        System.out.printf("Invalid parameter 'type', must be one of: %s%n", Arrays.toString(Type.values()));
-        return null;
-    }
     Path file = Path.of(fileParam);
     if(!Files.isRegularFile(file)) {
       System.out.printf("%s is not a file.%n", fileParam);
@@ -58,8 +78,7 @@ public class CertificateImporter implements Action {
       return null;
     }
 
-    // read file
-    String value = Files.readString(file, StandardCharsets.UTF_8);
+    ConfigZipExtractor config = new ConfigZipExtractor(file);
 
     // retain old values if present
     Map<String, String> attributes = new HashMap<>();
@@ -72,13 +91,26 @@ public class CertificateImporter implements Action {
         .forEach(e -> attributes.put(e.getKey(), e.getValue()));
 
     // add / override new value
-    attributes.put(type, value);
+    attributes.put(Type.privatekey.name(), config.getPrivateKey());
+    attributes.put(Type.publickey.name(), config.getPublicKey());
+    attributes.put(Type.token.name(), config.getJwtToken());
 
     // Store modified credentials
     Credentials newCredentials = new ImmutableCredentials("", "", attributes);
     scv.setCredentials(SCV_ALIAS, newCredentials);
-    System.out.printf("Imported %s from %s", type, fileParam);
+    System.out.printf("Imported certificates from %s%n", fileParam);
 
+    // Check if storage worked
+    Credentials credFromScv = scv.getCredentials(SCV_ALIAS);
+    if (Objects.equals(config.getPrivateKey(), credFromScv.getAttribute(Type.privatekey.name()))
+            && Objects.equals(config.getPublicKey(), credFromScv.getAttribute(Type.publickey.name()))
+            && Objects.equals(config.getJwtToken(), credFromScv.getAttribute(Type.token.name()))) {
+      System.out.println("Storing of certificates was successfully, will delete zip file.");
+      Files.delete(file);
+    } else {
+      System.out.println("Storing of certificates was NOT successfully!!!");
+    }
     return null;
   }
+
 }

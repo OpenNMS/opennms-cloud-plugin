@@ -26,31 +26,24 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.tsaas;
+package org.opennms.plugins.cloud.tsaas.shell;
 
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.Optional;
-import org.opennms.integration.api.v1.scv.Credentials;
-import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
+import static org.junit.Assert.*;
 
-public class SecureCredentialsVaultUtil {
-  public static final String SCV_ALIAS = "plugin.cloud.tsaas";
+import java.io.IOException;
+import java.nio.file.Path;
 
-  public enum Type {
-    truststore, publickey, privatekey, token;
-    public static boolean isValid(String value) {
-      return Arrays.stream(Type.values()).anyMatch(e -> e.name().equals(value));
+import org.junit.Test;
+
+public class ConfigZipExtractorTest {
+
+    @Test
+    public void shouldExtract() throws IOException {
+        Path configZipFile = Path.of("src/test/resources/cert/credentials.zip");
+        ConfigZipExtractor ex = new ConfigZipExtractor(configZipFile);
+        assertTrue(ex.getPrivateKey().startsWith("-----BEGIN PRIVATE KEY-----"));
+        assertTrue(ex.getPublicKey().startsWith("-----BEGIN CERTIFICATE-----"));
+        assertTrue(ex.getJwtToken().startsWith("acme"));
     }
-  }
 
-  private final SecureCredentialsVault scv;
-
-  public SecureCredentialsVaultUtil(SecureCredentialsVault scv) {
-    this.scv = Objects.requireNonNull(scv);
-  }
-
-  public Optional<Credentials> getCredentials() {
-    return Optional.ofNullable(this.scv.getCredentials(SCV_ALIAS));
-  }
 }

@@ -12,7 +12,6 @@
             <cm:property name="host" value="localhost"/>
             <cm:property name="port" value="5001"/>
             <cm:property name="tokenKey" value="x-scope-orgid"/>
-            <cm:property name="tokenValue" value="acme"/>
             <cm:property name="mtlsEnabled" value="false"/>
             <cm:property name="batchSize" value="1000"/>
             <cm:property name="maxBatchWaitTimeInMilliSeconds" value="5000" />
@@ -23,7 +22,6 @@
         <argument value="${host}"/>
         <argument value="${port}"/>
         <argument value="${tokenKey}"/>
-        <argument value="${tokenValue}"/>
         <argument value="${mtlsEnabled}"/>
         <argument value="${batchSize}"/>
         <argument value="${maxBatchWaitTimeInMilliSeconds}"/>
