@@ -29,7 +29,7 @@ The default configuration has the following settings:
 ```
 host=localhost
 port=5001
-tokenKey=x-scope-orgid
+tokenKey=token
 mtlsEnabled=false
 ```
 
@@ -38,7 +38,7 @@ Change configuration via Karaf shell:
 config:edit org.opennms.plugins.cloud
 property-set host localhost
 property-set port 5001
-property-set tokenKey x-scope-orgid
+property-set tokenKey token
 property-set mtlsEnabled false
 config:update
 ```

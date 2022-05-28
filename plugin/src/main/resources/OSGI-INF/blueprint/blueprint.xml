@@ -11,7 +11,7 @@
         <cm:default-properties>
             <cm:property name="host" value="localhost"/>
             <cm:property name="port" value="5001"/>
-            <cm:property name="tokenKey" value="x-scope-orgid"/>
+            <cm:property name="tokenKey" value="token"/>
             <cm:property name="mtlsEnabled" value="false"/>
             <cm:property name="batchSize" value="1000"/>
             <cm:property name="maxBatchWaitTimeInMilliSeconds" value="5000" />
