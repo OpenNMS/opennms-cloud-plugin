@@ -92,7 +92,7 @@ public class TsaasConfig {
     private Builder() {}
     private String host = "localhost";
     private int port = 5001;
-    private String tokenKey = "x-scope-orgid";
+    private String tokenKey = "token";
     private boolean mtlsEnabled = false;
     private int batchSize = 1000;
     private long maxBatchWaitTimeInMilliSeconds = 5000;
