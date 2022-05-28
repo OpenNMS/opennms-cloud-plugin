@@ -37,9 +37,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 import org.junit.After;
 import org.junit.Test;
@@ -57,7 +54,7 @@ public class CertificateImporterTest {
     CertificateImporter importer = new CertificateImporter();
     importer.scv = scv;
     credentialsFile = Files.createTempFile(this.getClass().getSimpleName(), ".zip");
-    Files.copy(Path.of("src/test/resources/cert/credentials.zip"), credentialsFile, StandardCopyOption.REPLACE_EXISTING);
+    Files.copy(Path.of("src/test/resources/cert/cloud-credentials.zip"), credentialsFile, StandardCopyOption.REPLACE_EXISTING);
     assertTrue(Files.exists(credentialsFile));
     importer.fileParam = credentialsFile.toString();
     importer.execute();
@@ -83,21 +80,4 @@ public class CertificateImporterTest {
     Files.deleteIfExists(this.credentialsFile);
   }
 
-  private final static class InMemoryScv implements SecureCredentialsVault {
-    final Map<String, Credentials> creds = new HashMap<>();
-    @Override
-    public Set<String> getAliases() {
-      return creds.keySet();
-    }
-
-    @Override
-    public Credentials getCredentials(String s) {
-      return creds.get(s);
-    }
-
-    @Override
-    public void setCredentials(String s, Credentials credentials) {
-      creds.put(s, credentials);
-    }
-  }
 }

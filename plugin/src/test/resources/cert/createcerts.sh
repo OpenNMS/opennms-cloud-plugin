@@ -1,4 +1,4 @@
-# This script recreates all needed cerfificates for the mtls test.
+# This script recreates all needed certificates for the mtls test.
 
 # use "password" as passphrase
 # use localhost as common name (CN)

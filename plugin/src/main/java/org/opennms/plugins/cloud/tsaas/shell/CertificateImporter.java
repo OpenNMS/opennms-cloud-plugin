@@ -31,12 +31,14 @@ package org.opennms.plugins.cloud.tsaas.shell;
 
 import static org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil.SCV_ALIAS;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
@@ -64,17 +66,29 @@ public class CertificateImporter implements Action {
   @Reference
   SecureCredentialsVault scv;
 
+  private Consumer<String> log;
+
+  public CertificateImporter() {
+    this.log = System.out::println;
+  }
+
+  public CertificateImporter(final String fileParam, final SecureCredentialsVault scv, final Consumer<String> log) {
+    this.fileParam = Objects.requireNonNull(fileParam);
+    this.scv = Objects.requireNonNull(scv);
+    this.log = Objects.requireNonNull(log);
+  }
+
   @Override
-  public Object execute() throws Exception {
+  public Object execute() throws IOException {
 
     // Validate
     Path file = Path.of(fileParam);
     if(!Files.isRegularFile(file)) {
-      System.out.printf("%s is not a file.%n", fileParam);
+      log("%s is not a file.", fileParam);
       return null;
     }
     if(!Files.isReadable(file)) {
-      System.out.printf("%s is not a readable.%n", fileParam);
+      log("%s is not a readable.", fileParam);
       return null;
     }
 
@@ -98,19 +112,23 @@ public class CertificateImporter implements Action {
     // Store modified credentials
     Credentials newCredentials = new ImmutableCredentials("", "", attributes);
     scv.setCredentials(SCV_ALIAS, newCredentials);
-    System.out.printf("Imported certificates from %s%n", fileParam);
+    log("Imported certificates from %s", fileParam);
 
     // Check if storage worked
     Credentials credFromScv = scv.getCredentials(SCV_ALIAS);
     if (Objects.equals(config.getPrivateKey(), credFromScv.getAttribute(Type.privatekey.name()))
             && Objects.equals(config.getPublicKey(), credFromScv.getAttribute(Type.publickey.name()))
             && Objects.equals(config.getJwtToken(), credFromScv.getAttribute(Type.token.name()))) {
-      System.out.println("Storing of certificates was successfully, will delete zip file.");
+      log("Storing of certificates was successfully, will delete zip file.");
       Files.delete(file);
     } else {
-      System.out.println("Storing of certificates was NOT successfully!!!");
+      log("Storing of certificates was NOT successfully!!!");
     }
     return null;
   }
 
+  public void log(String msg, String...s) {
+    String f = String.format(msg, (String[]) s);
+    this.log.accept(f);
+  }
 }
