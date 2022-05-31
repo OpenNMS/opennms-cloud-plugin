@@ -26,34 +26,30 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.tsaas.testserver;
+package org.opennms.plugins.cloud.tsaas.shell;
 
-import io.grpc.Context;
-import io.grpc.Contexts;
-import io.grpc.Metadata;
-import io.grpc.ServerCall;
-import io.grpc.ServerCallHandler;
-import io.grpc.ServerInterceptor;
-import io.grpc.Status;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
-public class TsassServerInterceptor implements ServerInterceptor {
+import org.opennms.integration.api.v1.scv.Credentials;
+import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
 
-    protected static final Context.Key<String> CLIENT_ID = Context.key("clientID");
-    private static final Metadata.Key<String> TOKEN = Metadata.Key.of("token", Metadata.ASCII_STRING_MARSHALLER);
+public final class InMemoryScv implements SecureCredentialsVault {
+    final Map<String, Credentials> creds = new HashMap<>();
 
     @Override
-    public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> serverCall, Metadata metadata, ServerCallHandler<ReqT, RespT> serverCallHandler) {
-        String clientID = metadata.get(TOKEN);
-        Status status;
-        if (clientID == null) {
-            status = Status.UNAUTHENTICATED.withDescription("Client token is missing or invalid");
-        } else {
-            Context ctx = Context.current().withValue(CLIENT_ID, clientID);
-            return Contexts.interceptCall(ctx, serverCall, metadata, serverCallHandler);
-        }
-        serverCall.close(status, metadata);
-        return new ServerCall.Listener<ReqT>() {
-            // noop
-        };
+    public Set<String> getAliases() {
+        return creds.keySet();
+    }
+
+    @Override
+    public Credentials getCredentials(String s) {
+        return creds.get(s);
+    }
+
+    @Override
+    public void setCredentials(String s, Credentials credentials) {
+        creds.put(s, credentials);
     }
 }

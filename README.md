@@ -15,25 +15,34 @@ feature:install opennms-cloud-plugin
 ```
 **Configure**
 
+***Import Certificates***
+
+Before mtls can be enabled, we need to import the certificates via OpenNMS Karaf shell:
+```
+opennms-cloud:import-cert /path/to/credentials/cloud-credentials.zip
+```
+The zip will be deleted automatically after a successful import.
+
+An alternative to the karaf comment is placing the zip file into `[opennms.home]/etc/cloud-credentials.zip`.
+The plugin will import the cloud credentials automatically and delete the file after successful import.
+
+***Properties***
+
 The default configuration has the following settings:
 ```
 host=localhost
 port=5001
-tokenKey=x-scope-orgid
-tokenValue=acme
+tokenKey=token
 mtlsEnabled=false
-certificatePath=${OPENNMS_HOME}/etc
 ```
 
 Change configuration via Karaf shell:
 ```
-config:edit opennms-cloud-plugin
+config:edit org.opennms.plugins.cloud
 property-set host localhost
 property-set port 5001
-property-set tokenKey x-scope-orgid
-property-set tokenValue acme
+property-set tokenKey token
 property-set mtlsEnabled false
-property-set certificatePath /etc/bla
 config:update
 ```
 

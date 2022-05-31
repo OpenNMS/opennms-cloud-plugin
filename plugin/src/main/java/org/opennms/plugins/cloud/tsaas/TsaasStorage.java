@@ -28,7 +28,12 @@
 
 package org.opennms.plugins.cloud.tsaas;
 
+import static org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil.SCV_ALIAS;
+import static org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil.Type.privatekey;
+import static org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil.Type.publickey;
+
 import com.google.protobuf.Timestamp;
+
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -43,7 +48,11 @@ import io.grpc.netty.shaded.io.netty.handler.ssl.ClientAuth;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
-import java.io.File;
+
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
@@ -51,7 +60,11 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
 import javax.net.ssl.SSLException;
+
+import org.opennms.integration.api.v1.scv.Credentials;
+import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
 import org.opennms.integration.api.v1.timeseries.Aggregation;
 import org.opennms.integration.api.v1.timeseries.Metric;
 import org.opennms.integration.api.v1.timeseries.Sample;
@@ -60,8 +73,10 @@ import org.opennms.integration.api.v1.timeseries.Tag;
 import org.opennms.integration.api.v1.timeseries.TagMatcher;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesFetchRequest;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
+import org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil.Type;
 import org.opennms.plugins.cloud.tsaas.grpc.GrpcObjectMapper;
 import org.opennms.plugins.cloud.tsaas.grpc.comp.ZStdCodecRegisterUtil;
+import org.opennms.plugins.cloud.tsaas.shell.CertificateImporter;
 import org.opennms.tsaas.TimeseriesGrpc;
 import org.opennms.tsaas.Tsaas;
 import org.slf4j.Logger;
@@ -74,8 +89,10 @@ import org.slf4j.LoggerFactory;
  */
 public class TsaasStorage implements TimeSeriesStorage {
     private static final Logger LOG = LoggerFactory.getLogger(TsaasStorage.class);
+
     private final TimeseriesGrpc.TimeseriesBlockingStub clientStub;
     private final TsaasConfig config;
+    private final SecureCredentialsVaultUtil scvUtil;
     private final ManagedChannel managedChannel;
     private final ConcurrentLinkedDeque<Tsaas.Sample> queue; // holds samples to be batched
     private Instant lastBatchSentTs;
@@ -84,21 +101,25 @@ public class TsaasStorage implements TimeSeriesStorage {
         @Override
         public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
                                                                    CallOptions callOptions, Channel next) {
-            return new ForwardingClientCall.SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
+            return new ForwardingClientCall.SimpleForwardingClientCall<>(next.newCall(method, callOptions)) {
                 @Override
                 public void start(final Listener<RespT> responseListener, final Metadata headers) {
-                    headers.put(Metadata.Key.of(config.getTokenKey(), Metadata.ASCII_STRING_MARSHALLER), config.getTokenValue());
+                    String token = scvUtil.getCredentials()
+                            .map(c -> c.getAttribute(Type.token.name()))
+                            .orElse("--not defined--");
+                    headers.put(Metadata.Key.of(config.getTokenKey(), Metadata.ASCII_STRING_MARSHALLER), token);
                     super.start(responseListener, headers);
                 }
             };
         }
     }
 
-    public TsaasStorage(TsaasConfig config) {
-        this.config = config;
+    public TsaasStorage(TsaasConfig config, SecureCredentialsVault scv) {
+        this.config = Objects.requireNonNull(config);
+        this.scvUtil = new SecureCredentialsVaultUtil(scv);
+        importCloudCredentialsIfPresent(scv);
         LOG.debug("Starting with host {} and port {}", config.getHost(), config.getPort());
-        queue = new ConcurrentLinkedDeque<>();
-        lastBatchSentTs = Instant.now();
+
         final NettyChannelBuilder builder = NettyChannelBuilder.forAddress(config.getHost(), config.getPort());
         if (config.isMtlsEnabled()) {
             builder.sslContext(createSslContext());
@@ -106,33 +127,60 @@ public class TsaasStorage implements TimeSeriesStorage {
             builder.usePlaintext();
         }
         managedChannel = builder
-            .compressorRegistry(ZStdCodecRegisterUtil.createCompressorRegistry())
-            .decompressorRegistry(ZStdCodecRegisterUtil.createDecompressorRegistry())
-            .build();
+                .compressorRegistry(ZStdCodecRegisterUtil.createCompressorRegistry())
+                .decompressorRegistry(ZStdCodecRegisterUtil.createDecompressorRegistry())
+                .build();
         clientStub = TimeseriesGrpc.newBlockingStub(managedChannel)
-            .withCompression("gzip") // ZStdGrpcCodec.ZSTD
-            .withInterceptors(new TokenAddingInterceptor());
+                .withCompression("gzip") // ZStdGrpcCodec.ZSTD
+                .withInterceptors(new TokenAddingInterceptor());
+        queue = new ConcurrentLinkedDeque<>();
+        lastBatchSentTs = Instant.now();
+    }
 
+    void importCloudCredentialsIfPresent(final SecureCredentialsVault scv) {
+
+        Path cloudCredentialsFile = Path.of(System.getProperty("opennms.home") + "/etc/cloud-credentials.zip");
+        if (Files.exists(cloudCredentialsFile)) {
+            try {
+                CertificateImporter importer = new CertificateImporter(cloudCredentialsFile.toString(), scv,
+                        (s) -> LoggerFactory.getLogger(CertificateImporter.class).info(s));
+                importer.execute();
+            } catch (Exception e) {
+                LOG.warn("Could not import {}. Will continue with old credentials.", cloudCredentialsFile, e);
+            }
+        }
     }
 
     private SslContext createSslContext() {
+        Objects.requireNonNull(scvUtil);
+        Credentials credentials = scvUtil.getCredentials()
+                .orElseThrow(() -> new NullPointerException(
+                        String.format("Could no find credentials in SecureCredentialsVault for %s. Please import via Karaf shell: opennms-tsaas:import-cert", SCV_ALIAS)));
 
         try {
             SslContextBuilder context = GrpcSslContexts.configure(GrpcSslContexts.forClient(), SslProvider.OPENSSL);
-            File truststore = new File(config.getCertificateDir() + "clienttruststore.pem");
-            if (truststore.canRead()) {
-                LOG.info("Will use truststore {}.", truststore.getAbsolutePath());
-                context.trustManager(truststore);
-            } else {
+            String truststore = credentials.getAttribute(Type.truststore.name());
+            if (truststore == null) {
                 LOG.info("Will use jvm truststore.");
+            } else {
+                LOG.info("Will use truststore from SecureCredentialsVault.");
+                context.trustManager(new ByteArrayInputStream(truststore.getBytes(StandardCharsets.UTF_8)));
             }
-            context.keyManager(new File(config.getCertificateDir() + "client.crt"),
-                    new File(config.getCertificateDir() + "client_pkcs8_key.pem"))
-                .clientAuth(ClientAuth.REQUIRE);
+
+            context.keyManager(
+                            getStreamFromAttribute(credentials, publickey),
+                            getStreamFromAttribute(credentials, privatekey))
+                    .clientAuth(ClientAuth.REQUIRE);
             return context.build();
         } catch (SSLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private ByteArrayInputStream getStreamFromAttribute(Credentials credentials, Type key) {
+        String attribute = Objects.requireNonNull(credentials.getAttribute(key.name()),
+                String.format("Could no find attribute %s in SecureCredentialsVault for %s", key, SCV_ALIAS));
+        return new ByteArrayInputStream(attribute.getBytes(StandardCharsets.UTF_8));
     }
 
     private static Tsaas.Tag toTag(Tag tag) {
@@ -178,8 +226,8 @@ public class TsaasStorage implements TimeSeriesStorage {
                 .forEach(this.queue::add);
 
         // send batched messages while the queue is fuller than batch size
-        while(this.queue.size() >= this.config.getBatchSize() ||
-            this.queue.size() > 0 && this.lastBatchSentTs.plusMillis(config.getMaxBatchWaitTimeInMilliSeconds()).isBefore(Instant.now())) {
+        while (this.queue.size() >= this.config.getBatchSize() ||
+                this.queue.size() > 0 && this.lastBatchSentTs.plusMillis(config.getMaxBatchWaitTimeInMilliSeconds()).isBefore(Instant.now())) {
             Tsaas.Samples.Builder builder = Tsaas.Samples.newBuilder();
             for (int i = 0; i < this.config.getBatchSize(); i++) {
                 Tsaas.Sample next = this.queue.poll();
@@ -200,7 +248,7 @@ public class TsaasStorage implements TimeSeriesStorage {
     @Override
     public List<Metric> findMetrics(Collection<TagMatcher> tagMatchers) throws StorageException {
         Objects.requireNonNull(tagMatchers);
-        if(tagMatchers.isEmpty()) {
+        if (tagMatchers.isEmpty()) {
             throw new IllegalArgumentException("at least one TagMatcher is required.");
         }
 
