@@ -70,7 +70,7 @@ public class ConfigZipExtractor {
         try (FileSystem fileSystem = FileSystems.newFileSystem(configZipFile, null)) {
             Path fileToExtract = fileSystem.getPath(fileName);
             byte[] bytes = Files.readAllBytes(fileToExtract);
-            return new String(bytes);
+            return new String(bytes).trim();
         }
     }
 }
