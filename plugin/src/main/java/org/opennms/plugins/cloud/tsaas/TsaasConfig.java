@@ -35,6 +35,7 @@ public class TsaasConfig {
   private final String host;
   private final int port;
   private final String tokenKey;
+  private final String tokenValue;
   private final boolean mtlsEnabled;
   private final int batchSize;
   private final long maxBatchWaitTimeInMilliSeconds;
@@ -42,12 +43,14 @@ public class TsaasConfig {
   public TsaasConfig(final String host,
       final int port,
       final String tokenKey,
+      final String tokenValue,
       final boolean mtlsEnabled,
       final int batchSize,
       final long maxBatchWaitTimeInMilliSeconds) {
     this.host = Objects.requireNonNull(host);
     this.port = requirePositiveNumber(port);
     this.tokenKey = Objects.requireNonNull(tokenKey);
+    this.tokenValue = Objects.requireNonNull(tokenValue);
     this.mtlsEnabled = mtlsEnabled;
     this.batchSize = batchSize;
     this.maxBatchWaitTimeInMilliSeconds = maxBatchWaitTimeInMilliSeconds;
@@ -72,6 +75,10 @@ public class TsaasConfig {
     return tokenKey;
   }
 
+  public String getTokenValue() {
+    return tokenValue;
+  }
+
   public boolean isMtlsEnabled() {
     return mtlsEnabled;
   }
@@ -93,6 +100,7 @@ public class TsaasConfig {
     private String host = "localhost";
     private int port = 5001;
     private String tokenKey = "token";
+    private String tokenValue = "acme";
     private boolean mtlsEnabled = false;
     private int batchSize = 1000;
     private long maxBatchWaitTimeInMilliSeconds = 5000;
@@ -102,6 +110,7 @@ public class TsaasConfig {
           host,
           port,
           tokenKey,
+          tokenValue,
           mtlsEnabled,
           batchSize,
           maxBatchWaitTimeInMilliSeconds);
@@ -119,6 +128,11 @@ public class TsaasConfig {
 
     public Builder tokenKey(final String tokenKey) {
       this.tokenKey = tokenKey;
+      return this;
+    }
+
+    public Builder tokenValue(final String tokenValue) {
+      this.tokenValue = tokenValue;
       return this;
     }
 

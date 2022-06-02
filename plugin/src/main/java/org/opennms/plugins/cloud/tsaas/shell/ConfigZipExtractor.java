@@ -37,7 +37,7 @@ import java.util.Objects;
 
 /**
  * The Zip file looks like this:
- * credentials.zip/
+ * cloud-credentials.zip/
  *     cert.crt
  *     key.key
  *     token.txt
