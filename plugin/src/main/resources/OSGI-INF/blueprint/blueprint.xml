@@ -12,7 +12,7 @@
             <cm:property name="host" value="localhost"/>
             <cm:property name="port" value="5001"/>
             <cm:property name="tokenKey" value="token"/>
-            <cm:property name="tokenValue" value="acme"/><!-- fallback if not imported via cloud-credentials.zip -->
+            <cm:property name="tokenValue" value="--not defined--"/><!-- fallback if not imported via cloud-credentials.zip -->
             <cm:property name="mtlsEnabled" value="false"/>
             <cm:property name="batchSize" value="1000"/>
             <cm:property name="maxBatchWaitTimeInMilliSeconds" value="5000" />
