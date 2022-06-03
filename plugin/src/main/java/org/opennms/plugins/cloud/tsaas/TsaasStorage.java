@@ -106,7 +106,10 @@ public class TsaasStorage implements TimeSeriesStorage {
                 public void start(final Listener<RespT> responseListener, final Metadata headers) {
                     String token = scvUtil.getCredentials()
                             .map(c -> c.getAttribute(Type.token.name()))
-                            .orElse("--not defined--");
+                            .orElse(config.getTokenValue()); // fallback
+                    if (token == null || token.isEmpty()) {
+                        token = "--not defined--";
+                    }
                     headers.put(Metadata.Key.of(config.getTokenKey(), Metadata.ASCII_STRING_MARSHALLER), token);
                     super.start(responseListener, headers);
                 }
