@@ -277,8 +277,8 @@ public class TsaasStorage implements TimeSeriesStorage {
                 .setAggregation(Tsaas.Aggregation.valueOf(request.getAggregation().name()))
                 .build();
         LOG.trace("Getting time series for request: {}", fetchRequest);
-        Tsaas.Samples samples = clientStub.getTimeseries(fetchRequest);
-        return GrpcObjectMapper.toSamples(samples);
+        Tsaas.TimeseriesData timeseriesData = clientStub.getTimeseriesData(fetchRequest);
+        return GrpcObjectMapper.toSamples(timeseriesData);
     }
 
     @Override

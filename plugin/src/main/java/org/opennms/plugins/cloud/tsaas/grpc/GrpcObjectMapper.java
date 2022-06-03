@@ -7,6 +7,7 @@ import static org.opennms.tsaas.Tsaas.Aggregation.NONE;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -141,6 +142,21 @@ public class GrpcObjectMapper {
                 .build();
     }
 
+    public static Sample toSample(Metric metric, Tsaas.DataPoint dataPoint) {
+        return ImmutableSample.builder()
+                .metric(metric)
+                .time(toTimestamp(dataPoint.getTime()))
+                .value(dataPoint.getValue())
+                .build();
+    }
+
+    public static Tsaas.DataPoint toDataPoint(Sample sample) {
+        return Tsaas.DataPoint.newBuilder()
+                .setTime(toTimestamp(sample.getTime()))
+                .setValue(sample.getValue())
+                .build();
+    }
+
     public static List<Sample> toSamples(Tsaas.Samples samples) {
         return samples
             .getSamplesList()
@@ -148,6 +164,18 @@ public class GrpcObjectMapper {
             .map(GrpcObjectMapper::toSample)
             .filter(s -> isValid(s.getMetric())) // we want only valid Metrics otherwise there will be a problem in OpenNMS)
             .collect(Collectors.toList());
+    }
+
+    public static List<Sample> toSamples(Tsaas.TimeseriesData timeseriesData) {
+        Metric metric = toMetric(timeseriesData.getMetric());
+        if(!isValid(metric)) {// we want only valid Metrics otherwise there will be a problem in OpenNMS)
+            return Collections.emptyList();
+        }
+        return timeseriesData
+                .getDataPointsList()
+                .stream()
+                .map(d -> toSample(metric, d))
+                .collect(Collectors.toList());
     }
 
     private static Timestamp toTimestamp(Instant instant) {
