@@ -38,7 +38,7 @@ services:
       - ${USER_HOME}/.m2/repository/org/opennms/plugins/cloud:/opt/opennms/system/org/opennms/plugins/cloud
       - ${USER_HOME}/.m2/repository/com/google/guava/guava/30.1-jre:/opt/opennms/system/com/google/guava/guava/30.1-jre
       - ${USER_HOME}/.m2/repository/org/opennms/tsaas/tsaas-grpc:/opt/opennms/system/org/opennms/tsaas/tsaas-grpc
-      - ${USER_HOME}/.m2/repository/com/google/protobuf/protobuf-java:/opt/opennms/system/com/google/protobuf/protobuf-java
+      - ${USER_HOME}/.m2/repository/com/google/protobuf/protobuf-java/3.19.4:/opt/opennms/system/com/google/protobuf/protobuf-java/3.19.4
     command: ["-s"]
     ports:
       - "8101:8101/tcp" # ssh port for karaf cosole
