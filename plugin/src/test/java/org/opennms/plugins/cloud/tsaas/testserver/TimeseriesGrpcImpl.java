@@ -100,39 +100,6 @@ public class TimeseriesGrpcImpl extends TimeseriesGrpc.TimeseriesImplBase implem
         }
     }
 
-    /**
-     * <pre>
-     * Deletes are not currently supported
-     *  rpc Delete (Metric) returns (google.protobuf.Empty);
-     * /
-     *
-     * /** GetSupportedAggregations not currently supported
-     *  rpc GetSupportedAggregations (google.protobuf.Empty) returns (SupportedAggregations);
-     * </pre>
-     */
-    @Override
-    @Deprecated
-    public void getTimeseries(Tsaas.FetchRequest request,
-                              io.grpc.stub.StreamObserver<Tsaas.Samples> responseObserver) {
-        String clientID = TsassServerInterceptor.CLIENT_ID.get();
-        LOG.debug("getTimeseries called with client ID {}", clientID);
-        TimeSeriesFetchRequest fetchRequest = GrpcObjectMapper.toTimeseriesFetchRequest(request);
-        try {
-            List<Sample> apiSamples;
-            apiSamples = storage.getTimeseries(fetchRequest);
-
-            List<Tsaas.Sample> samples = apiSamples.stream()
-                    .map(GrpcObjectMapper::toSample)
-                    .collect(Collectors.toList());
-            responseObserver.onNext(Tsaas.Samples.newBuilder().addAllSamples(samples).build());
-            responseObserver.onCompleted();
-            LOG.debug("Successfully queried timeseries - found {} samples.", samples.size());
-        } catch (StorageException e) {
-            LOG.error("Failed to retrieve timeseries.", e);
-            responseObserver.onError(e);
-        }
-    }
-
     @Override
     public void getTimeseriesData(Tsaas.FetchRequest request,
                               io.grpc.stub.StreamObserver<Tsaas.TimeseriesData> responseObserver) {
