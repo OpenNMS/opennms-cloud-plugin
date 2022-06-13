@@ -28,6 +28,8 @@
 
 package org.opennms.plugins.cloud.tsaas.testserver;
 
+import static org.opennms.plugins.cloud.tsaas.grpc.GrpcObjectMapper.toMetric;
+
 import io.grpc.BindableService;
 import java.util.Collection;
 import java.util.List;
@@ -98,32 +100,31 @@ public class TimeseriesGrpcImpl extends TimeseriesGrpc.TimeseriesImplBase implem
         }
     }
 
-    /**
-     * <pre>
-     * Deletes are not currently supported
-     *  rpc Delete (Metric) returns (google.protobuf.Empty);
-     * /
-     *
-     * /** GetSupportedAggregations not currently supported
-     *  rpc GetSupportedAggregations (google.protobuf.Empty) returns (SupportedAggregations);
-     * </pre>
-     */
     @Override
-    public void getTimeseries(Tsaas.FetchRequest request,
-                              io.grpc.stub.StreamObserver<Tsaas.Samples> responseObserver) {
+    public void getTimeseriesData(Tsaas.FetchRequest request,
+                              io.grpc.stub.StreamObserver<Tsaas.TimeseriesData> responseObserver) {
         String clientID = TsassServerInterceptor.CLIENT_ID.get();
         LOG.debug("getTimeseries called with client ID {}", clientID);
         TimeSeriesFetchRequest fetchRequest = GrpcObjectMapper.toTimeseriesFetchRequest(request);
         try {
             List<Sample> apiSamples;
             apiSamples = storage.getTimeseries(fetchRequest);
-
-            List<Tsaas.Sample> samples = apiSamples.stream()
-                    .map(GrpcObjectMapper::toSample)
+            Metric metric;
+            if(apiSamples.isEmpty()) {
+                metric = fetchRequest.getMetric();
+            } else {
+                metric = apiSamples.get(0).getMetric();
+            }
+            List<Tsaas.DataPoint> dataPoints = apiSamples.stream()
+                    .map(GrpcObjectMapper::toDataPoint)
                     .collect(Collectors.toList());
-            responseObserver.onNext(Tsaas.Samples.newBuilder().addAllSamples(samples).build());
+            Tsaas.TimeseriesData timeseriesData = Tsaas.TimeseriesData.newBuilder()
+                    .addAllDataPoints(dataPoints)
+                    .setMetric(toMetric(metric))
+                    .build();
+            responseObserver.onNext(timeseriesData);
             responseObserver.onCompleted();
-            LOG.debug("Successfully queried timeseries - found {} samples.", samples.size());
+            LOG.debug("Successfully queried timeseries - found {} samples.", apiSamples.size());
         } catch (StorageException e) {
             LOG.error("Failed to retrieve timeseries.", e);
             responseObserver.onError(e);
