@@ -71,6 +71,7 @@ import org.opennms.integration.api.v1.timeseries.Sample;
 import org.opennms.integration.api.v1.timeseries.StorageException;
 import org.opennms.integration.api.v1.timeseries.Tag;
 import org.opennms.integration.api.v1.timeseries.TagMatcher;
+import org.opennms.integration.api.v1.timeseries.TimeSeriesData;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesFetchRequest;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil.Type;
@@ -267,6 +268,7 @@ public class TsaasStorage implements TimeSeriesStorage {
     }
 
     @Override
+    @Deprecated
     public List<Sample> getTimeseries(TimeSeriesFetchRequest request) throws StorageException {
         Objects.requireNonNull(request.getMetric());
         Tsaas.FetchRequest fetchRequest = Tsaas.FetchRequest.newBuilder()
@@ -279,6 +281,21 @@ public class TsaasStorage implements TimeSeriesStorage {
         LOG.trace("Getting time series for request: {}", fetchRequest);
         Tsaas.TimeseriesData timeseriesData = clientStub.getTimeseriesData(fetchRequest);
         return GrpcObjectMapper.toSamples(timeseriesData);
+    }
+
+    @Override
+    public TimeSeriesData getTimeSeriesData(TimeSeriesFetchRequest request) throws StorageException {
+        Objects.requireNonNull(request.getMetric());
+        Tsaas.FetchRequest fetchRequest = Tsaas.FetchRequest.newBuilder()
+                .setMetric(toMetric(request.getMetric()))
+                .setStart(toTimestamp(request.getStart()))
+                .setEnd(toTimestamp(request.getEnd()))
+                .setStep(request.getStep().getSeconds())
+                .setAggregation(Tsaas.Aggregation.valueOf(request.getAggregation().name()))
+                .build();
+        LOG.trace("Getting time series for request: {}", fetchRequest);
+        Tsaas.TimeseriesData timeseriesData = clientStub.getTimeseriesData(fetchRequest);
+        return GrpcObjectMapper.toTimeSeriesData(timeseriesData);
     }
 
     @Override

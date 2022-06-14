@@ -12,17 +12,21 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.opennms.integration.api.v1.timeseries.Aggregation;
+import org.opennms.integration.api.v1.timeseries.DataPoint;
 import org.opennms.integration.api.v1.timeseries.IntrinsicTagNames;
 import org.opennms.integration.api.v1.timeseries.MetaTagNames;
 import org.opennms.integration.api.v1.timeseries.Metric;
 import org.opennms.integration.api.v1.timeseries.Sample;
 import org.opennms.integration.api.v1.timeseries.Tag;
 import org.opennms.integration.api.v1.timeseries.TagMatcher;
+import org.opennms.integration.api.v1.timeseries.TimeSeriesData;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesFetchRequest;
+import org.opennms.integration.api.v1.timeseries.immutables.ImmutableDataPoint;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableMetric;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableSample;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableTag;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableTagMatcher;
+import org.opennms.integration.api.v1.timeseries.immutables.ImmutableTimeSeriesData;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableTimeSeriesFetchRequest;
 import org.opennms.tsaas.Tsaas;
 
@@ -142,6 +146,13 @@ public class GrpcObjectMapper {
                 .build();
     }
 
+    public static DataPoint toDataPoint(Tsaas.DataPoint dataPoint) {
+        return ImmutableDataPoint.builder()
+                .time(toTimestamp(dataPoint.getTime()))
+                .value(dataPoint.getValue())
+                .build();
+    }
+
     public static Sample toSample(Metric metric, Tsaas.DataPoint dataPoint) {
         return ImmutableSample.builder()
                 .metric(metric)
@@ -176,6 +187,21 @@ public class GrpcObjectMapper {
                 .stream()
                 .map(d -> toSample(metric, d))
                 .collect(Collectors.toList());
+    }
+
+    public static TimeSeriesData toTimeSeriesData(Tsaas.TimeseriesData timeseriesData) {
+        Metric metric = toMetric(timeseriesData.getMetric());
+        List<DataPoint> dataPoints;
+        if(!isValid(metric)) {// we want only valid Metrics otherwise there will be a problem in OpenNMS)
+            dataPoints = Collections.emptyList();
+        } else {
+            dataPoints = timeseriesData
+                    .getDataPointsList()
+                    .stream()
+                    .map(GrpcObjectMapper::toDataPoint)
+                    .collect(Collectors.toList());
+        }
+        return new ImmutableTimeSeriesData(metric, dataPoints);
     }
 
     private static Timestamp toTimestamp(Instant instant) {
