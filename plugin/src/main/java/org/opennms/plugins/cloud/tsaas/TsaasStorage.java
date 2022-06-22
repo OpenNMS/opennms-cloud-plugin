@@ -89,6 +89,8 @@ import org.slf4j.LoggerFactory;
  */
 public class TsaasStorage implements TimeSeriesStorage {
     private static final Logger LOG = LoggerFactory.getLogger(TsaasStorage.class);
+    // 100M sync with cortex server
+    private final int MAX_MESSAGE_SIZE = 104857600;
 
     private final TimeseriesGrpc.TimeseriesBlockingStub clientStub;
     private final TsaasConfig config;
@@ -129,6 +131,8 @@ public class TsaasStorage implements TimeSeriesStorage {
         } else {
             builder.usePlaintext();
         }
+        // setup message size
+        builder.maxInboundMessageSize(MAX_MESSAGE_SIZE).maxInboundMetadataSize(MAX_MESSAGE_SIZE);
         managedChannel = builder
                 .compressorRegistry(ZStdCodecRegisterUtil.createCompressorRegistry())
                 .decompressorRegistry(ZStdCodecRegisterUtil.createDecompressorRegistry())
