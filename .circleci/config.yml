@@ -13,6 +13,7 @@ executors:
 workflows:
   build-deploy:
     jobs:
+      - build
       - tests:
           requires:
             - build
