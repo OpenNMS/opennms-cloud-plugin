@@ -13,7 +13,7 @@ executors:
 workflows:
   build-deploy:
     jobs:
-      - build:
+      - sonar:
           context: SonarCloud
       - tests:
           requires:
@@ -72,11 +72,17 @@ jobs:
             find . -type f -regex ".*/target/failsafe-reports/.*xml" -exec cp {} ~/junit/ \;
             find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/junit/ \;
           when: always
-      - run:
-          name: Analyze on SonarCloud
-          command: mvn verify sonar:sonar -Dsonar.projectKey=OpenNMS_opennms-cloud-plugin
       - store_test_results:
           path: ~/junit
+
+  sonar:
+    docker:
+      - image: 'circleci/openjdk:11-jdk'
+      steps:
+        - checkout
+        - run:
+            name: Analyze on SonarCloud
+            command: mvn verify sonar:sonar -Dsonar.projectKey=OpenNMS_opennms-cloud-plugin
 
   deploy:
     executor: build-executor
