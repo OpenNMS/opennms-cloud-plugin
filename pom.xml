@@ -26,6 +26,8 @@
         <grpcVersion>1.44.0</grpcVersion>
         <guavaVersion>30.1-jre</guavaVersion>
         <failureAccessVersion>1.0.1</failureAccessVersion>
+        <sonar.organization>opennms</sonar.organization>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
     </properties>
 
 
