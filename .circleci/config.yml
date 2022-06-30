@@ -14,9 +14,10 @@ workflows:
   build-deploy:
     jobs:
       - tests:
-          context: SonarCloud
           requires:
             - build
+          context:
+            - SonarCloud
       - deploy:
           context:
             - OSSRH Principal
