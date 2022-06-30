@@ -28,7 +28,7 @@
         <failureAccessVersion>1.0.1</failureAccessVersion>
         <sonar.organization>opennms</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
-        <jacocoVersion>0.8.5</jacocoVersion>
+        <jacocoVersion>0.8.7</jacocoVersion>
     </properties>
 
 
@@ -200,6 +200,9 @@
                         <configuration>
                             <dataFile>${project.build.directory}/jacoco-unit.exec</dataFile>
                             <outputDirectory>${project.build.directory}/jacoco-report</outputDirectory>
+                            <formats>
+                                <format>XML</format>
+                            </formats>
                         </configuration>
                     </execution>
                 </executions>
