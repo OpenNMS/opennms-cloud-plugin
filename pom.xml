@@ -29,7 +29,6 @@
         <sonar.organization>opennms</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <jacocoVersion>0.8.5</jacocoVersion>
-        <ci.instance>0</ci.instance>
     </properties>
 
 
@@ -189,47 +188,18 @@
                         </goals>
                         <configuration>
                             <append>true</append>
-                            <destFile>${project.build.directory}/jacoco-output/jacoco-unit.exec</destFile>
+                            <destFile>${project.build.directory}/jacoco-unit.exec</destFile>
                         </configuration>
                     </execution>
                     <execution>
-                        <id>before-integration-test-execution</id>
-                        <phase>pre-integration-test</phase>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                        <configuration>
-                            <append>true</append>
-                            <destFile>${project.build.directory}/jacoco-output/jacoco-it.exec</destFile>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>merge-unit-and-integration</id>
-                        <phase>post-integration-test</phase>
-                        <goals>
-                            <goal>merge</goal>
-                        </goals>
-                        <configuration>
-                            <fileSets>
-                                <fileSet>
-                                    <directory>${project.build.directory}/jacoco-output/</directory>
-                                    <includes>
-                                        <include>*.exec</include>
-                                    </includes>
-                                </fileSet>
-                            </fileSets>
-                            <destFile>${project.build.directory}/jacoco-merged-${ci.instance}.exec</destFile>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>create-merged-report</id>
+                        <id>create-report</id>
                         <phase>post-integration-test</phase>
                         <goals>
                             <goal>report</goal>
                         </goals>
                         <configuration>
-                            <dataFile>${project.build.directory}/jacoco-merged-${ci.instance}.exec</dataFile>
-                            <outputDirectory>${project.build.directory}/jacoco-merged-report-${ci.instance}</outputDirectory>
+                            <dataFile>${project.build.directory}/jacoco-unit.exec</dataFile>
+                            <outputDirectory>${project.build.directory}/jacoco-report</outputDirectory>
                         </configuration>
                     </execution>
                 </executions>

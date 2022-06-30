@@ -65,7 +65,7 @@ jobs:
       - run:
           name: Run unit and integration tests
           command: |
-            mvn -DskipITs=false -DskipTests=false clean install test integration-test
+            mvn -DskipITs=false -DskipTests=false clean jacoco:prepare-agent install test integration-test jacoco:report
       - run:
           name: Save test results
           command: |
