@@ -65,7 +65,7 @@ jobs:
       - run:
           name: Run unit and integration tests
           command: |
-            mvn -DskipITs=false -DskipTests=false clean jacoco:prepare-agent install test integration-test jacoco:report
+            mvn -DskipITs=false -DskipTests=false clean jacoco:prepare-agent install test integration-test jacoco:report sonar:sonar -Dsonar.projectKey=OpenNMS_opennms-cloud-plugin
       - run:
           name: Save test results
           command: |
@@ -73,9 +73,6 @@ jobs:
             find . -type f -regex ".*/target/failsafe-reports/.*xml" -exec cp {} ~/junit/ \;
             find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/junit/ \;
           when: always
-      - run:
-          name: Analyze on SonarCloud
-          command: mvn verify sonar:sonar -Dsonar.projectKey=OpenNMS_opennms-cloud-plugin
       - store_test_results:
           path: ~/junit
 
