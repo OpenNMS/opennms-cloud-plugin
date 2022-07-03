@@ -95,7 +95,7 @@ public class GrpcConnection {
         Objects.requireNonNull(scvUtil);
         Credentials credentials = scvUtil.getCredentials()
                 .orElseThrow(() -> new NullPointerException(
-                        String.format("Could no find credentials in SecureCredentialsVault for %s. Please import via Karaf shell: opennms-tsaas:import-cert", SCV_ALIAS)));
+                        String.format("Could no find credentials in SecureCredentialsVault for %s. Please import via Karaf shell: opennms-cloud:import-cert", SCV_ALIAS)));
 
         try {
             SslContextBuilder context = GrpcSslContexts.configure(GrpcSslContexts.forClient(), SslProvider.OPENSSL);
