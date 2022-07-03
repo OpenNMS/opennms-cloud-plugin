@@ -91,8 +91,6 @@ import org.slf4j.LoggerFactory;
  */
 public class TsaasStorage implements TimeSeriesStorage {
     private static final Logger LOG = LoggerFactory.getLogger(TsaasStorage.class);
-    // 100M sync with cortex server
-    private final int MAX_MESSAGE_SIZE = 104857600;
 
     private final TsaasConfig config;
     private final ConcurrentLinkedDeque<Tsaas.Sample> queue; // holds samples to be batched

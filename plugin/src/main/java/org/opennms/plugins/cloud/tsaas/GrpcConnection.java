@@ -62,6 +62,8 @@ import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
 
 public class GrpcConnection {
     private static final Logger LOG = LoggerFactory.getLogger(GrpcConnection.class);
+    // 100M sync with cortex server
+    private final static int MAX_MESSAGE_SIZE = 104857600;
 
     private ManagedChannel managedChannel;
     private TimeseriesGrpc.TimeseriesBlockingStub clientStub;
@@ -74,6 +76,8 @@ public class GrpcConnection {
         } else {
             builder.usePlaintext();
         }
+        // setup message size
+        builder.maxInboundMessageSize(MAX_MESSAGE_SIZE).maxInboundMetadataSize(MAX_MESSAGE_SIZE);
         managedChannel = builder
                 .compressorRegistry(ZStdCodecRegisterUtil.createCompressorRegistry())
                 .decompressorRegistry(ZStdCodecRegisterUtil.createDecompressorRegistry())
