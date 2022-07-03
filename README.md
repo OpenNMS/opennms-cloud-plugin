@@ -46,6 +46,13 @@ property-set mtlsEnabled false
 config:update
 ```
 
+***Verify***
+
+Check the cloud status with: 
+```
+opennms:health-check
+```
+
 **Update bundle** automatically (only relevant for development):
 ```
 bundle:watch *

@@ -122,6 +122,10 @@
                     <groupId>org.opennms.integration.api.sample</groupId>
                     <artifactId>sample-project</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>com.google.guava</groupId><!-- to satisfy maven-enforcer-plugin -->
+                    <artifactId>guava</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>

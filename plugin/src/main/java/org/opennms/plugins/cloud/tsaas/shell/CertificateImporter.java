@@ -48,8 +48,11 @@ import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.opennms.integration.api.v1.scv.Credentials;
 import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
 import org.opennms.integration.api.v1.scv.immutables.ImmutableCredentials;
+import org.opennms.plugins.cloud.tsaas.GrpcConnection;
 import org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil;
 import org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil.Type;
+import org.opennms.plugins.cloud.tsaas.TsaasConfig;
+import org.opennms.tsaas.Tsaas;
 
 @Command(scope = "opennms-cloud", name = "import-cert",
     description = "Imports certificates to be used with cloud tsaas.",
@@ -64,17 +67,24 @@ public class CertificateImporter implements Action {
   String fileParam;
 
   @Reference
+  TsaasConfig config;
+
+  @Reference
   SecureCredentialsVault scv;
 
-  private Consumer<String> log;
+  final private Consumer<String> log;
 
   public CertificateImporter() {
     this.log = System.out::println;
   }
 
-  public CertificateImporter(final String fileParam, final SecureCredentialsVault scv, final Consumer<String> log) {
+  public CertificateImporter(final String fileParam,
+                             final SecureCredentialsVault scv,
+                             final TsaasConfig config,
+                             final Consumer<String> log) {
     this.fileParam = Objects.requireNonNull(fileParam);
     this.scv = Objects.requireNonNull(scv);
+    this.config = Objects.requireNonNull(config);
     this.log = Objects.requireNonNull(log);
   }
 
@@ -92,7 +102,7 @@ public class CertificateImporter implements Action {
       return null;
     }
 
-    ConfigZipExtractor config = new ConfigZipExtractor(file);
+    ConfigZipExtractor configZip = new ConfigZipExtractor(file);
 
     // retain old values if present
     Map<String, String> attributes = new HashMap<>();
@@ -105,9 +115,9 @@ public class CertificateImporter implements Action {
         .forEach(e -> attributes.put(e.getKey(), e.getValue()));
 
     // add / override new value
-    attributes.put(Type.privatekey.name(), config.getPrivateKey());
-    attributes.put(Type.publickey.name(), config.getPublicKey());
-    attributes.put(Type.token.name(), config.getJwtToken());
+    attributes.put(Type.privatekey.name(), configZip.getPrivateKey());
+    attributes.put(Type.publickey.name(), configZip.getPublicKey());
+    attributes.put(Type.token.name(), configZip.getJwtToken());
 
     // Store modified credentials
     Credentials newCredentials = new ImmutableCredentials("", "", attributes);
@@ -116,14 +126,30 @@ public class CertificateImporter implements Action {
 
     // Check if storage worked
     Credentials credFromScv = scv.getCredentials(SCV_ALIAS);
-    if (Objects.equals(config.getPrivateKey(), credFromScv.getAttribute(Type.privatekey.name()))
-            && Objects.equals(config.getPublicKey(), credFromScv.getAttribute(Type.publickey.name()))
-            && Objects.equals(config.getJwtToken(), credFromScv.getAttribute(Type.token.name()))) {
+    if (Objects.equals(configZip.getPrivateKey(), credFromScv.getAttribute(Type.privatekey.name()))
+            && Objects.equals(configZip.getPublicKey(), credFromScv.getAttribute(Type.publickey.name()))
+            && Objects.equals(configZip.getJwtToken(), credFromScv.getAttribute(Type.token.name()))) {
       log("Storing of certificates was successfully, will delete zip file.");
+
       Files.delete(file);
     } else {
       log("Storing of certificates was NOT successfully!!!");
+      log("Will abort.");
+      return null;
     }
+
+    // Check if the connection can be established
+    log("Checking if connection to server works");
+    try {
+      GrpcConnection grpc = new GrpcConnection();
+      grpc.init(this.config, scvUtil);
+      Tsaas.CheckHealthResponse response = grpc.get().checkHealth(Tsaas.CheckHealthRequest.newBuilder().build());
+      log("Connection to cloud server: OK");
+      log("Status of cloud server: %s", response.getStatus().name());
+    } catch(Exception e) {
+      log("Warning: Connection to cloud was not successful: %s", e.getMessage());
+    }
+
     return null;
   }
 
