@@ -17,6 +17,8 @@ workflows:
       - tests:
           requires:
             - build
+          context:
+            - SonarCloud
       - deploy:
           context:
             - OSSRH Principal
@@ -63,7 +65,7 @@ jobs:
       - run:
           name: Run unit and integration tests
           command: |
-            mvn -DskipITs=false -DskipTests=false clean install test integration-test
+            mvn -DskipITs=false -DskipTests=false clean jacoco:prepare-agent install integration-test jacoco:report sonar:sonar -Pcoverage -Dsonar.projectKey=OpenNMS_opennms-cloud-plugin
       - run:
           name: Save test results
           command: |
@@ -71,7 +73,6 @@ jobs:
             find . -type f -regex ".*/target/failsafe-reports/.*xml" -exec cp {} ~/junit/ \;
             find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/junit/ \;
           when: always
-
       - store_test_results:
           path: ~/junit
 
