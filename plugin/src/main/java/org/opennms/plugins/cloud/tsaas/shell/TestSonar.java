@@ -15,7 +15,7 @@ public class TestSonar {
 
     public static boolean func2(String[] args) {
         String s = "false";
-        if (args.length> 0 && s.equals(args[0])){
+        if (/*args.length> 0 && */s.equals(args[0])){
             return true;
         } else {
             return false;
