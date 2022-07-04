@@ -15,7 +15,7 @@ public class TestSonar {
 
     public static boolean func2(String[] args) {
         String s = "false";
-        if (/*args.length> 0 && */s.equals(args[0])){
+        if (args.length> 0 && s.equals(args[0])){
             return true;
         } else {
             return false;
@@ -30,7 +30,7 @@ public class TestSonar {
         }
     }
 
-    public User getUser(Connection con, String user) throws SQLException {
+    public User func4(Connection con, String user) throws SQLException {
 
         Statement stmt1 = null;
         Statement stmt2 = null;
@@ -54,5 +54,21 @@ public class TestSonar {
     }
 
     private class User {
+    }
+
+    public static boolean func5(String s1, String s2) {
+        if (s1.equals(s2)){
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public static boolean func6(String s1, String s2) {
+        if (s1.equals(s2)){
+            return true;
+        } else {
+            return false;
+        }
     }
 }
