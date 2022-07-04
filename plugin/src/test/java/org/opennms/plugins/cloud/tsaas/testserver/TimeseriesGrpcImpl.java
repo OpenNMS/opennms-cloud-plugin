@@ -39,6 +39,7 @@ import org.opennms.integration.api.v1.timeseries.Metric;
 import org.opennms.integration.api.v1.timeseries.Sample;
 import org.opennms.integration.api.v1.timeseries.StorageException;
 import org.opennms.integration.api.v1.timeseries.TagMatcher;
+import org.opennms.integration.api.v1.timeseries.TimeSeriesData;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesFetchRequest;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.plugins.cloud.tsaas.grpc.GrpcObjectMapper;
@@ -107,24 +108,17 @@ public class TimeseriesGrpcImpl extends TimeseriesGrpc.TimeseriesImplBase implem
         LOG.debug("getTimeseries called with client ID {}", clientID);
         TimeSeriesFetchRequest fetchRequest = GrpcObjectMapper.toTimeseriesFetchRequest(request);
         try {
-            List<Sample> apiSamples;
-            apiSamples = storage.getTimeseries(fetchRequest);
-            Metric metric;
-            if(apiSamples.isEmpty()) {
-                metric = fetchRequest.getMetric();
-            } else {
-                metric = apiSamples.get(0).getMetric();
-            }
-            List<Tsaas.DataPoint> dataPoints = apiSamples.stream()
+            TimeSeriesData timeSeriesData = storage.getTimeSeriesData(fetchRequest);
+            List<Tsaas.DataPoint> dataPoints = timeSeriesData.getDataPoints().stream()
                     .map(GrpcObjectMapper::toDataPoint)
                     .collect(Collectors.toList());
             Tsaas.TimeseriesData timeseriesData = Tsaas.TimeseriesData.newBuilder()
                     .addAllDataPoints(dataPoints)
-                    .setMetric(toMetric(metric))
+                    .setMetric(toMetric(timeSeriesData.getMetric()))
                     .build();
             responseObserver.onNext(timeseriesData);
             responseObserver.onCompleted();
-            LOG.debug("Successfully queried timeseries - found {} samples.", apiSamples.size());
+            LOG.debug("Successfully queried timeseries - found {} samples.", timeSeriesData.getDataPoints().size());
         } catch (StorageException e) {
             LOG.error("Failed to retrieve timeseries.", e);
             responseObserver.onError(e);

@@ -9,14 +9,13 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.opennms.integration.api.v1.scv.Credentials;
-import org.opennms.plugins.cloud.tsaas.shell.InMemoryScv;
+import org.opennms.plugins.cloud.tsaas.config.InMemoryScv;
 
 public class TsassStorageCredentialsImportTest {
 

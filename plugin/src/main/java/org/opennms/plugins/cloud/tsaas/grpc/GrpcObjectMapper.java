@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.opennms.integration.api.v1.timeseries.Aggregation;
+import org.opennms.integration.api.v1.timeseries.DataPoint;
 import org.opennms.integration.api.v1.timeseries.IntrinsicTagNames;
 import org.opennms.integration.api.v1.timeseries.MetaTagNames;
 import org.opennms.integration.api.v1.timeseries.Metric;
@@ -25,10 +26,10 @@ import org.opennms.integration.api.v1.timeseries.immutables.ImmutableTag;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableTagMatcher;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableTimeSeriesFetchRequest;
 import org.opennms.tsaas.Tsaas;
-
-import com.google.protobuf.Timestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.protobuf.Timestamp;
 
 public class GrpcObjectMapper {
 
@@ -150,20 +151,11 @@ public class GrpcObjectMapper {
                 .build();
     }
 
-    public static Tsaas.DataPoint toDataPoint(Sample sample) {
+    public static Tsaas.DataPoint toDataPoint(DataPoint dataPoint) {
         return Tsaas.DataPoint.newBuilder()
-                .setTime(toTimestamp(sample.getTime()))
-                .setValue(sample.getValue())
+                .setTime(toTimestamp(dataPoint.getTime()))
+                .setValue(dataPoint.getValue())
                 .build();
-    }
-
-    public static List<Sample> toSamples(Tsaas.Samples samples) {
-        return samples
-            .getSamplesList()
-            .stream()
-            .map(GrpcObjectMapper::toSample)
-            .filter(s -> isValid(s.getMetric())) // we want only valid Metrics otherwise there will be a problem in OpenNMS)
-            .collect(Collectors.toList());
     }
 
     public static List<Sample> toSamples(Tsaas.TimeseriesData timeseriesData) {
@@ -178,9 +170,8 @@ public class GrpcObjectMapper {
                 .collect(Collectors.toList());
     }
 
-    private static Timestamp toTimestamp(Instant instant) {
+    public static Timestamp toTimestamp(final Instant instant) {
         return Timestamp.newBuilder()
-                // TODO: Is this the correct way to craft a proto timestamp from an instant?
                 .setSeconds(instant.getEpochSecond())
                 .setNanos(instant.getNano())
                 .build();

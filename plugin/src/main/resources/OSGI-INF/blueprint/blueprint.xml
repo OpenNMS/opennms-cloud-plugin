@@ -42,4 +42,14 @@
         </service-properties>
     </service>
 
+    <bean id="cloudHealthCheck" class="org.opennms.plugins.cloud.tsaas.CloudHealthCheck">
+        <argument ref="timeSeriesStorage"/>
+    </bean>
+
+    <service ref="cloudHealthCheck" interface="org.opennms.integration.api.v1.health.HealthCheck">
+        <service-properties>
+            <entry key="registration.export" value="true" />
+        </service-properties>
+    </service>
+
 </blueprint>

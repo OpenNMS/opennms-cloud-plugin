@@ -26,24 +26,30 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.tsaas.shell;
+package org.opennms.plugins.cloud.tsaas.config;
 
-import static org.junit.Assert.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
-import java.io.IOException;
-import java.nio.file.Path;
+import org.opennms.integration.api.v1.scv.Credentials;
+import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
 
-import org.junit.Test;
+public final class InMemoryScv implements SecureCredentialsVault {
+    final Map<String, Credentials> creds = new HashMap<>();
 
-public class ConfigZipExtractorTest {
-
-    @Test
-    public void shouldExtract() throws IOException {
-        Path configZipFile = Path.of("src/test/resources/cert/cloud-credentials.zip");
-        ConfigZipExtractor ex = new ConfigZipExtractor(configZipFile);
-        assertTrue(ex.getPrivateKey().startsWith("-----BEGIN PRIVATE KEY-----"));
-        assertTrue(ex.getPublicKey().startsWith("-----BEGIN CERTIFICATE-----"));
-        assertTrue(ex.getJwtToken().startsWith("acme"));
+    @Override
+    public Set<String> getAliases() {
+        return creds.keySet();
     }
 
+    @Override
+    public Credentials getCredentials(String s) {
+        return creds.get(s);
+    }
+
+    @Override
+    public void setCredentials(String s, Credentials credentials) {
+        creds.put(s, credentials);
+    }
 }

@@ -30,9 +30,9 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
+                        <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
+                        <Bundle-Version>${project.version}</Bundle-Version>
                         <Karaf-Commands>*</Karaf-Commands>
-                        <!-- Nothing to export -->
-                        <Export-Package></Export-Package>
                     </instructions>
                 </configuration>
             </plugin>
