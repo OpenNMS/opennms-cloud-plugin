@@ -9,4 +9,12 @@ public class TestSonar {
             return false;
         }
     }
+
+    public static boolean func2(String[] args) {
+        if (args.length> 0 && "true".equals(args[0])){
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
