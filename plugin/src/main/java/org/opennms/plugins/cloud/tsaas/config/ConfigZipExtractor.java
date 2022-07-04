@@ -26,7 +26,7 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.tsaas.shell;
+package org.opennms.plugins.cloud.tsaas.config;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;

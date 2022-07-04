@@ -28,31 +28,9 @@
 
 package org.opennms.plugins.cloud.tsaas;
 
-import static org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil.SCV_ALIAS;
-import static org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil.Type.privatekey;
-import static org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil.Type.publickey;
 import static org.opennms.plugins.cloud.tsaas.grpc.GrpcObjectMapper.toMetric;
 import static org.opennms.plugins.cloud.tsaas.grpc.GrpcObjectMapper.toTimestamp;
 
-import com.google.protobuf.Timestamp;
-
-import io.grpc.CallOptions;
-import io.grpc.Channel;
-import io.grpc.ClientCall;
-import io.grpc.ClientInterceptor;
-import io.grpc.ForwardingClientCall;
-import io.grpc.ManagedChannel;
-import io.grpc.Metadata;
-import io.grpc.MethodDescriptor;
-import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
-import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
-import io.grpc.netty.shaded.io.netty.handler.ssl.ClientAuth;
-import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
-import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
-import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
-
-import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -60,26 +38,18 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import javax.net.ssl.SSLException;
-
-import org.opennms.integration.api.v1.scv.Credentials;
 import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
 import org.opennms.integration.api.v1.timeseries.Aggregation;
 import org.opennms.integration.api.v1.timeseries.Metric;
 import org.opennms.integration.api.v1.timeseries.Sample;
 import org.opennms.integration.api.v1.timeseries.StorageException;
-import org.opennms.integration.api.v1.timeseries.Tag;
 import org.opennms.integration.api.v1.timeseries.TagMatcher;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesFetchRequest;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
-import org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil.Type;
 import org.opennms.plugins.cloud.tsaas.grpc.GrpcObjectMapper;
-import org.opennms.plugins.cloud.tsaas.grpc.comp.ZStdCodecRegisterUtil;
-import org.opennms.plugins.cloud.tsaas.shell.CertificateImporter;
-import org.opennms.tsaas.TimeseriesGrpc;
+import org.opennms.plugins.cloud.tsaas.config.CertificateImporter;
 import org.opennms.tsaas.Tsaas;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,8 +71,7 @@ public class TsaasStorage implements TimeSeriesStorage {
         this.config = Objects.requireNonNull(config);
         importCloudCredentialsIfPresent(scv);
         SecureCredentialsVaultUtil scvUtil = new SecureCredentialsVaultUtil(scv);
-        this.grpc = new GrpcConnection();
-        this.grpc.init(config, scvUtil);
+        this.grpc = new GrpcConnection(config, scvUtil);
         LOG.debug("Starting with host {} and port {}", config.getHost(), config.getPort());
         queue = new ConcurrentLinkedDeque<>();
         lastBatchSentTs = Instant.now();
@@ -116,16 +85,13 @@ public class TsaasStorage implements TimeSeriesStorage {
                 CertificateImporter importer = new CertificateImporter(
                         cloudCredentialsFile.toString(),
                         scv,
-                        config,
-                        (s) -> LoggerFactory.getLogger(CertificateImporter.class).info(s));
-                importer.execute();
+                        config);
+                importer.doIt();
             } catch (Exception e) {
                 LOG.warn("Could not import {}. Will continue with old credentials.", cloudCredentialsFile, e);
             }
         }
     }
-
-
 
     @Override
     public void store(List<Sample> samples) throws StorageException {

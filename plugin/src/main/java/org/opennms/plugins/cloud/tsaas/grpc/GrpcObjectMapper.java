@@ -25,12 +25,11 @@ import org.opennms.integration.api.v1.timeseries.immutables.ImmutableSample;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableTag;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableTagMatcher;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableTimeSeriesFetchRequest;
-import org.opennms.plugins.cloud.tsaas.TsaasStorage;
 import org.opennms.tsaas.Tsaas;
-
-import com.google.protobuf.Timestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.protobuf.Timestamp;
 
 public class GrpcObjectMapper {
 

@@ -65,11 +65,10 @@ public class GrpcConnection {
     // 100M sync with cortex server
     private final static int MAX_MESSAGE_SIZE = 104857600;
 
-    private ManagedChannel managedChannel;
-    private TimeseriesGrpc.TimeseriesBlockingStub clientStub;
+    private final ManagedChannel managedChannel;
+    private final TimeseriesGrpc.TimeseriesBlockingStub clientStub;
 
-    public void init(final TsaasConfig config, final SecureCredentialsVaultUtil scvUtil) {
-        shutDown();
+    public GrpcConnection(final TsaasConfig config, final SecureCredentialsVaultUtil scvUtil) {
         final NettyChannelBuilder builder = NettyChannelBuilder.forAddress(config.getHost(), config.getPort());
         if (config.isMtlsEnabled()) {
             builder.sslContext(createSslContext(scvUtil));

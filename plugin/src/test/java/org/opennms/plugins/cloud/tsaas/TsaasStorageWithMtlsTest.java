@@ -51,11 +51,11 @@ import org.opennms.integration.api.v1.timeseries.AbstractStorageIntegrationTest;
 import org.opennms.integration.api.v1.timeseries.InMemoryStorage;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil.Type;
-import org.opennms.plugins.cloud.tsaas.shell.ConfigZipExtractor;
+import org.opennms.plugins.cloud.tsaas.config.ConfigZipExtractor;
 import org.opennms.plugins.cloud.tsaas.testserver.TsaasServer;
 import org.opennms.plugins.cloud.tsaas.testserver.TsassServerInterceptor;
 
-@Ignore // TODO: Patrick: works locally but not on circleci :-/
+@Ignore // ignore because: works locally but not on circleci :-/
 public class TsaasStorageWithMtlsTest extends AbstractStorageIntegrationTest {
 
   private TsaasStorage storage;
@@ -68,7 +68,7 @@ public class TsaasStorageWithMtlsTest extends AbstractStorageIntegrationTest {
         .batchSize(1) // set to 1 so that samples are not held back in the queue
         .build();
 
-    Path pathToZipFile = Path.of("src/test/resources/cert/credentials.zip");
+    Path pathToZipFile = Path.of("src/test/resources/cert/cloud-credentials.zip");
     assertTrue(Files.exists(pathToZipFile));
     ConfigZipExtractor certs = new ConfigZipExtractor(pathToZipFile);
     Map<String, String> attributes = new HashMap<>();
@@ -86,7 +86,7 @@ public class TsaasStorageWithMtlsTest extends AbstractStorageIntegrationTest {
     super.setUp();
   }
 
-  private String getCert(String filename) throws IOException {
+  private String getCert(final String filename) throws IOException {
     return CharStreams.toString(new InputStreamReader(
         this.getClass().getResourceAsStream("/cert/" + filename), Charsets.UTF_8));
   }

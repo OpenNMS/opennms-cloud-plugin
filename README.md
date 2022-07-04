@@ -17,14 +17,9 @@ feature:install opennms-cloud-plugin
 
 ***Import Certificates***
 
-Before mtls can be enabled, we need to import the certificates via OpenNMS Karaf shell:
-```
-opennms-cloud:import-cert /path/to/credentials/cloud-credentials.zip
-```
-The zip will be deleted automatically after a successful import.
-
-An alternative to the karaf comment is placing the zip file into `[opennms.home]/etc/cloud-credentials.zip`.
-The plugin will import the cloud credentials automatically and delete the file after successful import.
+Before mtls can be enabled, we need to import the certificates.
+Move the cloud credentials file to: `[opennms.home]/etc/cloud-credentials.zip`.
+When the plugin is started it will import the cloud credentials automatically and delete the file after successful import.
 
 ***Properties***
 

@@ -26,7 +26,7 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.tsaas.shell;
+package org.opennms.plugins.cloud.tsaas.config;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -43,6 +43,7 @@ import org.junit.Test;
 import org.opennms.integration.api.v1.scv.Credentials;
 import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
 import org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil.Type;
+import org.opennms.plugins.cloud.tsaas.TsaasConfig;
 
 public class CertificateImporterTest {
 
@@ -51,13 +52,11 @@ public class CertificateImporterTest {
   @Test
   public void shouldImportCertificates() throws Exception {
     SecureCredentialsVault scv = new InMemoryScv();
-    CertificateImporter importer = new CertificateImporter();
-    importer.scv = scv;
     credentialsFile = Files.createTempFile(this.getClass().getSimpleName(), ".zip");
     Files.copy(Path.of("src/test/resources/cert/cloud-credentials.zip"), credentialsFile, StandardCopyOption.REPLACE_EXISTING);
     assertTrue(Files.exists(credentialsFile));
-    importer.fileParam = credentialsFile.toString();
-    importer.execute();
+    CertificateImporter importer = new CertificateImporter(credentialsFile.toString(), scv, TsaasConfig.builder().build());
+    importer.doIt();
 
     Credentials credentials = scv.getCredentials(SCV_ALIAS);
     assertNotNull(credentials);
