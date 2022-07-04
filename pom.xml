@@ -6,7 +6,6 @@
     <version>1.0.0-SNAPSHOT</version>
     <name>OpenNMS :: Plugins :: Cloud Plugin :: Parent</name>
     <packaging>pom</packaging>
-
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
