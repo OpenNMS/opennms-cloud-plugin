@@ -28,12 +28,17 @@
 
 package org.opennms.plugins.cloud.tsaas;
 
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -105,6 +110,22 @@ public class TsaasStorageNetworkProblemTest {
     plugin.store(createSamples());
     verify(serverStorage, times(1)).store(any());
   }
+
+  @Test
+  public void shouldRecoverAfterServerException() throws StorageException, InterruptedException {
+    TsaasConfig config = TsaasConfig
+            .builder()
+            .batchSize(1)
+            .build();
+    TsaasStorage plugin = new TsaasStorage(config, mock(SecureCredentialsVault.class));
+
+    doThrow(new StorageException("hups")).when(serverStorage).store(any());
+    assertThrows(io.grpc.StatusRuntimeException.class, () -> plugin.store(createSamples()));
+    doNothing().when(serverStorage).store(any());
+    plugin.store(createSamples());
+    verify(serverStorage, times(2)).store(any());
+  }
+
 
   private List<Sample> createSamples () {
     return Collections.singletonList(
