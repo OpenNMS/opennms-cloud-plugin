@@ -98,11 +98,8 @@ public class TsaasStorageNetworkProblemTest {
     reset(serverStorage);
 
     server.stopServer();
-    try {
-      plugin.store(createSamples());
-    } catch(StatusRuntimeException e) {
-      LOG.warn("Caught expected StatusRuntimeException {}", e.getStatus());
-    }
+    assertThrows(io.grpc.StatusRuntimeException.class, () -> plugin.store(createSamples()));
+
     verify(serverStorage, never()).store(any());
 
     server.startServer();
