@@ -103,7 +103,7 @@ public class TsaasStorageNetworkProblemTest {
     verify(serverStorage, never()).store(any());
 
     server.startServer();
-    Thread.sleep(1000); // wait till we are ready
+    Thread.sleep(2000); // wait till server is ready
     plugin.store(createSamples());
     verify(serverStorage, times(1)).store(any());
   }
