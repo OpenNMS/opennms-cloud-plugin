@@ -14,7 +14,7 @@
         <hamcrest.version>1.3</hamcrest.version>
         <tsaasClientVersion>LATEST</tsaasClientVersion>
         <java.version>11</java.version>
-        <zstd.version>1.5.2-3</zstd.version>
+        <zstd.version>1.5.0-2</zstd.version>
         <junit.version>4.13.2</junit.version>
         <karaf.version>4.3.6</karaf.version>
         <log4j.version>2.13.3</log4j.version>
