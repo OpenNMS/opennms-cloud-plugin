@@ -94,7 +94,7 @@ public class TsaasStorageNetworkProblemTest {
     reset(serverStorage);
 
     server.stopServer();
-    assertThrows(io.grpc.StatusRuntimeException.class, () -> plugin.store(createSamples()));
+    assertThrows(StorageException.class, () -> plugin.store(createSamples()));
 
     verify(serverStorage, never()).store(any());
 
@@ -113,7 +113,7 @@ public class TsaasStorageNetworkProblemTest {
     TsaasStorage plugin = new TsaasStorage(config, mock(SecureCredentialsVault.class));
 
     doThrow(new StorageException("hups")).when(serverStorage).store(any());
-    assertThrows(io.grpc.StatusRuntimeException.class, () -> plugin.store(createSamples()));
+    plugin.store(createSamples()); // nothing should happen since this is a non recoverable exception
     doNothing().when(serverStorage).store(any());
     plugin.store(createSamples());
     verify(serverStorage, times(2)).store(any());
