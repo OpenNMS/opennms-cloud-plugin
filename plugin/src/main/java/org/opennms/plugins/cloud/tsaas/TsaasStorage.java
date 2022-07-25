@@ -28,6 +28,7 @@
 
 package org.opennms.plugins.cloud.tsaas;
 
+import static org.opennms.plugins.cloud.tsaas.GrpcExceptionHandler.executeRpcCall;
 import static org.opennms.plugins.cloud.tsaas.grpc.GrpcObjectMapper.toMetric;
 import static org.opennms.plugins.cloud.tsaas.grpc.GrpcObjectMapper.toTimestamp;
 
@@ -36,11 +37,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.stream.Collectors;
-
 import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
 import org.opennms.integration.api.v1.timeseries.Aggregation;
 import org.opennms.integration.api.v1.timeseries.Metric;
@@ -49,8 +50,8 @@ import org.opennms.integration.api.v1.timeseries.StorageException;
 import org.opennms.integration.api.v1.timeseries.TagMatcher;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesFetchRequest;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
-import org.opennms.plugins.cloud.tsaas.grpc.GrpcObjectMapper;
 import org.opennms.plugins.cloud.tsaas.config.CertificateImporter;
+import org.opennms.plugins.cloud.tsaas.grpc.GrpcObjectMapper;
 import org.opennms.tsaas.Tsaas;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -117,7 +118,7 @@ public class TsaasStorage implements TimeSeriesStorage {
             }
             // Make call (only if we have anything to send):
             if (builder.getSamplesCount() > 0) {
-                this.grpc.get().store(builder.build());
+                executeRpcCall(() -> this.grpc.get().store(builder.build()));
                 lastBatchSentTs = Instant.now();
             }
         }
@@ -137,8 +138,11 @@ public class TsaasStorage implements TimeSeriesStorage {
                 .addAllMatchers(mappedTags)
                 .build();
         LOG.trace("Getting the metrics for the following tags: {}", tagsMessage);
-        Tsaas.Metrics result = this.grpc.get().findMetrics(tagsMessage);
-        return GrpcObjectMapper.toMetrics(result);
+        return executeRpcCall(
+            () -> this.grpc.get().findMetrics(tagsMessage),
+            GrpcObjectMapper::toMetrics,
+            Collections::emptyList
+        );
     }
 
     @Override
@@ -152,8 +156,11 @@ public class TsaasStorage implements TimeSeriesStorage {
                 .setAggregation(Tsaas.Aggregation.valueOf(request.getAggregation().name()))
                 .build();
         LOG.trace("Getting time series for request: {}", fetchRequest);
-        Tsaas.TimeseriesData timeseriesData = this.grpc.get().getTimeseriesData(fetchRequest);
-        return GrpcObjectMapper.toSamples(timeseriesData);
+        return executeRpcCall(
+            () -> this.grpc.get().getTimeseriesData(fetchRequest),
+            GrpcObjectMapper::toSamples,
+            Collections::emptyList
+        );
     }
 
     @Override
