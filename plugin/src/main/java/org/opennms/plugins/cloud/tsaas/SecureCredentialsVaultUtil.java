@@ -28,9 +28,9 @@
 
 package org.opennms.plugins.cloud.tsaas;
 
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
+
 import org.opennms.integration.api.v1.scv.Credentials;
 import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
 
