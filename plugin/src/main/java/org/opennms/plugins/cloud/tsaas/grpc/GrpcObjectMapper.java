@@ -6,7 +6,6 @@ import static org.opennms.tsaas.Tsaas.Aggregation.NONE;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -34,12 +33,6 @@ import com.google.protobuf.Timestamp;
 public class GrpcObjectMapper {
 
     private static final Logger LOG = LoggerFactory.getLogger(GrpcObjectMapper.class);
-
-    public static Collection<Tag> toTags(Collection<Tsaas.Tag> tags) {
-        return tags.stream()
-                .map(t -> new ImmutableTag(t.getKey(), t.getValue()))
-                .collect(Collectors.toList());
-    }
 
     public static Tsaas.Tag toTag(Tag tag) {
         return Tsaas.Tag.newBuilder()

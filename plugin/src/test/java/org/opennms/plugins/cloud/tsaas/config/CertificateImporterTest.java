@@ -30,7 +30,11 @@ package org.opennms.plugins.cloud.tsaas.config;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil.SCV_ALIAS;
 
 import java.io.IOException;
@@ -48,6 +52,16 @@ import org.opennms.plugins.cloud.tsaas.TsaasConfig;
 public class CertificateImporterTest {
 
   private Path credentialsFile;
+
+  @Test
+  public void shouldRejectMissingFiles() throws Exception {
+    credentialsFile = Path.of("IDontExist.file");
+    final String file = credentialsFile.toString();
+    final SecureCredentialsVault scv = new InMemoryScv();
+    final TsaasConfig config = TsaasConfig.builder().build();
+    final CertificateImporter importer = new CertificateImporter(file, scv, config);
+    assertThrows(IllegalArgumentException.class, importer::doIt);
+  }
 
   @Test
   public void shouldImportCertificates() throws Exception {
@@ -72,6 +86,20 @@ public class CertificateImporterTest {
 
     // Check if file has been deleted. we expect that the file is deleted after a successful import:
     assertFalse(Files.exists(credentialsFile));
+  }
+
+  @Test
+  public void shouldNotDeleteIfScvStorageGoesWrong() throws Exception {
+    SecureCredentialsVault scv = mock(SecureCredentialsVault.class);
+    when(scv.getCredentials(any())).thenReturn(mock(Credentials.class)); // won't store anything => storage will go wrong
+    credentialsFile = Files.createTempFile(this.getClass().getSimpleName(), ".zip");
+    Files.copy(Path.of("src/test/resources/cert/cloud-credentials.zip"), credentialsFile, StandardCopyOption.REPLACE_EXISTING);
+    assertTrue(Files.exists(credentialsFile));
+    CertificateImporter importer = new CertificateImporter(credentialsFile.toString(), scv, TsaasConfig.builder().build());
+    importer.doIt();
+
+    // Check if file has been deleted. We expect that the file is not deleted after an unsuccessful import:
+    assertTrue(Files.exists(credentialsFile));
   }
 
   @After

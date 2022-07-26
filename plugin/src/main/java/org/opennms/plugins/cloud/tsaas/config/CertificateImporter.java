@@ -74,12 +74,10 @@ public class CertificateImporter {
         // Validate
         Path file = Path.of(fileParam);
         if (!Files.isRegularFile(file)) {
-            LOG.info("{} is not a file.", fileParam);
-            return;
+            throw new IllegalArgumentException(String.format("%s is not a file.", fileParam));
         }
         if (!Files.isReadable(file)) {
-            LOG.info("{} is not a readable.", fileParam);
-            return;
+            throw new IllegalArgumentException(String.format("%s is not a readable.", fileParam));
         }
 
         final ConfigZipExtractor configZip = new ConfigZipExtractor(file);

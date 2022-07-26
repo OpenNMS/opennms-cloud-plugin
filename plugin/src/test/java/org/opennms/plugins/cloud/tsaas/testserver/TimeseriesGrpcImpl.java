@@ -31,6 +31,8 @@ package org.opennms.plugins.cloud.tsaas.testserver;
 import static org.opennms.plugins.cloud.tsaas.grpc.GrpcObjectMapper.toMetric;
 
 import io.grpc.BindableService;
+import io.grpc.stub.StreamObserver;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -123,6 +125,15 @@ public class TimeseriesGrpcImpl extends TimeseriesGrpc.TimeseriesImplBase implem
             LOG.error("Failed to retrieve timeseries.", e);
             responseObserver.onError(e);
         }
+    }
+
+    @Override
+    public void checkHealth(Tsaas.CheckHealthRequest request, StreamObserver<Tsaas.CheckHealthResponse> responseObserver) {
+        Tsaas.CheckHealthResponse response = Tsaas.CheckHealthResponse.newBuilder()
+                .setStatus(Tsaas.CheckHealthResponse.ServingStatus.SERVING)
+                .build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 
     public void shutdown() {

@@ -28,6 +28,7 @@
 
 package org.opennms.plugins.cloud.tsaas.shell;
 
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -46,5 +47,19 @@ public class MetricWriteTest {
         write.count = 3;
         write.execute();
         verify(tss, times(1)).store(any());
+    }
+
+    @Test
+    public void shouldRejectNegativeCount() throws Exception {
+        final MetricWrite write = new MetricWrite();
+        write.count = -1;
+        assertThrows(IllegalArgumentException.class, write::execute);
+    }
+
+    @Test
+    public void shouldRejectZeroCount() throws Exception {
+        final MetricWrite write = new MetricWrite();
+        write.count = 0;
+        assertThrows(IllegalArgumentException.class, write::execute);
     }
 }
