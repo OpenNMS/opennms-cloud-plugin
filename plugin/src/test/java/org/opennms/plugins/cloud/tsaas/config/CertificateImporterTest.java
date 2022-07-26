@@ -59,8 +59,8 @@ public class CertificateImporterTest {
     final String file = credentialsFile.toString();
     final SecureCredentialsVault scv = new InMemoryScv();
     final TsaasConfig config = TsaasConfig.builder().build();
-    assertThrows(IllegalArgumentException.class,
-            () -> new CertificateImporter(file, scv, config).doIt());
+    final CertificateImporter importer = new CertificateImporter(file, scv, config);
+    assertThrows(IllegalArgumentException.class, importer::doIt);
   }
 
   @Test
