@@ -58,6 +58,7 @@ import io.grpc.MethodDescriptor;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.ClientAuth;
+import io.grpc.netty.shaded.io.netty.handler.ssl.OpenSsl;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
@@ -99,7 +100,9 @@ public class GrpcConnection {
                         String.format("Could no find credentials in SecureCredentialsVault for %s. Please import via Karaf shell: opennms-cloud:import-cert", SCV_ALIAS)));
 
         try {
-            SslContextBuilder context = GrpcSslContexts.configure(GrpcSslContexts.forClient(), SslProvider.OPENSSL);
+            final SslProvider provider = OpenSsl.isAvailable() && SslProvider.isAlpnSupported(SslProvider.OPENSSL) ? SslProvider.OPENSSL : SslProvider.JDK;
+            LOG.info("Using SSL provider {}, ", provider);
+            SslContextBuilder context = GrpcSslContexts.configure(GrpcSslContexts.forClient(), provider);
             String truststore = credentials.getAttribute(SecureCredentialsVaultUtil.Type.truststore.name());
             if (truststore == null) {
                 LOG.info("Will use jvm truststore.");
