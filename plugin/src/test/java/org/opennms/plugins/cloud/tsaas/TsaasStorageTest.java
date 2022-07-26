@@ -73,7 +73,7 @@ public class TsaasStorageTest extends AbstractStorageIntegrationTest {
   }
 
   @Test
-  @Ignore
+  @Ignore("we don't implement delete(), hence @Ignore")
   @Override
   public void shouldDeleteMetrics() throws Exception {
     // we don't support delete...

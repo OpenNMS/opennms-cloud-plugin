@@ -52,7 +52,7 @@ public class MetricWrite implements Action {
                     .value((double)random.nextInt(8000 - 3000) + 3000)
                     .time(Instant.now().minus(l*10, ChronoUnit.MINUTES)).build());
         }
-        System.out.printf("Storing %s samples.\n", count);
+        System.out.printf("Storing %s samples.%n", count);
         tss.store(samples);
         System.out.println("Done.");
         return null;
