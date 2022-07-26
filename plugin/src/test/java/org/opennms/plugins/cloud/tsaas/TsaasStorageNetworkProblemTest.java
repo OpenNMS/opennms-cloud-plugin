@@ -30,7 +30,6 @@ package org.opennms.plugins.cloud.tsaas;
 
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -38,7 +37,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -59,8 +57,6 @@ import org.opennms.plugins.cloud.tsaas.testserver.TsaasServer;
 import org.opennms.plugins.cloud.tsaas.testserver.TsassServerInterceptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.grpc.StatusRuntimeException;
 
 public class TsaasStorageNetworkProblemTest {
 
@@ -103,7 +99,7 @@ public class TsaasStorageNetworkProblemTest {
     verify(serverStorage, never()).store(any());
 
     server.startServer();
-    Thread.sleep(2000); // wait till server is ready
+    plugin.grpc.managedChannel.resetConnectBackoff(); // make sure the channel is ready. Otherwise it has a short wait time
     plugin.store(createSamples());
     verify(serverStorage, times(1)).store(any());
   }

@@ -46,11 +46,11 @@ public class MetricWrite implements Action {
                 .metaTag("_idx2w", "(response:127.0.0.1,*)")
                 .build();
         List<Sample> samples = new ArrayList<>();
-        for(int i=count; i>0; i--) {
+        for(long l=count; l>0; l--) {
             samples.add(ImmutableSample.builder()
                     .metric(metric)
                     .value((double)random.nextInt(8000 - 3000) + 3000)
-                    .time(Instant.now().minus(i*10, ChronoUnit.MINUTES)).build());
+                    .time(Instant.now().minus(l*10, ChronoUnit.MINUTES)).build());
         }
         System.out.printf("Storing %s samples.\n", count);
         tss.store(samples);
