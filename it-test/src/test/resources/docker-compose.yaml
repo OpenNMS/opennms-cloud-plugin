@@ -36,7 +36,7 @@ services:
     volumes:
       # we overlay local maven repo in the container. It contains the plugin jars and dependencies:
       - ${USER_HOME}/.m2/repository/org/opennms/plugins/cloud:/opt/opennms/system/org/opennms/plugins/cloud
-      - ${USER_HOME}/.m2/repository/com/google/guava/guava/30.1-jre:/opt/opennms/system/com/google/guava/guava/30.1-jre
+      - ${USER_HOME}/.m2/repository/com/google/guava/guava/31.0.1-android:/opt/opennms/system/com/google/guava/guava/31.0.1-android
       - ${USER_HOME}/.m2/repository/org/opennms/tsaas/tsaas-grpc:/opt/opennms/system/org/opennms/tsaas/tsaas-grpc
       - ${USER_HOME}/.m2/repository/com/google/protobuf/protobuf-java/3.19.4:/opt/opennms/system/com/google/protobuf/protobuf-java/3.19.4
       - ${USER_HOME}/.m2/repository/com/github/luben/zstd-jni/1.5.0-2/:/opt/opennms/system/com/github/luben/zstd-jni/1.5.0-2
