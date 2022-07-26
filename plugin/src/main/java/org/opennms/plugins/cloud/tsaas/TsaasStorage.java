@@ -31,6 +31,7 @@ package org.opennms.plugins.cloud.tsaas;
 import static org.opennms.plugins.cloud.tsaas.grpc.GrpcObjectMapper.toMetric;
 import static org.opennms.plugins.cloud.tsaas.grpc.GrpcObjectMapper.toTimestamp;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -65,7 +66,8 @@ public class TsaasStorage implements TimeSeriesStorage {
     private final TsaasConfig config;
     private final ConcurrentLinkedDeque<Tsaas.Sample> queue; // holds samples to be batched
     private Instant lastBatchSentTs;
-    private final GrpcConnection grpc;
+    @VisibleForTesting
+    final GrpcConnection grpc;
 
     public TsaasStorage(TsaasConfig config, SecureCredentialsVault scv) {
         this.config = Objects.requireNonNull(config);
@@ -103,14 +105,14 @@ public class TsaasStorage implements TimeSeriesStorage {
 
         // send batched messages while the queue is fuller than batch size
         while (this.queue.size() >= this.config.getBatchSize() ||
-                this.queue.size() > 0 && this.lastBatchSentTs.plusMillis(config.getMaxBatchWaitTimeInMilliSeconds()).isBefore(Instant.now())) {
+                this.queue.isEmpty() && this.lastBatchSentTs.plusMillis(config.getMaxBatchWaitTimeInMilliSeconds()).isBefore(Instant.now())) {
             Tsaas.Samples.Builder builder = Tsaas.Samples.newBuilder();
             for (int i = 0; i < this.config.getBatchSize(); i++) {
                 Tsaas.Sample next = this.queue.poll();
                 if (next != null) {
                     builder.addSamples(next);
                 } else {
-                    break; // queue is empty => nothing more to do. This can happen since we are in a multithreaded environment.
+                    break; // queue is empty => nothing more to do. This can happen since we are in a multi threaded environment.
                 }
             }
             // Make call (only if we have anything to send):
@@ -169,7 +171,7 @@ public class TsaasStorage implements TimeSeriesStorage {
         return this.grpc.get().checkHealth(Tsaas.CheckHealthRequest.newBuilder().build());
     }
 
-    public void destroy() {
+    public void destroy() throws InterruptedException {
         grpc.shutDown();
     }
 }

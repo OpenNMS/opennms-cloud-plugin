@@ -92,7 +92,7 @@ public class TsaasStorageWithMtlsTest extends AbstractStorageIntegrationTest {
   }
 
   @After
-  public void tearDown() {
+  public void tearDown() throws InterruptedException {
     if (storage != null) {
       storage.destroy();
     }

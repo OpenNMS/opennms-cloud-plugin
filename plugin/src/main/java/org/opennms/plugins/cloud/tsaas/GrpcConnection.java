@@ -45,6 +45,8 @@ import org.opennms.tsaas.TimeseriesGrpc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -61,11 +63,11 @@ import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
 
 public class GrpcConnection {
-    private static final Logger LOG = LoggerFactory.getLogger(GrpcConnection.class);
+    static private final Logger LOG = LoggerFactory.getLogger(GrpcConnection.class);
     // 100M sync with cortex server
-    private final static int MAX_MESSAGE_SIZE = 104857600;
-
-    private final ManagedChannel managedChannel;
+    static private final int MAX_MESSAGE_SIZE = 104857600;
+    @VisibleForTesting
+    final ManagedChannel managedChannel;
     private final TimeseriesGrpc.TimeseriesBlockingStub clientStub;
 
     public GrpcConnection(final TsaasConfig config, final SecureCredentialsVaultUtil scvUtil) {
@@ -122,21 +124,17 @@ public class GrpcConnection {
         return new ByteArrayInputStream(attribute.getBytes(StandardCharsets.UTF_8));
     }
 
-    public void shutDown() {
+    public void shutDown() throws InterruptedException {
         if (managedChannel != null) {
             managedChannel.shutdownNow();
-            try {
-                managedChannel.awaitTermination(15, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                LOG.info("Interrupted while awaiting for channel to shutdown.");
-            }
+            managedChannel.awaitTermination(15, TimeUnit.SECONDS);
         }
     }
 
     private static class TokenAddingInterceptor implements ClientInterceptor {
 
         final String tokenKey;
-        final String token;
+        final String tokenValue;
 
         TokenAddingInterceptor(final TsaasConfig config, final SecureCredentialsVaultUtil scvUtil) {
             this.tokenKey = config.getTokenKey();
@@ -146,16 +144,16 @@ public class GrpcConnection {
             if (token == null || token.isEmpty()) {
                 token = "--not defined--";
             }
-            this.token = token;
+            this.tokenValue = token;
         }
 
         @Override
-        public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
-                                                                   CallOptions callOptions, Channel next) {
+        public <I, O> ClientCall<I, O> interceptCall(MethodDescriptor<I, O> method,
+                                                     CallOptions callOptions, Channel next) {
             return new ForwardingClientCall.SimpleForwardingClientCall<>(next.newCall(method, callOptions)) {
                 @Override
-                public void start(final Listener<RespT> responseListener, final Metadata headers) {
-                    headers.put(Metadata.Key.of(tokenKey, Metadata.ASCII_STRING_MARSHALLER), token);
+                public void start(final Listener<O> responseListener, final Metadata headers) {
+                    headers.put(Metadata.Key.of(tokenKey, Metadata.ASCII_STRING_MARSHALLER), tokenValue);
                     super.start(responseListener, headers);
                 }
             };
