@@ -30,6 +30,7 @@ package org.opennms.plugins.cloud.tsaas.config;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil.SCV_ALIAS;
 
@@ -48,6 +49,13 @@ import org.opennms.plugins.cloud.tsaas.TsaasConfig;
 public class CertificateImporterTest {
 
   private Path credentialsFile;
+
+  @Test
+  public void shouldRejectMissingFiles() throws Exception {
+    credentialsFile = Path.of("IDontExist.file");
+    assertThrows(IllegalArgumentException.class,
+            () -> new CertificateImporter(credentialsFile.toString(), new InMemoryScv(), TsaasConfig.builder().build()).doIt());
+  }
 
   @Test
   public void shouldImportCertificates() throws Exception {

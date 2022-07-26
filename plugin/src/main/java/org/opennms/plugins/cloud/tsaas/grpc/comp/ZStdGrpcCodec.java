@@ -11,7 +11,7 @@ import io.grpc.Codec;
 
 public class ZStdGrpcCodec implements Codec {
 
-    public final static String ZSTD = "zstd";
+    public static final String ZSTD = "zstd";
 
     @Override
     public String getMessageEncoding() {

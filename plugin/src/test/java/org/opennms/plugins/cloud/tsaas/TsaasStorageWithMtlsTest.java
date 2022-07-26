@@ -55,7 +55,6 @@ import org.opennms.plugins.cloud.tsaas.config.ConfigZipExtractor;
 import org.opennms.plugins.cloud.tsaas.testserver.TsaasServer;
 import org.opennms.plugins.cloud.tsaas.testserver.TsassServerInterceptor;
 
-@Ignore // ignore because: works locally but not on circleci :-/
 public class TsaasStorageWithMtlsTest extends AbstractStorageIntegrationTest {
 
   private TsaasStorage storage;

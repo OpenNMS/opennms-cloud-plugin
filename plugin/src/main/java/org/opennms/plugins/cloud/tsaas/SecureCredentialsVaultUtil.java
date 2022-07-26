@@ -39,9 +39,6 @@ public class SecureCredentialsVaultUtil {
 
   public enum Type {
     truststore, publickey, privatekey, token;
-    public static boolean isValid(String value) {
-      return Arrays.stream(Type.values()).anyMatch(e -> e.name().equals(value));
-    }
   }
 
   private final SecureCredentialsVault scv;

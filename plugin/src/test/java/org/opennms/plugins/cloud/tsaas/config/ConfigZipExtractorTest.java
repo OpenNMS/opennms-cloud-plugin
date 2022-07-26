@@ -39,6 +39,12 @@ public class ConfigZipExtractorTest {
 
     @Test
     public void shouldExtract() throws IOException {
+        Path configZipFile = Path.of("noneExistingFile.zip");
+        assertThrows(IllegalArgumentException.class, () -> new ConfigZipExtractor(configZipFile));
+    }
+
+    @Test
+    public void shouldRejectMissingFile() throws IOException {
         Path configZipFile = Path.of("src/test/resources/cert/cloud-credentials.zip");
         ConfigZipExtractor ex = new ConfigZipExtractor(configZipFile);
         assertTrue(ex.getPrivateKey().startsWith("-----BEGIN PRIVATE KEY-----"));
