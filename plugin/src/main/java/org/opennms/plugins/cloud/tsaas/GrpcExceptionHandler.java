@@ -32,21 +32,24 @@ import static io.grpc.Status.Code.DEADLINE_EXCEEDED;
 import static io.grpc.Status.Code.OK;
 import static io.grpc.Status.Code.UNAVAILABLE;
 
-import com.google.common.collect.ImmutableSet;
-import io.grpc.Status;
-import io.grpc.Status.Code;
-import io.grpc.StatusRuntimeException;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
+
 import org.opennms.integration.api.v1.timeseries.StorageException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.grpc.Status;
+import io.grpc.Status.Code;
+import io.grpc.StatusRuntimeException;
+
 public class GrpcExceptionHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(GrpcExceptionHandler.class);
-  private static final Set<Code> RECOVERABLE_EXCEPTIONS = ImmutableSet.of(DEADLINE_EXCEEDED, UNAVAILABLE);
+  private static final Set<Code> RECOVERABLE_EXCEPTIONS = new HashSet<>(Arrays.asList(DEADLINE_EXCEEDED, UNAVAILABLE));
 
   static <T, R> R executeRpcCall(Supplier<T> callToExecute, Function<T, R> mapper, Supplier<R> defaultFunction) throws StorageException {
     try {
