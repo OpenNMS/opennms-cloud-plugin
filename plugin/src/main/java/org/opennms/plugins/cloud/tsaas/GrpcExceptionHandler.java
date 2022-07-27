@@ -30,6 +30,7 @@ package org.opennms.plugins.cloud.tsaas;
 
 import static io.grpc.Status.Code.DEADLINE_EXCEEDED;
 import static io.grpc.Status.Code.OK;
+import static io.grpc.Status.Code.RESOURCE_EXHAUSTED;
 import static io.grpc.Status.Code.UNAUTHENTICATED;
 import static io.grpc.Status.Code.UNAVAILABLE;
 
@@ -59,7 +60,8 @@ public class GrpcExceptionHandler {
   private static final Set<Code> RECOVERABLE_EXCEPTIONS = new HashSet<>(Arrays.asList(
           DEADLINE_EXCEEDED,
           UNAVAILABLE,
-          UNAUTHENTICATED));
+          UNAUTHENTICATED,
+          RESOURCE_EXHAUSTED));
 
   private GrpcExceptionHandler() {
     // Utility class
