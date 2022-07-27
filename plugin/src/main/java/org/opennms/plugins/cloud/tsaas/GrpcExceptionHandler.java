@@ -55,7 +55,11 @@ import io.grpc.StatusRuntimeException;
 public class GrpcExceptionHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(GrpcExceptionHandler.class);
-  static final Set<Code> RECOVERABLE_EXCEPTIONS = new HashSet<>(Arrays.asList(DEADLINE_EXCEEDED, UNAVAILABLE));
+  private static final Set<Code> RECOVERABLE_EXCEPTIONS = new HashSet<>(Arrays.asList(DEADLINE_EXCEEDED, UNAVAILABLE));
+
+  private GrpcExceptionHandler() {
+    // Utility class
+  }
 
   static <T, R> R executeRpcCall(Supplier<T> callToExecute, Function<T, R> mapper, Supplier<R> defaultFunction) throws StorageException {
     try {
@@ -79,7 +83,7 @@ public class GrpcExceptionHandler {
 
   static <T> void executeRpcCall(Supplier<T> callToExecute) throws StorageException {
     try {
-      T result = callToExecute.get();
+      callToExecute.get();
     } catch (StatusRuntimeException ex) {
       Status.Code status = ex.getStatus().getCode();
       if (OK == status) {
