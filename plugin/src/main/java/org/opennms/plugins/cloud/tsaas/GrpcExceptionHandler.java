@@ -46,10 +46,16 @@ import io.grpc.Status;
 import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 
+/**
+ * Tries to distinguish between
+ * - recoverable Exceptions: will be propgated to OpenNMS and
+ * - non recoverable Exceptions: will be logged dropped
+ * see also: https://www.grpc.io/docs/guides/error/
+ * */
 public class GrpcExceptionHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(GrpcExceptionHandler.class);
-  private static final Set<Code> RECOVERABLE_EXCEPTIONS = new HashSet<>(Arrays.asList(DEADLINE_EXCEEDED, UNAVAILABLE));
+  static final Set<Code> RECOVERABLE_EXCEPTIONS = new HashSet<>(Arrays.asList(DEADLINE_EXCEEDED, UNAVAILABLE));
 
   static <T, R> R executeRpcCall(Supplier<T> callToExecute, Function<T, R> mapper, Supplier<R> defaultFunction) throws StorageException {
     try {
