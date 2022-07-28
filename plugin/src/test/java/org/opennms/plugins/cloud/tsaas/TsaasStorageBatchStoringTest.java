@@ -50,6 +50,7 @@ import org.opennms.integration.api.v1.timeseries.StorageException;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableMetric;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableSample;
+import org.opennms.plugins.cloud.config.CloudConfig;
 import org.opennms.plugins.cloud.tsaas.testserver.TsaasServer;
 import org.opennms.plugins.cloud.tsaas.testserver.TsassServerInterceptor;
 
@@ -60,7 +61,7 @@ public class TsaasStorageBatchStoringTest {
 
   @Before
   public void setUp() throws Exception {
-    TsaasConfig config = TsaasConfig.builder()
+    CloudConfig config = CloudConfig.builder()
         .build();
     serverStorage = Mockito.mock(TimeSeriesStorage.class);
     server = new TsaasServer(config, new TsassServerInterceptor(), serverStorage);
@@ -76,7 +77,7 @@ public class TsaasStorageBatchStoringTest {
 
   @Test
   public void shouldSendStoreSamplesAfterWaitTime() throws StorageException, InterruptedException {
-    TsaasConfig config = TsaasConfig
+    CloudConfig config = CloudConfig
         .builder()
         .batchSize(10)
         .maxBatchWaitTimeInMilliSeconds(500)

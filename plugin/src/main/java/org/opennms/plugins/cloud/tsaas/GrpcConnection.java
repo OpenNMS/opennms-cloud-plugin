@@ -40,6 +40,7 @@ import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLException;
 
 import org.opennms.integration.api.v1.scv.Credentials;
+import org.opennms.plugins.cloud.config.CloudConfig;
 import org.opennms.plugins.cloud.tsaas.grpc.comp.ZStdCodecRegisterUtil;
 import org.opennms.tsaas.TimeseriesGrpc;
 import org.slf4j.Logger;
@@ -68,7 +69,7 @@ public class GrpcConnection {
     private final ManagedChannel managedChannel;
     private final TimeseriesGrpc.TimeseriesBlockingStub clientStub;
 
-    public GrpcConnection(final TsaasConfig config, final SecureCredentialsVaultUtil scvUtil) {
+    public GrpcConnection(final CloudConfig config, final SecureCredentialsVaultUtil scvUtil) {
         final NettyChannelBuilder builder = NettyChannelBuilder.forAddress(config.getHost(), config.getPort());
         if (config.isMtlsEnabled()) {
             builder.sslContext(createSslContext(scvUtil));
@@ -138,7 +139,7 @@ public class GrpcConnection {
         final String tokenKey;
         final String token;
 
-        TokenAddingInterceptor(final TsaasConfig config, final SecureCredentialsVaultUtil scvUtil) {
+        TokenAddingInterceptor(final CloudConfig config, final SecureCredentialsVaultUtil scvUtil) {
             this.tokenKey = config.getTokenKey();
             String token = scvUtil.getCredentials()
                     .map(c -> c.getAttribute(SecureCredentialsVaultUtil.Type.token.name()))

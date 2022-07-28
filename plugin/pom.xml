@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    
     <parent>
         <groupId>org.opennms.plugins.cloud</groupId>
         <artifactId>cloud-parent</artifactId>
@@ -96,6 +95,39 @@
             <artifactId>zstd-jni</artifactId>
             <version>${zstd.version}</version>
         </dependency>
+        <!-- faas -->
+        <dependency>
+            <groupId>org.opennms.features.telemetry</groupId>
+            <artifactId>org.opennms.features.telemetry.api</artifactId>
+            <version>${opennms.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.guava</groupId><!-- to satisfy maven-enforcer-plugin -->
+                    <artifactId>guava</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.opennms.features.telemetry</groupId>
+            <artifactId>org.opennms.features.telemetry.registry</artifactId>
+            <version>${opennms.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.guava</groupId><!-- to satisfy maven-enforcer-plugin -->
+                    <artifactId>guava</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.opennms.features.telemetry.distributed</groupId>
+            <artifactId>org.opennms.features.telemetry.distributed.minion</artifactId>
+            <version>${opennms.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.opennms.core.ipc.sink</groupId>
+            <artifactId>org.opennms.core.ipc.sink.offheap</artifactId>
+            <version>${opennms.version}</version>
+        </dependency>
 
         <!-- Test -->
         <dependency>
@@ -140,6 +172,12 @@
             <groupId>org.awaitility</groupId>
             <artifactId>awaitility</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>osgi.cmpn</artifactId>
+            <version>7.0.0</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 </project>

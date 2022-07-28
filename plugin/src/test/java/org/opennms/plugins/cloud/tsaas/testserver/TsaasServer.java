@@ -39,7 +39,7 @@ import java.util.concurrent.CompletableFuture;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
-import org.opennms.plugins.cloud.tsaas.TsaasConfig;
+import org.opennms.plugins.cloud.config.CloudConfig;
 import org.opennms.plugins.cloud.tsaas.grpc.comp.ZStdCodecRegisterUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,13 +53,13 @@ public class TsaasServer {
 
     private static final Logger LOG = LoggerFactory.getLogger(TsaasServer.class);
 
-    private final TsaasConfig config;
+    private final CloudConfig config;
     private Server server;
     private final TimeseriesGrpcImpl timeseriesService;
     private final TsassServerInterceptor serverInterceptor;
 
 
-    public TsaasServer(final TsaasConfig config,
+    public TsaasServer(final CloudConfig config,
         final TsassServerInterceptor serverInterceptor,
         final TimeSeriesStorage storage) {
         this.timeseriesService = new TimeseriesGrpcImpl(storage);

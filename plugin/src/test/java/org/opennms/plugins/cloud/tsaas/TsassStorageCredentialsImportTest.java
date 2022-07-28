@@ -15,6 +15,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.opennms.integration.api.v1.scv.Credentials;
+import org.opennms.plugins.cloud.config.CloudConfig;
 import org.opennms.plugins.cloud.tsaas.config.InMemoryScv;
 
 public class TsassStorageCredentialsImportTest {
@@ -33,7 +34,7 @@ public class TsassStorageCredentialsImportTest {
     public void shouldImportCloudCredentialsIfPresent() throws Exception {
 
         InMemoryScv scv = new InMemoryScv();
-        TsaasStorage storage = new TsaasStorage(TsaasConfig.builder().build(), scv);
+        TsaasStorage storage = new TsaasStorage(CloudConfig.builder().build(), scv);
         openNmsHome = Files.createTempDirectory(this.getClass().getSimpleName());
         System.setProperty(OPENNMS_HOME, openNmsHome.toString());
         Files.createDirectory(Path.of(openNmsHome.toString(), "etc"));

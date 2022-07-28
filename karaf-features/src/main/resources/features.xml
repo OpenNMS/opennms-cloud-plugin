@@ -4,6 +4,8 @@
         <feature dependency="true">aries-blueprint</feature>
         <feature dependency="true">shell</feature>
         <feature version="${opennms.api.version}" dependency="true">opennms-integration-api</feature>
+        <feature dependency="true">minion-telemetryd-receivers</feature>
+        <feature>opennms-core-ipc-sink-offheap</feature>
         <feature version="${project.version}" dependency="true">cloud-guava</feature>
         <bundle dependency="true">mvn:com.github.luben/zstd-jni/${zstd.version}</bundle>
         <bundle>mvn:org.opennms.tsaas/tsaas-grpc/${tsaasClientVersion}</bundle><!-- the grpc client to talk to Tsaas -->

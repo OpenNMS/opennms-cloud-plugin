@@ -42,8 +42,9 @@ import org.junit.After;
 import org.junit.Test;
 import org.opennms.integration.api.v1.scv.Credentials;
 import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
+import org.opennms.plugins.cloud.tsaas.config.CertificateImporter;
 import org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil.Type;
-import org.opennms.plugins.cloud.tsaas.TsaasConfig;
+import org.opennms.plugins.cloud.config.CloudConfig;
 
 public class CertificateImporterTest {
 
@@ -55,7 +56,7 @@ public class CertificateImporterTest {
     credentialsFile = Files.createTempFile(this.getClass().getSimpleName(), ".zip");
     Files.copy(Path.of("src/test/resources/cert/cloud-credentials.zip"), credentialsFile, StandardCopyOption.REPLACE_EXISTING);
     assertTrue(Files.exists(credentialsFile));
-    CertificateImporter importer = new CertificateImporter(credentialsFile.toString(), scv, TsaasConfig.builder().build());
+    CertificateImporter importer = new CertificateImporter(credentialsFile.toString(), scv, CloudConfig.builder().build());
     importer.doIt();
 
     Credentials credentials = scv.getCredentials(SCV_ALIAS);

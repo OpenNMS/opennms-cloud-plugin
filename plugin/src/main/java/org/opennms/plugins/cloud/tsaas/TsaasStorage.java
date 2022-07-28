@@ -48,6 +48,7 @@ import org.opennms.integration.api.v1.timeseries.StorageException;
 import org.opennms.integration.api.v1.timeseries.TagMatcher;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesFetchRequest;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
+import org.opennms.plugins.cloud.config.CloudConfig;
 import org.opennms.plugins.cloud.tsaas.grpc.GrpcObjectMapper;
 import org.opennms.plugins.cloud.tsaas.config.CertificateImporter;
 import org.opennms.tsaas.Tsaas;
@@ -62,12 +63,12 @@ import org.slf4j.LoggerFactory;
 public class TsaasStorage implements TimeSeriesStorage {
     private static final Logger LOG = LoggerFactory.getLogger(TsaasStorage.class);
 
-    private final TsaasConfig config;
+    private final CloudConfig config;
     private final ConcurrentLinkedDeque<Tsaas.Sample> queue; // holds samples to be batched
     private Instant lastBatchSentTs;
     private final GrpcConnection grpc;
 
-    public TsaasStorage(TsaasConfig config, SecureCredentialsVault scv) {
+    public TsaasStorage(CloudConfig config, SecureCredentialsVault scv) {
         this.config = Objects.requireNonNull(config);
         importCloudCredentialsIfPresent(scv);
         SecureCredentialsVaultUtil scvUtil = new SecureCredentialsVaultUtil(scv);

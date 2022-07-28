@@ -50,6 +50,7 @@ import org.opennms.integration.api.v1.scv.immutables.ImmutableCredentials;
 import org.opennms.integration.api.v1.timeseries.AbstractStorageIntegrationTest;
 import org.opennms.integration.api.v1.timeseries.InMemoryStorage;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
+import org.opennms.plugins.cloud.config.CloudConfig;
 import org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil.Type;
 import org.opennms.plugins.cloud.tsaas.config.ConfigZipExtractor;
 import org.opennms.plugins.cloud.tsaas.testserver.TsaasServer;
@@ -63,7 +64,7 @@ public class TsaasStorageWithMtlsTest extends AbstractStorageIntegrationTest {
 
   @Before
   public void setUp() throws Exception {
-    TsaasConfig config = TsaasConfig.builder()
+    CloudConfig config = CloudConfig.builder()
         .mtlsEnabled(true)
         .batchSize(1) // set to 1 so that samples are not held back in the queue
         .build();

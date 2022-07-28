@@ -42,10 +42,10 @@ import java.util.Set;
 import org.opennms.integration.api.v1.scv.Credentials;
 import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
 import org.opennms.integration.api.v1.scv.immutables.ImmutableCredentials;
+import org.opennms.plugins.cloud.config.CloudConfig;
 import org.opennms.plugins.cloud.tsaas.GrpcConnection;
 import org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil;
 import org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil.Type;
-import org.opennms.plugins.cloud.tsaas.TsaasConfig;
 import org.opennms.tsaas.Tsaas;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +55,7 @@ public class CertificateImporter {
 
     private final String fileParam;
 
-    private final TsaasConfig config;
+    private final CloudConfig config;
 
     private final SecureCredentialsVault scv;
 
@@ -63,7 +63,7 @@ public class CertificateImporter {
 
     public CertificateImporter(final String fileParam,
                                final SecureCredentialsVault scv,
-                               final TsaasConfig config) {
+                               final CloudConfig config) {
         this.fileParam = Objects.requireNonNull(fileParam);
         this.scv = Objects.requireNonNull(scv);
         this.config = Objects.requireNonNull(config);

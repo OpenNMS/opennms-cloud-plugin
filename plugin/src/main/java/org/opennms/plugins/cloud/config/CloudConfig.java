@@ -26,12 +26,13 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.tsaas;
+package org.opennms.plugins.cloud.config;
 
 import java.util.Objects;
 
-public class TsaasConfig {
+public class CloudConfig {
 
+  private final String systemName;
   private final String host;
   private final int port;
   private final String tokenKey;
@@ -40,13 +41,15 @@ public class TsaasConfig {
   private final int batchSize;
   private final long maxBatchWaitTimeInMilliSeconds;
 
-  public TsaasConfig(final String host,
-      final int port,
-      final String tokenKey,
-      final String tokenValue,
-      final boolean mtlsEnabled,
-      final int batchSize,
-      final long maxBatchWaitTimeInMilliSeconds) {
+  public CloudConfig(final String systemName,
+                     final String host,
+                     final int port,
+                     final String tokenKey,
+                     final String tokenValue,
+                     final boolean mtlsEnabled,
+                     final int batchSize,
+                     final long maxBatchWaitTimeInMilliSeconds) {
+    this.systemName = Objects.requireNonNull(systemName);
     this.host = Objects.requireNonNull(host);
     this.port = requirePositiveNumber(port);
     this.tokenKey = Objects.requireNonNull(tokenKey);
@@ -61,6 +64,10 @@ public class TsaasConfig {
       throw new IllegalArgumentException(String.format("A positive number is required but was %s", value));
     }
     return value;
+  }
+
+  public String getSystemName() {
+    return systemName;
   }
 
   public String getHost() {
@@ -97,6 +104,7 @@ public class TsaasConfig {
 
   public static class Builder {
     private Builder() {}
+    private String systemName = "horizon";
     private String host = "localhost";
     private int port = 5001;
     private String tokenKey = "token";
@@ -105,8 +113,9 @@ public class TsaasConfig {
     private int batchSize = 1000;
     private long maxBatchWaitTimeInMilliSeconds = 5000;
 
-    public TsaasConfig build() {
-      return new TsaasConfig(
+    public CloudConfig build() {
+      return new CloudConfig(
+          systemName,
           host,
           port,
           tokenKey,
@@ -114,6 +123,11 @@ public class TsaasConfig {
           mtlsEnabled,
           batchSize,
           maxBatchWaitTimeInMilliSeconds);
+    }
+
+    public Builder systemName(final String systemName){
+      this.systemName = systemName;
+      return this;
     }
 
     public Builder host(final String host) {
