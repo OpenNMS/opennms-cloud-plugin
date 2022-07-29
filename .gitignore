@@ -13,3 +13,6 @@ build.properties
 .*launch
 .idea
 
+/plugin/src/main/ui/dist/
+/plugin/src/main/ui/node_modules/
+yarn.lock
