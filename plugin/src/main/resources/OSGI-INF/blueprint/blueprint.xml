@@ -52,4 +52,13 @@
         </service-properties>
     </service>
 
+    <service id="cloudUiExtension" interface="org.opennms.integration.api.v1.ui.UIExtension">
+        <bean class="org.opennms.plugins.cloud.ui.CloudUiExtension">
+            <property name="id" value="cloudUiExtension"/>
+            <property name="menuEntry" value="OpenNMS Cloud"/>
+            <property name="resourceRoot" value="ui-ext"/>
+            <property name="moduleFileName" value="uiextension.es.js"/>
+        </bean>
+    </service>
+
 </blueprint>
