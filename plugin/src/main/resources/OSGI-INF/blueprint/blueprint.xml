@@ -5,6 +5,7 @@
                 http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0
                 http://aries.apache.org/schemas/blueprint-cm/blueprint-cm-1.1.0.xsd">
 
+    <!-- TSAAS -->
     <!-- Configuration stored in $OPENNMS_HOME/etc/org.opennms.plugins.cloud.cfg file -->
     <cm:property-placeholder id="tsaas-pocPluginProperties" persistent-id="org.opennms.plugins.cloud"
                              update-strategy="reload">
@@ -42,16 +43,17 @@
         </service-properties>
     </service>
 
+    <!-- HEALTH -->
     <bean id="cloudHealthCheck" class="org.opennms.plugins.cloud.tsaas.CloudHealthCheck">
         <argument ref="timeSeriesStorage"/>
     </bean>
-
     <service ref="cloudHealthCheck" interface="org.opennms.integration.api.v1.health.HealthCheck">
         <service-properties>
             <entry key="registration.export" value="true" />
         </service-properties>
     </service>
 
+    <!-- UI -->
     <service id="cloudUiExtension" interface="org.opennms.integration.api.v1.ui.UIExtension">
         <bean class="org.opennms.plugins.cloud.ui.CloudUiExtension">
             <property name="id" value="cloudUiExtension"/>
@@ -59,6 +61,16 @@
             <property name="resourceRoot" value="ui-ext"/>
             <property name="moduleFileName" value="uiextension.es.js"/>
         </bean>
+    </service>
+
+    <!-- REST -->
+    <bean id="cloudConfigRestService" class="org.opennms.plugins.cloud.rest.CloudConfigRestServiceImpl" >
+        <argument ref="tsaasConfig"/>
+    </bean>
+    <service interface="org.opennms.plugins.cloud.rest.CloudConfigRestService" ref="cloudConfigRestService" >
+        <service-properties>
+            <entry key="application-path" value="/rest/plugin" /><!-- TODO: Patrick not sure which base path we should use -->
+        </service-properties>
     </service>
 
 </blueprint>

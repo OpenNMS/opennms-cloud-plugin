@@ -155,6 +155,12 @@
             <artifactId>zstd-jni</artifactId>
             <version>${zstd.version}</version>
         </dependency>
+        <dependency><!-- for rest api -->
+            <groupId>jakarta.ws.rs</groupId>
+            <artifactId>jakarta.ws.rs-api</artifactId>
+            <version>2.1.6</version>
+            <scope>provided</scope><!-- comes with opennms -->
+        </dependency>
 
         <!-- Test -->
         <dependency>

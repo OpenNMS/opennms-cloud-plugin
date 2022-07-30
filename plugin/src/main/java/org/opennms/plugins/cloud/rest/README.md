@@ -1,0 +1,1 @@
+see also: https://docs.opennms.com/meridian/2022/development/rest/osgi.html
