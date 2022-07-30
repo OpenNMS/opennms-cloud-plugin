@@ -8,8 +8,6 @@
     <packaging>pom</packaging>
 
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <awaitilityVersion>4.0.3</awaitilityVersion>
         <hamcrest.version>1.3</hamcrest.version>
         <tsaasClientVersion>LATEST</tsaasClientVersion>
