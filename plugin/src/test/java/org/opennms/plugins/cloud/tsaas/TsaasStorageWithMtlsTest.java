@@ -62,10 +62,16 @@ public class TsaasStorageWithMtlsTest extends AbstractStorageIntegrationTest {
 
   @Before
   public void setUp() throws Exception {
-    TsaasConfig config = TsaasConfig.builder()
+    TsaasConfig serverConfig = TsaasConfig.builder()
         .mtlsEnabled(true)
         .batchSize(1) // set to 1 so that samples are not held back in the queue
+        .port(0)
         .build();
+
+    server = new TsaasServer(serverConfig, new TsassServerInterceptor(), new InMemoryStorage());
+    server.startServer();
+
+    TsaasConfig clientConfig = server.getConfig();
 
     Path pathToZipFile = Path.of("src/test/resources/cert/cloud-credentials.zip");
     assertTrue(Files.exists(pathToZipFile));
@@ -79,9 +85,7 @@ public class TsaasStorageWithMtlsTest extends AbstractStorageIntegrationTest {
     SecureCredentialsVault scv = mock(SecureCredentialsVault.class);
     when(scv.getCredentials(SCV_ALIAS)).thenReturn(new ImmutableCredentials("", "", attributes));
 
-    storage = new TsaasStorage(config, scv);
-    server = new TsaasServer(config, new TsassServerInterceptor(), new InMemoryStorage());
-    server.startServer();
+    storage = new TsaasStorage(clientConfig, scv);
     super.setUp();
   }
 

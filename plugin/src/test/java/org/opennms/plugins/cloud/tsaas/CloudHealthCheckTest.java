@@ -50,12 +50,17 @@ public class CloudHealthCheckTest {
 
     @Before
     public void setUp() throws Exception {
-        TsaasConfig config = TsaasConfig.builder()
+        TsaasConfig serverConfig = TsaasConfig.builder()
                 .batchSize(1) // set to 1 so that samples are not held back in the queue
+                .port(0)
                 .build();
-        storage = new TsaasStorage(config, mock(SecureCredentialsVault.class));
-        server = new TsaasServer(config, new TsassServerInterceptor(), new InMemoryStorage());
+
+        server = new TsaasServer(serverConfig, new TsassServerInterceptor(), new InMemoryStorage());
         server.startServer();
+
+        TsaasConfig clientConfig = server.getConfig();
+
+        storage = new TsaasStorage(clientConfig, mock(SecureCredentialsVault.class));
     }
 
     @After

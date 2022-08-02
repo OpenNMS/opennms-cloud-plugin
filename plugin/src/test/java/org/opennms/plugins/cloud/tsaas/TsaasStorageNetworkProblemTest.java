@@ -63,14 +63,20 @@ public class TsaasStorageNetworkProblemTest {
 
   private TsaasServer server;
   private TimeSeriesStorage serverStorage;
+  private TsaasConfig clientConfig;
 
   @Before
   public void setUp() throws Exception {
-    TsaasConfig config = TsaasConfig.builder()
-        .build();
+    TsaasConfig serverConfig = TsaasConfig.builder()
+            .port(0)
+            .batchSize(1)
+            .build();
+
     serverStorage = Mockito.mock(TimeSeriesStorage.class);
-    server = new TsaasServer(config, new TsassServerInterceptor(), serverStorage);
+    server = new TsaasServer(serverConfig, new TsassServerInterceptor(), serverStorage);
     server.startServer();
+
+    clientConfig = server.getConfig();
   }
 
   @After
@@ -82,11 +88,7 @@ public class TsaasStorageNetworkProblemTest {
 
   @Test
   public void shouldRecoverAfterServerFailure() throws StorageException, InterruptedException {
-    TsaasConfig config = TsaasConfig
-        .builder()
-        .batchSize(1)
-        .build();
-    TsaasStorage plugin = new TsaasStorage(config, mock(SecureCredentialsVault.class));
+    TsaasStorage plugin = new TsaasStorage(clientConfig, mock(SecureCredentialsVault.class));
 
     plugin.store(createSamples());
     verify(serverStorage, times(1)).store(any());
@@ -105,11 +107,7 @@ public class TsaasStorageNetworkProblemTest {
 
   @Test
   public void shouldRecoverAfterServerException() throws StorageException, InterruptedException {
-    TsaasConfig config = TsaasConfig
-            .builder()
-            .batchSize(1)
-            .build();
-    TsaasStorage plugin = new TsaasStorage(config, mock(SecureCredentialsVault.class));
+    TsaasStorage plugin = new TsaasStorage(clientConfig, mock(SecureCredentialsVault.class));
 
     doThrow(new StorageException("hups")).when(serverStorage).store(any());
     plugin.store(createSamples()); // nothing should happen since this is a non recoverable exception

@@ -57,14 +57,22 @@ public class TsaasStorageBatchStoringTest {
 
   private TsaasServer server;
   private TimeSeriesStorage serverStorage;
+  private TsaasConfig clientConfig;
 
   @Before
   public void setUp() throws Exception {
-    TsaasConfig config = TsaasConfig.builder()
-        .build();
+    TsaasConfig serverConfig = TsaasConfig.builder()
+            .batchSize(10)
+            .maxBatchWaitTimeInMilliSeconds(500)
+            .port(0)
+            .build();
+
     serverStorage = Mockito.mock(TimeSeriesStorage.class);
-    server = new TsaasServer(config, new TsassServerInterceptor(), serverStorage);
+
+    server = new TsaasServer(serverConfig, new TsassServerInterceptor(), serverStorage);
     server.startServer();
+
+    clientConfig = server.getConfig();
   }
 
   @After
@@ -76,12 +84,7 @@ public class TsaasStorageBatchStoringTest {
 
   @Test
   public void shouldSendStoreSamplesAfterWaitTime() throws StorageException, InterruptedException {
-    TsaasConfig config = TsaasConfig
-        .builder()
-        .batchSize(10)
-        .maxBatchWaitTimeInMilliSeconds(500)
-        .build();
-    TsaasStorage plugin = new TsaasStorage(config, mock(SecureCredentialsVault.class));
+    TsaasStorage plugin = new TsaasStorage(clientConfig, mock(SecureCredentialsVault.class));
 
     // store 2 samples. The batch size is 10 => should only call server when 10 samples are reached or maxBatchWaitTime has passed:
     plugin.store(createSamples());
@@ -89,7 +92,7 @@ public class TsaasStorageBatchStoringTest {
     verify(serverStorage, never()).store(any());
 
     // let's wait until maxBatchWaitTime time has passed
-    Thread.sleep(config.getMaxBatchWaitTimeInMilliSeconds() + 10);
+    Thread.sleep(clientConfig.getMaxBatchWaitTimeInMilliSeconds() + 10);
     plugin.store(createSamples());
 
     // we expect 3 samples, one from each call:
@@ -103,7 +106,7 @@ public class TsaasStorageBatchStoringTest {
     verify(serverStorage, never()).store(any());
 
     // let's wait until maxBatchWaitTime time has passed
-    Thread.sleep(config.getMaxBatchWaitTimeInMilliSeconds() + 10);
+    Thread.sleep(clientConfig.getMaxBatchWaitTimeInMilliSeconds() + 10);
     plugin.store(createSamples());
 
     // we expect 3 samples, one from each call:
