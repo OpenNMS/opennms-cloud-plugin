@@ -91,6 +91,17 @@ public class TsaasConfig {
     return this.maxBatchWaitTimeInMilliSeconds;
   }
 
+  public Builder cloneIntoBuilder() {
+    return new Builder()
+            .host(host)
+            .port(port)
+            .tokenKey(tokenKey)
+            .tokenValue(tokenValue)
+            .mtlsEnabled(mtlsEnabled)
+            .batchSize(batchSize)
+            .maxBatchWaitTimeInMilliSeconds(maxBatchWaitTimeInMilliSeconds);
+  }
+
   public static Builder builder() {
     return new Builder();
   }

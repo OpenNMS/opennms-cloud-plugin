@@ -53,7 +53,7 @@ public class TsaasServer {
 
     private static final Logger LOG = LoggerFactory.getLogger(TsaasServer.class);
 
-    private final TsaasConfig config;
+    private TsaasConfig config;
     private Server server;
     private final TimeseriesGrpcImpl timeseriesService;
     private final TsassServerInterceptor serverInterceptor;
@@ -89,7 +89,11 @@ public class TsaasServer {
                 .build()
                 .start();
 
-            LOG.info("Grpc Server started, listening on {}", config.getPort());
+            LOG.info("Grpc Server started, listening on {}", server.getPort());
+            if (server.getPort() != config.getPort()) {
+                LOG.info("saving port {} into config", server.getPort());
+                config = config.cloneIntoBuilder().port(server.getPort()).build();
+            }
             CompletableFuture.runAsync(() -> {
                 try {
                     server.awaitTermination();
@@ -112,4 +116,5 @@ public class TsaasServer {
         LOG.info("Grpc Server stopped");
     }
 
+    public TsaasConfig getConfig() { return config; }
 }
