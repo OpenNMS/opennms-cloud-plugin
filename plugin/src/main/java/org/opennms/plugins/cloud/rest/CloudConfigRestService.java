@@ -16,4 +16,9 @@ public interface CloudConfigRestService {
     @PUT
     @Path("/activationkey")
     Response putActivationKey(final String key);
+
+    @GET
+    @Path("/status")
+    @Produces(value={MediaType.APPLICATION_JSON})
+    Response getStatus();
 }

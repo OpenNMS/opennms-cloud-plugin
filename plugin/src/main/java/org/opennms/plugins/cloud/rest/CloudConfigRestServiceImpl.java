@@ -7,6 +7,7 @@ import org.opennms.plugins.cloud.tsaas.TsaasConfig;
 public class CloudConfigRestServiceImpl implements CloudConfigRestService {
 
     private final TsaasConfig config;
+    private boolean configured = false;
 
     public CloudConfigRestServiceImpl(final TsaasConfig config) {
         this.config = config;
@@ -21,10 +22,18 @@ public class CloudConfigRestServiceImpl implements CloudConfigRestService {
 
     @Override
     public Response putActivationKey(final String key) {
+        configured = true;
         // TODO: Patrick implement me properly
+        return getStatus();
+    }
+
+    @Override
+    public Response getStatus() {
+        // TODO: Patrick implement me properly
+        String status = configured ? "configured" : "notConfigured";
         return Response
                 .status(Response.Status.OK)
-                .entity("{\"status\":\"looking good!\"}")
+                .entity("{\"status\":\"" + status + "\"}")
                 .build();
     }
 }
