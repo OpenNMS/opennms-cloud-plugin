@@ -13,15 +13,15 @@ import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.opennms.integration.api.v1.timeseries.Metric;
 import org.opennms.integration.api.v1.timeseries.TagMatcher;
-import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableTagMatcher;
+import org.opennms.plugins.cloud.tsaas.TsaasStorage;
 
 @Command(scope = "opennms-tsaas", name = "query-metrics", description = "Find metrics.", detailedDescription= "pairs")
 @Service
 public class MetricQuery implements Action {
 
     @Reference
-    TimeSeriesStorage tss;
+    TsaasStorage tss;
 
     @Argument(multiValued=true)
     List<String> arguments = new LinkedList<>();

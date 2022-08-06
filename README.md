@@ -29,6 +29,7 @@ host=localhost
 port=5001
 tokenKey=token
 mtlsEnabled=false
+batchSize=1000
 ```
 
 Change configuration via Karaf shell:
@@ -38,6 +39,7 @@ property-set host localhost
 property-set port 5001
 property-set tokenKey token
 property-set mtlsEnabled false
+property-set batchSize 1000
 config:update
 ```
 

@@ -35,13 +35,13 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import org.junit.Test;
-import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
+import org.opennms.plugins.cloud.tsaas.TsaasStorage;
 
 public class MetricWriteTest {
 
     @Test
     public void shouldWrite() throws Exception {
-        TimeSeriesStorage tss = mock(TimeSeriesStorage.class);
+        TsaasStorage tss = mock(TsaasStorage.class);
         final MetricWrite write = new MetricWrite();
         write.tss = tss;
         write.count = 3;

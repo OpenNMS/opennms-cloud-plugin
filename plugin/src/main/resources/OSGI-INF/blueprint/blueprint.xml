@@ -74,4 +74,9 @@
         </service-properties>
     </service>
 
+    <bean id="cloudServiceManager" class="org.opennms.plugins.cloud.ServiceManager" destroy-method="destroy">
+        <argument ref="blueprintBundleContext"/>
+        <argument ref="timeSeriesStorage"/>
+    </bean>
+    <service ref="cloudServiceManager" interface="org.opennms.plugins.cloud.ServiceManager" />
 </blueprint>

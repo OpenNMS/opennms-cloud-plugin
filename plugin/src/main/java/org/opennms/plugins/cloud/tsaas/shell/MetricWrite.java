@@ -14,16 +14,16 @@ import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.opennms.integration.api.v1.timeseries.IntrinsicTagNames;
 import org.opennms.integration.api.v1.timeseries.Metric;
 import org.opennms.integration.api.v1.timeseries.Sample;
-import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableMetric;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableSample;
+import org.opennms.plugins.cloud.tsaas.TsaasStorage;
 
 @Command(scope = "opennms-tsaas", name = "write-samples", description = "Write samples.")
 @Service
 public class MetricWrite implements Action {
 
     @Reference
-    TimeSeriesStorage tss;
+    TsaasStorage tss;
 
     @Option(name = "count")
     int count = 1;
