@@ -5,7 +5,8 @@
                 http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0
                 http://aries.apache.org/schemas/blueprint-cm/blueprint-cm-1.1.0.xsd">
 
-    <!-- TSAAS -->
+    <!-- CONFIG -->
+    <reference id="secureCredentialsVault" interface="org.opennms.integration.api.v1.scv.SecureCredentialsVault" availability="mandatory"/>
     <!-- Configuration stored in $OPENNMS_HOME/etc/org.opennms.plugins.cloud.cfg file -->
     <cm:property-placeholder id="tsaas-pocPluginProperties" persistent-id="org.opennms.plugins.cloud"
                              update-strategy="reload">
@@ -30,18 +31,7 @@
         <argument value="${maxBatchWaitTimeInMilliSeconds}"/>
     </bean>
 
-    <reference id="secureCredentialsVault" interface="org.opennms.integration.api.v1.scv.SecureCredentialsVault" availability="mandatory"/>
-
-    <bean id="timeSeriesStorage" class="org.opennms.plugins.cloud.tsaas.TsaasStorage" destroy-method="destroy">
-        <argument ref="tsaasConfig"/>
-        <argument ref="secureCredentialsVault" />
-    </bean>
-
-    <service ref="timeSeriesStorage" interface="org.opennms.integration.api.v1.timeseries.TimeSeriesStorage">
-        <service-properties>
-            <entry key="registration.export" value="true" />
-        </service-properties>
-    </service>
+    <bean id="cloudConfigManager" class="org.opennms.plugins.cloud.config.ConfigurationManager" />
 
     <!-- HEALTH -->
     <bean id="cloudHealthCheck" class="org.opennms.plugins.cloud.tsaas.CloudHealthCheck">
@@ -65,11 +55,22 @@
 
     <!-- REST -->
     <bean id="cloudConfigRestService" class="org.opennms.plugins.cloud.rest.CloudConfigRestServiceImpl" >
-        <argument ref="tsaasConfig"/>
+        <argument ref="cloudConfigManager"/>
     </bean>
     <service interface="org.opennms.plugins.cloud.rest.CloudConfigRestService" ref="cloudConfigRestService" >
         <service-properties>
             <entry key="application-path" value="/rest/plugin" /><!-- TODO: Patrick not sure which base path we should use -->
+        </service-properties>
+    </service>
+
+    <!-- TSAAS -->
+    <bean id="timeSeriesStorage" class="org.opennms.plugins.cloud.tsaas.TsaasStorage" destroy-method="destroy">
+        <argument ref="tsaasConfig"/>
+        <argument ref="secureCredentialsVault" />
+    </bean>
+    <service ref="timeSeriesStorage" interface="org.opennms.integration.api.v1.timeseries.TimeSeriesStorage">
+        <service-properties>
+            <entry key="registration.export" value="true" />
         </service-properties>
     </service>
 

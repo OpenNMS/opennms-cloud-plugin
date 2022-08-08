@@ -26,24 +26,36 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.rest;
+package org.opennms.plugins.cloud.config;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.successful;
 
-@Path("/cloud/config")
-public interface CloudConfigRestService {
+// 5.) authenticate(String opennmsKey, environment-uuid, system-uuid) return cert, grpc endpoint
+// 6.) store: cert, cloud services, environment-uuid
+// 7.) identity:
+// 9.) getServices
+// 10.) getAccessToken (cert, system-uuid, service) return token
+public class ConfigurationManager {
 
-    @PUT
-    @Path("/activationkey")
-    Response putActivationKey(final String key);
+    public enum ConfigStatus {
+        /** We never tried to configure the cloud plugin. */
+        notAttempted,
+        /** The cloud plugin is configured successfully. */
+        successful,
+        /** The cloud plugin is configured but the configuration failed. */
+        failed
 
-    @GET
-    @Path("/status")
-    @Produces(value={MediaType.APPLICATION_JSON})
-    Response getStatus();
+    }
+
+    private ConfigStatus currentStatus = ConfigStatus.notAttempted;
+
+    public void configure(final String key) {
+        // TODO: actual configuration
+        this.currentStatus = successful;
+    }
+
+    public ConfigStatus getStatus() {
+        return currentStatus;
+    }
+
 }

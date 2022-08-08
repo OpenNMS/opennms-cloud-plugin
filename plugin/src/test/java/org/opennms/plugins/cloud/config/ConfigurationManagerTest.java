@@ -26,24 +26,20 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.rest;
+package org.opennms.plugins.cloud.config;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import static org.junit.Assert.assertEquals;
 
-@Path("/cloud/config")
-public interface CloudConfigRestService {
+import org.junit.Test;
 
-    @PUT
-    @Path("/activationkey")
-    Response putActivationKey(final String key);
+public class ConfigurationManagerTest {
 
-    @GET
-    @Path("/status")
-    @Produces(value={MediaType.APPLICATION_JSON})
-    Response getStatus();
+    @Test
+    public void shouldConfigure(){
+        ConfigurationManager cm = new ConfigurationManager();
+        assertEquals(ConfigurationManager.ConfigStatus.notAttempted, cm.getStatus());
+        cm.configure("something");
+        assertEquals(ConfigurationManager.ConfigStatus.successful, cm.getStatus());
+    }
+
 }
