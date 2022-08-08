@@ -28,7 +28,9 @@
 
 package org.opennms.plugins.cloud.config;
 
-import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.successful;
+import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.SUCCESSFUL;
+
+import java.util.Objects;
 
 // 5.) authenticate(String opennmsKey, environment-uuid, system-uuid) return cert, grpc endpoint
 // 6.) store: cert, cloud services, environment-uuid
@@ -39,19 +41,20 @@ public class ConfigurationManager {
 
     public enum ConfigStatus {
         /** We never tried to configure the cloud plugin. */
-        notAttempted,
+        NOT_ATTEMPTED,
         /** The cloud plugin is configured successfully. */
-        successful,
+        SUCCESSFUL,
         /** The cloud plugin is configured but the configuration failed. */
-        failed
+        FAILED
 
     }
 
-    private ConfigStatus currentStatus = ConfigStatus.notAttempted;
+    private ConfigStatus currentStatus = ConfigStatus.NOT_ATTEMPTED;
 
     public void configure(final String key) {
+        Objects.requireNonNull(key);
         // TODO: actual configuration
-        this.currentStatus = successful;
+        this.currentStatus = SUCCESSFUL;
     }
 
     public ConfigStatus getStatus() {

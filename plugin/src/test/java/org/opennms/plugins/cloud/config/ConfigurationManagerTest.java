@@ -37,9 +37,9 @@ public class ConfigurationManagerTest {
     @Test
     public void shouldConfigure(){
         ConfigurationManager cm = new ConfigurationManager();
-        assertEquals(ConfigurationManager.ConfigStatus.notAttempted, cm.getStatus());
+        assertEquals(ConfigurationManager.ConfigStatus.NOT_ATTEMPTED, cm.getStatus());
         cm.configure("something");
-        assertEquals(ConfigurationManager.ConfigStatus.successful, cm.getStatus());
+        assertEquals(ConfigurationManager.ConfigStatus.SUCCESSFUL, cm.getStatus());
     }
 
 }
