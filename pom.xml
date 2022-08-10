@@ -29,6 +29,7 @@
         <sonar.organization>opennms</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <jacocoVersion>0.8.7</jacocoVersion>
+        <osgiJaxRsVersion>1.1.0.ONMS</osgiJaxRsVersion>
     </properties>
 
 
