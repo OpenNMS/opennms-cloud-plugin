@@ -52,6 +52,7 @@ import org.opennms.integration.api.v1.timeseries.TimeSeriesFetchRequest;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.plugins.cloud.config.CertificateImporter;
 import org.opennms.plugins.cloud.srv.tsaas.grpc.GrpcObjectMapper;
+import org.opennms.tsaas.TimeseriesGrpc;
 import org.opennms.tsaas.Tsaas;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,13 +71,13 @@ public class TsaasStorage implements TimeSeriesStorage {
     private final ConcurrentLinkedDeque<Tsaas.Sample> queue; // holds samples to be batched
     private Instant lastBatchSentTs;
     @VisibleForTesting
-    final GrpcConnection grpc;
+    final GrpcConnection<TimeseriesGrpc.TimeseriesBlockingStub> grpc;
 
     public TsaasStorage(TsaasConfig config, SecureCredentialsVault scv) {
         this.config = Objects.requireNonNull(config);
         importCloudCredentialsIfPresent(scv);
         SecureCredentialsVaultUtil scvUtil = new SecureCredentialsVaultUtil(scv);
-        this.grpc = new GrpcConnection(config, scvUtil);
+        this.grpc = new GrpcConnection<>(config, scvUtil, TimeseriesGrpc::newBlockingStub);
         LOG.debug("Starting with host {} and port {}", config.getHost(), config.getPort());
         queue = new ConcurrentLinkedDeque<>();
         lastBatchSentTs = Instant.now();

@@ -137,6 +137,11 @@
             <version>${tsaasClientVersion}</version>
         </dependency>
         <dependency>
+            <groupId>org.opennms.cloud</groupId>
+            <artifactId>config-grpc</artifactId>
+            <version>${configClientVersion}</version>
+        </dependency>
+        <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
             <version>${protobufVersion}</version>
@@ -166,6 +171,12 @@
             <artifactId>jakarta.ws.rs-api</artifactId>
             <version>2.1.6</version>
             <scope>provided</scope><!-- comes with opennms -->
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.24</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Test -->

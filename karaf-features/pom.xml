@@ -146,5 +146,11 @@
             <version>${tsaasClientVersion}</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.opennms.cloud</groupId>
+            <artifactId>config-grpc</artifactId>
+            <version>${configClientVersion}</version>
+            <scope>provided</scope>
+        </dependency>
 </dependencies>
 </project>

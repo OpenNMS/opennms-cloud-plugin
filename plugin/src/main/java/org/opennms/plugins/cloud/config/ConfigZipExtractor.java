@@ -54,6 +54,14 @@ public class ConfigZipExtractor {
         }
     }
 
+    public CloudGatewayConfig get() throws IOException {
+        return CloudGatewayConfig.builder()
+                .publicKey(getPublicKey())
+                .privateKey(getPrivateKey())
+                .token(getJwtToken())
+                .build();
+    }
+
     public String getPrivateKey() throws IOException {
         return extractFile("key.key");
     }

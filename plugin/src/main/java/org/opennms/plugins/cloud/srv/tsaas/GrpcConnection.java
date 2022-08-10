@@ -36,12 +36,12 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import javax.net.ssl.SSLException;
 
 import org.opennms.integration.api.v1.scv.Credentials;
 import org.opennms.plugins.cloud.srv.tsaas.grpc.comp.ZStdCodecRegisterUtil;
-import org.opennms.tsaas.TimeseriesGrpc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,16 +62,17 @@ import io.grpc.netty.shaded.io.netty.handler.ssl.OpenSsl;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
+import io.grpc.stub.AbstractBlockingStub;
 
-public class GrpcConnection {
+public class GrpcConnection<T extends AbstractBlockingStub<T>> {
     private static final Logger LOG = LoggerFactory.getLogger(GrpcConnection.class);
     // 100M sync with cortex server
     private static final int MAX_MESSAGE_SIZE = 104857600;
     @VisibleForTesting
     final ManagedChannel managedChannel;
-    private final TimeseriesGrpc.TimeseriesBlockingStub clientStub;
+    private final T clientStub;
 
-    public GrpcConnection(final TsaasConfig config, final SecureCredentialsVaultUtil scvUtil) {
+    public GrpcConnection(final TsaasConfig config, final SecureCredentialsVaultUtil scvUtil, final Function<ManagedChannel,T> stubCreator) {
         final NettyChannelBuilder builder = NettyChannelBuilder.forAddress(config.getHost(), config.getPort());
         if (config.isMtlsEnabled()) {
             builder.sslContext(createSslContext(scvUtil));
@@ -84,12 +85,12 @@ public class GrpcConnection {
                 .compressorRegistry(ZStdCodecRegisterUtil.createCompressorRegistry())
                 .decompressorRegistry(ZStdCodecRegisterUtil.createDecompressorRegistry())
                 .build();
-        clientStub = TimeseriesGrpc.newBlockingStub(managedChannel)
+        clientStub = stubCreator.apply(managedChannel)
                 .withCompression("gzip") // ZStdGrpcCodec.ZSTD
                 .withInterceptors(new TokenAddingInterceptor(config, scvUtil));
     }
 
-    public TimeseriesGrpc.TimeseriesBlockingStub get() {
+    public T get() {
         return this.clientStub;
     }
 

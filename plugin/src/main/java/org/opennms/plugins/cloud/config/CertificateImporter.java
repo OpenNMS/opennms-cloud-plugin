@@ -36,17 +36,16 @@ import static org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil.Typ
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 import org.opennms.integration.api.v1.scv.Credentials;
 import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
 import org.opennms.integration.api.v1.scv.immutables.ImmutableCredentials;
 import org.opennms.plugins.cloud.srv.tsaas.GrpcConnection;
 import org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil;
+import org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil.Type;
 import org.opennms.plugins.cloud.srv.tsaas.TsaasConfig;
+import org.opennms.tsaas.TimeseriesGrpc;
 import org.opennms.tsaas.Tsaas;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,14 +59,18 @@ public class CertificateImporter {
 
     private final SecureCredentialsVault scv;
 
+    private final ConfigurationManager configManager;
+
     private static final Logger LOG = LoggerFactory.getLogger(CertificateImporter.class);
 
     public CertificateImporter(final String fileParam,
                                final SecureCredentialsVault scv,
-                               final TsaasConfig config) {
+                               final TsaasConfig config,
+                               final ConfigurationManager configManager) {
         this.fileParam = Objects.requireNonNull(fileParam);
         this.scv = Objects.requireNonNull(scv);
         this.config = Objects.requireNonNull(config);
+        this.configManager = Objects.requireNonNull(configManager);
     }
 
     public void doIt() throws IOException {
@@ -81,51 +84,41 @@ public class CertificateImporter {
             throw new IllegalArgumentException(String.format("%s is not a readable.", fileParam));
         }
 
-        final ConfigZipExtractor configZip = new ConfigZipExtractor(file);
-
-        // retain old values if present
-        Map<String, String> attributes = new HashMap<>();
-        SecureCredentialsVaultUtil scvUtil = new SecureCredentialsVaultUtil(scv);
-        scvUtil.getCredentials()
-                .map(Credentials::getAttributes)
-                .map(Map::entrySet)
-                .stream()
-                .flatMap(Set::stream)
-                .forEach(e -> attributes.put(e.getKey(), e.getValue()));
-
-        // add / override new value
-        attributes.put(privatekey.name(), configZip.getPrivateKey());
-        attributes.put(publickey.name(), configZip.getPublicKey());
-        attributes.put(token.name(), configZip.getJwtToken());
-
-        // Store modified credentials
-        Credentials newCredentials = new ImmutableCredentials("", "", attributes);
-        scv.setCredentials(SecureCredentialsVaultUtil.SCV_ALIAS, newCredentials);
+        final CloudGatewayConfig config = new ConfigZipExtractor(file).get();
+        configManager.importCredentials(config);
         LOG.info("Imported certificates from {}", fileParam);
 
-        // Check if storage worked
-        Credentials credFromScv = scv.getCredentials(SecureCredentialsVaultUtil.SCV_ALIAS);
-        if (Objects.equals(configZip.getPrivateKey(), credFromScv.getAttribute(privatekey.name()))
-                && Objects.equals(configZip.getPublicKey(), credFromScv.getAttribute(publickey.name()))
-                && Objects.equals(configZip.getJwtToken(), credFromScv.getAttribute(SecureCredentialsVaultUtil.Type.token.name()))) {
+        if (isConfigStored(config)) {
             LOG.info("Storing of certificates was successfully, will delete zip file.");
-
             Files.delete(file);
         } else {
             LOG.info("Storing of certificates was NOT successfully!!!");
             LOG.info("Will abort.");
-            return;
         }
 
+        tryConnection(scv);
+    }
+
+    public boolean isConfigStored(final CloudGatewayConfig config) {
+        Credentials credFromScv = scv.getCredentials(SCV_ALIAS);
+        return Objects.equals(config.getPrivateKey(), credFromScv.getAttribute(Type.privatekey.name()))
+                && Objects.equals(config.getPublicKey(), credFromScv.getAttribute(Type.publickey.name()))
+                && Objects.equals(config.getToken(), credFromScv.getAttribute(Type.token.name()));
+    }
+
+    boolean tryConnection(final SecureCredentialsVault scv) {
         // Check if the connection can be established
         LOG.info("Checking if connection to server works");
         try {
-            GrpcConnection grpc = new GrpcConnection(this.config, scvUtil);
+            SecureCredentialsVaultUtil scvUtil = new SecureCredentialsVaultUtil(scv);
+            GrpcConnection<TimeseriesGrpc.TimeseriesBlockingStub> grpc = new GrpcConnection<>(this.config, scvUtil, TimeseriesGrpc::newBlockingStub);
             Tsaas.CheckHealthResponse response = grpc.get().checkHealth(Tsaas.CheckHealthRequest.newBuilder().build());
             LOG.info("Connection to cloud server: OK");
             LOG.info("Status of cloud server: {}", response.getStatus().name());
         } catch (Exception e) {
             LOG.info("Warning: Connection to cloud was not successful: {}", e.getMessage());
+            return false;
         }
+        return true;
     }
 }
