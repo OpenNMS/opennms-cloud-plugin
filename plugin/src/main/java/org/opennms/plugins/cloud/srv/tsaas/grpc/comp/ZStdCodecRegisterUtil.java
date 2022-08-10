@@ -5,6 +5,9 @@ import io.grpc.DecompressorRegistry;
 
 public class ZStdCodecRegisterUtil {
 
+    private ZStdCodecRegisterUtil(){
+        // Utility class
+    }
     public static DecompressorRegistry createDecompressorRegistry() {
         return DecompressorRegistry.getDefaultInstance().with(new ZStdGrpcCodec(), true);
     }

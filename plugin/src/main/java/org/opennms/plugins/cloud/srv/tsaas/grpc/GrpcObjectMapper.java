@@ -34,6 +34,10 @@ public class GrpcObjectMapper {
 
     private static final Logger LOG = LoggerFactory.getLogger(GrpcObjectMapper.class);
 
+    private GrpcObjectMapper() {
+        // Utility class
+    }
+
     public static Tsaas.Tag toTag(Tag tag) {
         return Tsaas.Tag.newBuilder()
                 .setKey(tag.getKey())

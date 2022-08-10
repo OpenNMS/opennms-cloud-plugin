@@ -30,7 +30,7 @@ package org.opennms.plugins.cloud.srv;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
@@ -65,7 +65,7 @@ public class ServiceManager {
 
     final TsaasStorage tsaas;
 
-    private final Map<Service, ServiceRegistration<?>> registrations = new HashMap<>();
+    private final Map<Service, ServiceRegistration<?>> registrations = new EnumMap<>(Service.class);
 
     public ServiceManager(final BundleContext context,
                           final TsaasStorage tsaas) {
