@@ -21,7 +21,7 @@
         </cm:default-properties>
     </cm:property-placeholder>
 
-    <bean id="tsaasConfig" class="org.opennms.plugins.cloud.tsaas.TsaasConfig" >
+    <bean id="tsaasConfig" class="org.opennms.plugins.cloud.srv.tsaas.TsaasConfig" >
         <argument value="${host}"/>
         <argument value="${port}"/>
         <argument value="${tokenKey}"/>
@@ -34,7 +34,7 @@
     <bean id="cloudConfigManager" class="org.opennms.plugins.cloud.config.ConfigurationManager" />
 
     <!-- HEALTH -->
-    <bean id="cloudHealthCheck" class="org.opennms.plugins.cloud.tsaas.CloudHealthCheck">
+    <bean id="cloudHealthCheck" class="org.opennms.plugins.cloud.srv.tsaas.CloudHealthCheck">
         <argument ref="timeSeriesStorage"/>
     </bean>
     <service ref="cloudHealthCheck" interface="org.opennms.integration.api.v1.health.HealthCheck">
@@ -63,20 +63,17 @@
         </service-properties>
     </service>
 
-    <!-- TSAAS -->
-    <bean id="timeSeriesStorage" class="org.opennms.plugins.cloud.tsaas.TsaasStorage" destroy-method="destroy">
-        <argument ref="tsaasConfig"/>
-        <argument ref="secureCredentialsVault" />
-    </bean>
-    <service ref="timeSeriesStorage" interface="org.opennms.integration.api.v1.timeseries.TimeSeriesStorage">
-        <service-properties>
-            <entry key="registration.export" value="true" />
-        </service-properties>
-    </service>
-
-    <bean id="cloudServiceManager" class="org.opennms.plugins.cloud.ServiceManager" destroy-method="destroy">
+    <!-- SERVICES -->
+    <bean id="cloudServiceManager" class="org.opennms.plugins.cloud.srv.ServiceManager" destroy-method="destroy">
         <argument ref="blueprintBundleContext"/>
         <argument ref="timeSeriesStorage"/>
     </bean>
-    <service ref="cloudServiceManager" interface="org.opennms.plugins.cloud.ServiceManager" />
+    <service ref="cloudServiceManager" interface="org.opennms.plugins.cloud.srv.ServiceManager" />
+
+    <!-- SERVICE: TSAAS -->
+    <bean id="timeSeriesStorage" class="org.opennms.plugins.cloud.srv.tsaas.TsaasStorage" destroy-method="destroy">
+        <argument ref="tsaasConfig"/>
+        <argument ref="secureCredentialsVault" />
+    </bean>
+    <service ref="timeSeriesStorage" interface="org.opennms.plugins.cloud.srv.tsaas.TsaasStorage" />
 </blueprint>
