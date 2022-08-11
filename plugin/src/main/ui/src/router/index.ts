@@ -1,11 +1,11 @@
 import { createRouter, createWebHistory, Router } from 'vue-router'
-import HelloWorld from '../components/HelloWorld.vue'
+import CloudPlugin from '../components/CloudPlugin.vue'
 
 const routes = [
   {
     path: '/',
-    name: 'hello',
-    component: HelloWorld,
+    name: 'CloudPlugin',
+    component: CloudPlugin,
   },
 ]
 

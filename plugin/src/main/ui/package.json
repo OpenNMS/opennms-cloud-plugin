@@ -18,6 +18,12 @@
     "preview": "vite build && vite preview --port 5002"
   },
   "dependencies": {
+    "@featherds/button": "0.11.1",
+    "@featherds/icon": "0.11.1",
+    "@featherds/snackbar": "0.11.1",
+    "@featherds/styles": "0.11.1",
+    "@featherds/textarea": "0.11.1",
+    "@featherds/utils": "0.11.1",
     "pinia": "^2.0.14",
     "vite-plugin-externals": "^0.5.0",
     "vue": "^3.2.37",
@@ -26,8 +32,10 @@
   "devDependencies": {
     "@types/node": "^18.0.0",
     "@vitejs/plugin-vue": "^2.2.0",
+    "sass": "1.54.3",
     "typescript": "^4.5.4",
     "vite": "^2.8.0",
     "vue-tsc": "^0.38.1"
-  }
+  },
+  "packageManager": "yarn@3.2.2"
 }
