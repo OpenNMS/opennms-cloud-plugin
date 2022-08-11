@@ -44,7 +44,7 @@ import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
 import org.opennms.integration.api.v1.scv.immutables.ImmutableCredentials;
 import org.opennms.plugins.cloud.tsaas.GrpcConnection;
 import org.opennms.plugins.cloud.tsaas.SecureCredentialsVaultUtil;
-import org.opennms.tsaas.TimeseriesGrpc;
+import org.opennms.plugins.cloud.tsaas.TsaasConfig;
 
 // 5.) authenticate(String opennmsKey, environment-uuid, system-uuid) return cert, grpc endpoint
 // 6.) store: cert, cloud services, environment-uuid
@@ -66,15 +66,18 @@ public class ConfigurationManager {
     private ConfigStatus currentStatus = ConfigStatus.NOT_ATTEMPTED;
 
     private final SecureCredentialsVault scv;
+    private final TsaasConfig config;
 
-    public ConfigurationManager(final SecureCredentialsVault scv) {
+    public ConfigurationManager(final SecureCredentialsVault scv, final TsaasConfig config) {
         this.scv = Objects.requireNonNull(scv);
+        this.config = Objects.requireNonNull(config);
     }
 
     public void configure(final String key) {
         Objects.requireNonNull(key);
         SecureCredentialsVaultUtil scvUtil = new SecureCredentialsVaultUtil(scv);
-        final GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> grpcConnection = new GrpcConnection<>(config, scvUtil, TimeseriesGrpc::newBlockingStub);
+        final GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> grpcConnection =
+                new GrpcConnection<>(config, scvUtil, AuthenticateGrpc::newBlockingStub);
         AuthenticateGrpc.AuthenticateBlockingStub grpc = grpcConnection.get();
 
         AuthenticateOuterClass.AuthenticateKeyRequest keyRequest = AuthenticateOuterClass.AuthenticateKeyRequest.newBuilder()

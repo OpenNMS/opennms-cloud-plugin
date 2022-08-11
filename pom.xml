@@ -13,7 +13,7 @@
         <awaitilityVersion>4.0.3</awaitilityVersion>
         <hamcrest.version>1.3</hamcrest.version>
         <tsaasClientVersion>LATEST</tsaasClientVersion>
-        <configClientVersion>1.0.0-SNAPSHOT</configClientVersion>
+        <configClientVersion>LATEST</configClientVersion>
         <java.version>11</java.version>
         <zstd.version>1.5.0-2</zstd.version>
         <junit.version>4.13.2</junit.version>

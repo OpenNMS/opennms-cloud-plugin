@@ -137,9 +137,10 @@
             <version>${tsaasClientVersion}</version>
         </dependency>
         <dependency>
-            <groupId>org.opennms.cloud</groupId>
-            <artifactId>config-grpc</artifactId>
+            <groupId>org.opennms.tsaas.platform</groupId>
+            <artifactId>tsaas-authenticate-grpc</artifactId>
             <version>${configClientVersion}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.google.protobuf</groupId>

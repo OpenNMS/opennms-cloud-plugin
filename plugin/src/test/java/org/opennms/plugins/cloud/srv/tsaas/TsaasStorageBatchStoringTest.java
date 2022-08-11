@@ -51,6 +51,7 @@ import org.opennms.integration.api.v1.timeseries.StorageException;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableMetric;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableSample;
+import org.opennms.plugins.cloud.config.ConfigurationManager;
 import org.opennms.plugins.cloud.srv.tsaas.testserver.TsaasServer;
 import org.opennms.plugins.cloud.srv.tsaas.testserver.TsassServerInterceptor;
 
@@ -85,7 +86,7 @@ public class TsaasStorageBatchStoringTest {
 
   @Test
   public void shouldSendStoreSamplesAfterWaitTime() throws StorageException, InterruptedException {
-    TsaasStorage plugin = new TsaasStorage(clientConfig, mock(SecureCredentialsVault.class));
+    TsaasStorage plugin = new TsaasStorage(clientConfig, mock(SecureCredentialsVault.class), mock(ConfigurationManager.class));
 
     // store 2 samples. The batch size is 10 => should only call server when 10 samples are reached or maxBatchWaitTime has passed:
     plugin.store(createSamples());

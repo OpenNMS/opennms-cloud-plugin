@@ -33,14 +33,15 @@ public class TsassStorageCredentialsImportTest {
     public void shouldImportCloudCredentialsIfPresent() throws Exception {
 
         InMemoryScv scv = new InMemoryScv();
-        TsaasStorage storage = new TsaasStorage(TsaasConfig.builder().build(), scv);
+        ConfigurationManager cm = new ConfigurationManager(scv, TsaasConfig.builder().build());
+        TsaasStorage storage = new TsaasStorage(TsaasConfig.builder().build(), scv, cm);
         openNmsHome = Files.createTempDirectory(this.getClass().getSimpleName());
         System.setProperty(OPENNMS_HOME, openNmsHome.toString());
         Files.createDirectory(Path.of(openNmsHome.toString(), "etc"));
         Path credentialsFile = Path.of(openNmsHome.toString(), "etc", "cloud-credentials.zip");
         Files.copy(Path.of("src/test/resources/cert/cloud-credentials.zip"), credentialsFile);
         assertTrue(Files.exists(credentialsFile));
-        storage.importCloudCredentialsIfPresent(scv);
+        storage.importCloudCredentialsIfPresent(scv, cm);
         Credentials credentials = scv.getCredentials(SCV_ALIAS);
         assertNotNull(credentials);
         String value = credentials.getAttribute(SecureCredentialsVaultUtil.Type.publickey.name());

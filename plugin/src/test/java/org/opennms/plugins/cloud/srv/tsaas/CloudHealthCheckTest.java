@@ -40,6 +40,7 @@ import org.opennms.integration.api.v1.health.Response;
 import org.opennms.integration.api.v1.health.Status;
 import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
 import org.opennms.integration.api.v1.timeseries.InMemoryStorage;
+import org.opennms.plugins.cloud.srv.config.ConfigurationManager;
 import org.opennms.plugins.cloud.srv.tsaas.testserver.TsaasServer;
 import org.opennms.plugins.cloud.srv.tsaas.testserver.TsassServerInterceptor;
 import org.opennms.tsaas.Tsaas;
@@ -60,7 +61,7 @@ public class CloudHealthCheckTest {
 
         TsaasConfig clientConfig = server.getConfig();
 
-        storage = new TsaasStorage(clientConfig, mock(SecureCredentialsVault.class));
+        storage = new TsaasStorage(clientConfig, mock(SecureCredentialsVault.class), mock(ConfigurationManager.class));
     }
 
     @After

@@ -89,7 +89,7 @@ public class TsaasStorageNetworkProblemTest {
 
   @Test
   public void shouldRecoverAfterServerFailure() throws StorageException, InterruptedException {
-    TsaasStorage plugin = new TsaasStorage(clientConfig, mock(SecureCredentialsVault.class));
+    TsaasStorage plugin = new TsaasStorage(clientConfig, mock(SecureCredentialsVault.class), mock(ConfigurationManager.class));
 
     plugin.store(createSamples());
     verify(serverStorage, times(1)).store(any());
@@ -108,7 +108,7 @@ public class TsaasStorageNetworkProblemTest {
 
   @Test
   public void shouldRecoverAfterServerException() throws StorageException, InterruptedException {
-    TsaasStorage plugin = new TsaasStorage(clientConfig, mock(SecureCredentialsVault.class));
+    TsaasStorage plugin = new TsaasStorage(clientConfig, mock(SecureCredentialsVault.class), mock(ConfigurationManager.class));
 
     doThrow(new StorageException("hups")).when(serverStorage).store(any());
     plugin.store(createSamples()); // nothing should happen since this is a non recoverable exception

@@ -58,7 +58,7 @@ public class TsaasStorageTest extends AbstractStorageIntegrationTest {
 
     TsaasConfig clientConfig = server.getConfig();
 
-    storage = new TsaasStorage(clientConfig, mock(SecureCredentialsVault.class));
+    storage = new TsaasStorage(clientConfig, mock(SecureCredentialsVault.class), mock(ConfigurationManager.class));
     super.setUp();
   }
 

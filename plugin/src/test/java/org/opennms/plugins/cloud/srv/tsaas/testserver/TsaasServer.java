@@ -58,14 +58,16 @@ public class TsaasServer {
 
     private TsaasConfig config;
     private Server server;
-    private final TimeseriesGrpcImpl timeseriesService;
+    private final TimeSeriesGrpcImpl timeSeriesService;
+    private final ConfigGrpcImpl configGrpcService;
     private final TsassServerInterceptor serverInterceptor;
 
 
     public TsaasServer(final TsaasConfig config,
         final TsassServerInterceptor serverInterceptor,
         final TimeSeriesStorage storage) {
-        this.timeseriesService = new TimeseriesGrpcImpl(storage);
+        this.configGrpcService = new ConfigGrpcImpl();
+        this.timeSeriesService = new TimeSeriesGrpcImpl(storage);
         this.config = config;
         this.serverInterceptor = serverInterceptor;
     }
@@ -75,7 +77,8 @@ public class TsaasServer {
         try {
             NettyServerBuilder builder = NettyServerBuilder
                     .forPort(config.getPort())
-                    .addService(timeseriesService)
+                    .addService(configGrpcService)
+                    .addService(timeSeriesService)
                     .decompressorRegistry(ZStdCodecRegisterUtil.createDecompressorRegistry())
                     .compressorRegistry(ZStdCodecRegisterUtil.createCompressorRegistry())
                     .intercept(serverInterceptor);
@@ -100,7 +103,7 @@ public class TsaasServer {
             CompletableFuture.runAsync(() -> {
                 try {
                     server.awaitTermination();
-                    this.timeseriesService.shutdown();
+                    this.timeSeriesService.shutdown();
                 } catch (InterruptedException ex) {
                     LOG.error(ex.getMessage(), ex);
                 }

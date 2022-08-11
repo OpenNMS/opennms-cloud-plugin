@@ -57,6 +57,9 @@ import org.opennms.plugins.cloud.srv.tsaas.testserver.TsassServerInterceptor;
 import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
 
+import com.google.common.base.Charsets;
+import com.google.common.io.CharStreams;
+
 public class TsaasStorageWithMtlsTest extends AbstractStorageIntegrationTest {
 
   private TsaasStorage storage;
@@ -87,7 +90,7 @@ public class TsaasStorageWithMtlsTest extends AbstractStorageIntegrationTest {
     SecureCredentialsVault scv = mock(SecureCredentialsVault.class);
     when(scv.getCredentials(SCV_ALIAS)).thenReturn(new ImmutableCredentials("", "", attributes));
 
-    storage = new TsaasStorage(clientConfig, scv);
+    storage = new TsaasStorage(clientConfig, scv, mock(ConfigurationManager.class));
     super.setUp();
   }
 

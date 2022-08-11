@@ -59,7 +59,7 @@ public class CertificateImporterTest {
     final String file = credentialsFile.toString();
     final SecureCredentialsVault scv = new InMemoryScv();
     final TsaasConfig config = TsaasConfig.builder().build();
-    final CertificateImporter importer = new CertificateImporter(file, scv, config);
+    final CertificateImporter importer = new CertificateImporter(file, scv, config, mock(ConfigurationManager.class));
     assertThrows(IllegalArgumentException.class, importer::doIt);
   }
 
@@ -69,7 +69,8 @@ public class CertificateImporterTest {
     credentialsFile = Files.createTempFile(this.getClass().getSimpleName(), ".zip");
     Files.copy(Path.of("src/test/resources/cert/cloud-credentials.zip"), credentialsFile, StandardCopyOption.REPLACE_EXISTING);
     assertTrue(Files.exists(credentialsFile));
-    CertificateImporter importer = new CertificateImporter(credentialsFile.toString(), scv, TsaasConfig.builder().build());
+    ConfigurationManager cm = new ConfigurationManager(scv, TsaasConfig.builder().build());
+    CertificateImporter importer = new CertificateImporter(credentialsFile.toString(), scv, TsaasConfig.builder().build(), cm);
     importer.doIt();
 
     Credentials credentials = scv.getCredentials(SCV_ALIAS);
@@ -95,7 +96,7 @@ public class CertificateImporterTest {
     credentialsFile = Files.createTempFile(this.getClass().getSimpleName(), ".zip");
     Files.copy(Path.of("src/test/resources/cert/cloud-credentials.zip"), credentialsFile, StandardCopyOption.REPLACE_EXISTING);
     assertTrue(Files.exists(credentialsFile));
-    CertificateImporter importer = new CertificateImporter(credentialsFile.toString(), scv, TsaasConfig.builder().build());
+    CertificateImporter importer = new CertificateImporter(credentialsFile.toString(), scv, TsaasConfig.builder().build(), mock(ConfigurationManager.class));
     importer.doIt();
 
     // Check if file has been deleted. We expect that the file is not deleted after an unsuccessful import:

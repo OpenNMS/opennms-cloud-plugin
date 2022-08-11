@@ -73,9 +73,10 @@ public class TsaasStorage implements TimeSeriesStorage {
     @VisibleForTesting
     final GrpcConnection<TimeseriesGrpc.TimeseriesBlockingStub> grpc;
 
-    public TsaasStorage(TsaasConfig config, SecureCredentialsVault scv) {
+    public TsaasStorage(TsaasConfig config, SecureCredentialsVault scv, ConfigurationManager cm) {
         this.config = Objects.requireNonNull(config);
-        importCloudCredentialsIfPresent(scv);
+        Objects.requireNonNull(cm);
+        importCloudCredentialsIfPresent(scv, cm);
         SecureCredentialsVaultUtil scvUtil = new SecureCredentialsVaultUtil(scv);
         this.grpc = new GrpcConnection<>(config, scvUtil, TimeseriesGrpc::newBlockingStub);
         LOG.debug("Starting with host {} and port {}", config.getHost(), config.getPort());
@@ -83,7 +84,7 @@ public class TsaasStorage implements TimeSeriesStorage {
         lastBatchSentTs = Instant.now();
     }
 
-    void importCloudCredentialsIfPresent(final SecureCredentialsVault scv) {
+    void importCloudCredentialsIfPresent(final SecureCredentialsVault scv, ConfigurationManager cm) {
 
         Path cloudCredentialsFile = Path.of(System.getProperty("opennms.home") + "/etc/cloud-credentials.zip");
         if (Files.exists(cloudCredentialsFile)) {
@@ -91,7 +92,8 @@ public class TsaasStorage implements TimeSeriesStorage {
                 CertificateImporter importer = new CertificateImporter(
                         cloudCredentialsFile.toString(),
                         scv,
-                        config);
+                        config,
+                        cm);
                 importer.doIt();
             } catch (Exception e) {
                 LOG.warn("Could not import {}. Will continue with old credentials.", cloudCredentialsFile, e);
