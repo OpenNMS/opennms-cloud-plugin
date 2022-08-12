@@ -41,7 +41,7 @@ public class CloudConfigRestServiceImpl implements CloudConfigRestService {
         this.cm = Objects.requireNonNull(cm);
     }
 
-    @Override
+    @Override // {"key":{"__v_isShallow":false,"dep":{"w":0,"n":0},"__v_isRef":true,"_rawValue":"aaa","_value":"aaa"}}
     public Response putActivationKey(final String key) {
         this.cm.configure(key);
         return getStatus();

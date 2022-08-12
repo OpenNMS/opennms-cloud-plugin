@@ -19,10 +19,12 @@ const keyDisabled = ref(false);
  * Should notify on error, but silent on success (will just display the values)
  */
 const updateStatus = async () => {
-  const val = await fetch('/cloud/config/status', { method: 'GET' })
+  const val = await fetch('/opennms/rest/plugin/cloud/config/status', { method: 'GET' })
   try {
     const jsonResponse = await val.json();
     status.value = jsonResponse;
+    notification.value = jsonResponse;
+    show.value = true;
   } catch (e) {
     notification.value = e as {};
     show.value = true;
@@ -34,11 +36,14 @@ const updateStatus = async () => {
  * Will notify on error, but otherwise is silent.
  */
 const submitKey = async () => {
-  const val = await fetch('/cloud/config/activationKey', { method: 'PUT', body: JSON.stringify({ key: key }) })
+  const val = await fetch('/opennms/rest/plugin/cloud/config/activationkey', { method: 'PUT', body: JSON.stringify({ key: key }) })
   try {
     const jsonResponse = await val.json();
+    status.value = jsonResponse;
+    notification.value = jsonResponse;
+    show.value = true;
     if (jsonResponse.success) {
-
+        // do something
     }
   } catch (e) {
     notification.value = e as {};
@@ -51,17 +56,17 @@ const submitKey = async () => {
  * Interim method until the API is ready. We can probably call submitKey directly when its ready.
  */
 const tryToSubmit = () => {
-  console.log('Trying to submit the key', key, 'WHEN API IS READY, REMOVE THIS AND UNCOMMENT LINE BELOW')
-  notification.value = 'Fake API for now. Your key is:' + key.value;
-  show.value = true;
-  //submitKey();
+  // console.log('Trying to submit the key', key, 'WHEN API IS READY, REMOVE THIS AND UNCOMMENT LINE BELOW')
+  // notification.value = 'Fake API for now. Your key is:' + key.value;
+  // show.value = true;
+  submitKey();
 }
 
 onMounted(async () => {
-  notification.value = 'Plugin Mounted. Faking API Status call';
-  show.value = true;
-  console.log('Trying to Load the Status. WHEN API IS READY, REMOVE THIS AND UNCOMMENT LINE BELOW')
-  //updateStatus();
+  // notification.value = 'Plugin Mounted. Faking API Status call';
+  // show.value = true;
+  // console.log('Trying to Load the Status. WHEN API IS READY, REMOVE THIS AND UNCOMMENT LINE BELOW')
+  updateStatus();
 })
 </script>
 
@@ -75,7 +80,7 @@ onMounted(async () => {
   <div class="center">
     <h1>OpenNMS Cloud Services</h1>
     <p>Activate the OpenNMS Hybrid and Cloud Services.</p>
-    <p class="small">For more information about this feature, click <a href="http://example.com">here</a></p>
+    <p class="small">For more information about this feature, click <a href="https://github.com/OpenNMS/opennms-cloud-plugin">here</a></p>
     <Toggle :active="active" :toggle="toggle" activeText="Cloud Services Enabled"
       disabledText="Cloud Services Disabled" />
     <div class="key-entry" v-if="active">
