@@ -76,6 +76,4 @@
         <argument ref="secureCredentialsVault" />
     </bean>
     <service ref="timeSeriesStorage" interface="org.opennms.plugins.cloud.srv.tsaas.TsaasStorage" />
-
-
 </blueprint>
