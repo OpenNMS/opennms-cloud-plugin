@@ -81,11 +81,11 @@ public class CertificateImporter {
             throw new IllegalArgumentException(String.format("%s is not a readable.", fileParam));
         }
 
-        final CloudGatewayConfig config = new ConfigZipExtractor(file).get();
-        configManager.importCredentials(config);
+        final CloudGatewayConfig cloudGatewayConfig = new ConfigZipExtractor(file).get();
+        configManager.importCredentials(cloudGatewayConfig);
         LOG.info("Imported certificates from {}", fileParam);
 
-        if (isConfigStored(config)) {
+        if (isConfigStored(cloudGatewayConfig)) {
             LOG.info("Storing of certificates was successfully, will delete zip file.");
             Files.delete(file);
         } else {

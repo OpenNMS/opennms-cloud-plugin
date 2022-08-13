@@ -49,7 +49,6 @@ import org.opennms.plugins.cloud.srv.GrpcService;
 import org.opennms.plugins.cloud.srv.tsaas.GrpcConnection;
 import org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil;
 import org.opennms.plugins.cloud.srv.tsaas.TsaasConfig;
-import org.opennms.plugins.cloud.srv.tsaas.TsaasStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,7 +68,7 @@ public class ConfigurationManager {
         FAILED
     }
 
-    private static final Logger LOG = LoggerFactory.getLogger(TsaasStorage.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ConfigurationManager.class);
 
     final String systemId =  UUID.randomUUID().toString(); // TODO: Patrick get from OpenNMS
     private ConfigStatus currentStatus = ConfigStatus.NOT_ATTEMPTED;
@@ -120,8 +119,8 @@ public class ConfigurationManager {
 
     public void configure(final String key) {
         Objects.requireNonNull(key);
-        CloudGatewayConfig config = fetchCredentials(key);
-        importCredentials(config);
+        CloudGatewayConfig cloudGatewayConfig = fetchCredentials(key);
+        importCredentials(cloudGatewayConfig);
         AuthenticateOuterClass.GetServicesResponse servicesResponse = grpc
                 .getServices(AuthenticateOuterClass.GetServicesRequest.newBuilder().setSystemId(systemId).build());
         Map<String, AuthenticateOuterClass.Service> services = servicesResponse.getServicesMap();

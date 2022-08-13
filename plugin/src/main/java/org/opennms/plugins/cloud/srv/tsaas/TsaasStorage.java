@@ -91,7 +91,7 @@ public class TsaasStorage implements TimeSeriesStorage, GrpcService {
             try {
                 grpc.shutDown();
             } catch (InterruptedException e) {
-                // do nothing, we are in no loop.
+                Thread.currentThread().interrupt();
             }
         }
     }
