@@ -51,13 +51,12 @@ import org.opennms.integration.api.v1.timeseries.StorageException;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableMetric;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableSample;
-import org.opennms.plugins.cloud.config.ConfigurationManager;
-import org.opennms.plugins.cloud.srv.tsaas.testserver.TsaasServer;
-import org.opennms.plugins.cloud.srv.tsaas.testserver.TsassServerInterceptor;
+import org.opennms.plugins.cloud.testserver.GrpcTestServer;
+import org.opennms.plugins.cloud.testserver.GrpcTestServerInterceptor;
 
 public class TsaasStorageBatchStoringTest {
 
-  private TsaasServer server;
+  private GrpcTestServer server;
   private TimeSeriesStorage serverStorage;
   private TsaasConfig clientConfig;
 
@@ -71,7 +70,7 @@ public class TsaasStorageBatchStoringTest {
 
     serverStorage = Mockito.mock(TimeSeriesStorage.class);
 
-    server = new TsaasServer(serverConfig, new TsassServerInterceptor(), serverStorage);
+    server = new GrpcTestServer(serverConfig, new GrpcTestServerInterceptor(), serverStorage);
     server.startServer();
 
     clientConfig = server.getConfig();
@@ -86,7 +85,7 @@ public class TsaasStorageBatchStoringTest {
 
   @Test
   public void shouldSendStoreSamplesAfterWaitTime() throws StorageException, InterruptedException {
-    TsaasStorage plugin = new TsaasStorage(clientConfig, mock(SecureCredentialsVault.class), mock(ConfigurationManager.class));
+    TsaasStorage plugin = new TsaasStorage(clientConfig, mock(SecureCredentialsVault.class));
 
     // store 2 samples. The batch size is 10 => should only call server when 10 samples are reached or maxBatchWaitTime has passed:
     plugin.store(createSamples());

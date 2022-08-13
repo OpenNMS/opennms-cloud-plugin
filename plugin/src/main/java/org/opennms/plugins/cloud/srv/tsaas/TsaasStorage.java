@@ -32,8 +32,6 @@ import static org.opennms.plugins.cloud.srv.tsaas.GrpcExceptionHandler.executeRp
 import static org.opennms.plugins.cloud.srv.tsaas.grpc.GrpcObjectMapper.toMetric;
 import static org.opennms.plugins.cloud.srv.tsaas.grpc.GrpcObjectMapper.toTimestamp;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
@@ -50,7 +48,7 @@ import org.opennms.integration.api.v1.timeseries.StorageException;
 import org.opennms.integration.api.v1.timeseries.TagMatcher;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesFetchRequest;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
-import org.opennms.plugins.cloud.config.CertificateImporter;
+import org.opennms.plugins.cloud.srv.GrpcService;
 import org.opennms.plugins.cloud.srv.tsaas.grpc.GrpcObjectMapper;
 import org.opennms.tsaas.TimeseriesGrpc;
 import org.opennms.tsaas.Tsaas;
@@ -64,39 +62,36 @@ import com.google.common.annotations.VisibleForTesting;
  * <p>
  * This implementation forwards time series requests to the OpenNMS time series service running in the cloud.
  */
-public class TsaasStorage implements TimeSeriesStorage {
+public class TsaasStorage implements TimeSeriesStorage, GrpcService {
     private static final Logger LOG = LoggerFactory.getLogger(TsaasStorage.class);
 
     private final TsaasConfig config;
+
+    private final SecureCredentialsVault scv;
     private final ConcurrentLinkedDeque<Tsaas.Sample> queue; // holds samples to be batched
     private Instant lastBatchSentTs;
     @VisibleForTesting
-    final GrpcConnection<TimeseriesGrpc.TimeseriesBlockingStub> grpc;
+    GrpcConnection<TimeseriesGrpc.TimeseriesBlockingStub> grpc;
 
-    public TsaasStorage(TsaasConfig config, SecureCredentialsVault scv, ConfigurationManager cm) {
+    public TsaasStorage(TsaasConfig config, SecureCredentialsVault scv) {
         this.config = Objects.requireNonNull(config);
-        Objects.requireNonNull(cm);
-        importCloudCredentialsIfPresent(scv, cm);
-        SecureCredentialsVaultUtil scvUtil = new SecureCredentialsVaultUtil(scv);
-        this.grpc = new GrpcConnection<>(config, scvUtil, TimeseriesGrpc::newBlockingStub);
+        this.scv = scv;
+        initGrpc();
         LOG.debug("Starting with host {} and port {}", config.getHost(), config.getPort());
         queue = new ConcurrentLinkedDeque<>();
         lastBatchSentTs = Instant.now();
     }
 
-    void importCloudCredentialsIfPresent(final SecureCredentialsVault scv, ConfigurationManager cm) {
-
-        Path cloudCredentialsFile = Path.of(System.getProperty("opennms.home") + "/etc/cloud-credentials.zip");
-        if (Files.exists(cloudCredentialsFile)) {
+    @Override
+    public void initGrpc() {
+        GrpcConnection<TimeseriesGrpc.TimeseriesBlockingStub> oldGrpc = this.grpc;
+        SecureCredentialsVaultUtil scvUtil = new SecureCredentialsVaultUtil(scv);
+        this.grpc = new GrpcConnection<>(config, scvUtil, TimeseriesGrpc::newBlockingStub);
+        if(oldGrpc != null) {
             try {
-                CertificateImporter importer = new CertificateImporter(
-                        cloudCredentialsFile.toString(),
-                        scv,
-                        config,
-                        cm);
-                importer.doIt();
-            } catch (Exception e) {
-                LOG.warn("Could not import {}. Will continue with old credentials.", cloudCredentialsFile, e);
+                grpc.shutDown();
+            } catch (InterruptedException e) {
+                // do nothing, we are in no loop.
             }
         }
     }

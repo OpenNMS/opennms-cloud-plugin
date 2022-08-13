@@ -26,7 +26,7 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.srv.tsaas.testserver;
+package org.opennms.plugins.cloud.testserver;
 
 import static org.awaitility.Awaitility.await;
 
@@ -52,22 +52,22 @@ import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
  * It is backed by an InMemoryStorage.
  * We use it to verify that our grpc implementation works.
  */
-public class TsaasServer {
+public class GrpcTestServer {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TsaasServer.class);
+    private static final Logger LOG = LoggerFactory.getLogger(GrpcTestServer.class);
 
     private TsaasConfig config;
     private Server server;
-    private final TimeSeriesGrpcImpl timeSeriesService;
+    private final TsaasGrpcImpl timeSeriesService;
     private final ConfigGrpcImpl configGrpcService;
-    private final TsassServerInterceptor serverInterceptor;
+    private final GrpcTestServerInterceptor serverInterceptor;
 
 
-    public TsaasServer(final TsaasConfig config,
-        final TsassServerInterceptor serverInterceptor,
-        final TimeSeriesStorage storage) {
-        this.configGrpcService = new ConfigGrpcImpl();
-        this.timeSeriesService = new TimeSeriesGrpcImpl(storage);
+    public GrpcTestServer(final TsaasConfig config,
+                          final GrpcTestServerInterceptor serverInterceptor,
+                          final TimeSeriesStorage storage) {
+        this.configGrpcService = new ConfigGrpcImpl(config);
+        this.timeSeriesService = new TsaasGrpcImpl(storage);
         this.config = config;
         this.serverInterceptor = serverInterceptor;
     }
@@ -98,7 +98,7 @@ public class TsaasServer {
             LOG.info("Grpc Server started, listening on {}", server.getPort());
             if (server.getPort() != config.getPort()) {
                 LOG.info("saving port {} into config", server.getPort());
-                config = config.cloneIntoBuilder().port(server.getPort()).build();
+                config = config.toBuilder().port(server.getPort()).build();
             }
             CompletableFuture.runAsync(() -> {
                 try {

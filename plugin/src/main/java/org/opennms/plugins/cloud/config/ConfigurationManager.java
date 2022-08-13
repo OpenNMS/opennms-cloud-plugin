@@ -28,9 +28,30 @@
 
 package org.opennms.plugins.cloud.config;
 
-import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.SUCCESSFUL;
+import static org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil.SCV_ALIAS;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
+
+import org.jline.utils.Log;
+import org.opennms.dataplatform.access.AuthenticateGrpc;
+import org.opennms.dataplatform.access.AuthenticateOuterClass;
+import org.opennms.integration.api.v1.scv.Credentials;
+import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
+import org.opennms.integration.api.v1.scv.immutables.ImmutableCredentials;
+import org.opennms.plugins.cloud.srv.GrpcService;
+import org.opennms.plugins.cloud.srv.tsaas.GrpcConnection;
+import org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil;
+import org.opennms.plugins.cloud.srv.tsaas.TsaasConfig;
+import org.opennms.plugins.cloud.srv.tsaas.TsaasStorage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // 5.) authenticate(String opennmsKey, environment-uuid, system-uuid) return cert, grpc endpoint
 // 6.) store: cert, cloud services, environment-uuid
@@ -46,19 +67,116 @@ public class ConfigurationManager {
         SUCCESSFUL,
         /** The cloud plugin is configured but the configuration failed. */
         FAILED
-
     }
 
+    private static final Logger LOG = LoggerFactory.getLogger(TsaasStorage.class);
+
+    final String systemId =  UUID.randomUUID().toString(); // TODO: Patrick get from OpenNMS
     private ConfigStatus currentStatus = ConfigStatus.NOT_ATTEMPTED;
+
+    private final SecureCredentialsVault scv;
+
+    private final List<GrpcService> grpcServices;
+
+    private final AuthenticateGrpc.AuthenticateBlockingStub grpc;
+
+    private final TsaasConfig config;
+
+    public ConfigurationManager(final SecureCredentialsVault scv, final TsaasConfig config, List<GrpcService> grpcServices) {
+        this(scv,
+                grpcServices,
+                config,
+                new GrpcConnection<>(config,
+                        new SecureCredentialsVaultUtil(scv),
+                        AuthenticateGrpc::newBlockingStub).get());
+    }
+
+    public ConfigurationManager(final SecureCredentialsVault scv,
+                                final List<GrpcService> grpcServices,
+                                final TsaasConfig config,
+                                final AuthenticateGrpc.AuthenticateBlockingStub grpc) {
+        this.scv = Objects.requireNonNull(scv);
+        this.grpcServices = Objects.requireNonNull(grpcServices);
+        this.grpc = Objects.requireNonNull(grpc);
+        this.config = Objects.requireNonNull(config);
+        importCloudCredentialsIfPresent();
+    }
+
+    void importCloudCredentialsIfPresent() {
+        Path cloudCredentialsFile = Path.of(System.getProperty("opennms.home") + "/etc/cloud-credentials.zip");
+        if (Files.exists(cloudCredentialsFile)) {
+            try {
+                CertificateImporter importer = new CertificateImporter(
+                        cloudCredentialsFile.toString(),
+                        scv,
+                        config,
+                        this);
+                importer.doIt();
+            } catch (Exception e) {
+                LOG.warn("Could not import {}. Will continue with old credentials.", cloudCredentialsFile, e);
+            }
+        }
+    }
 
     public void configure(final String key) {
         Objects.requireNonNull(key);
-        // TODO: actual configuration
-        this.currentStatus = SUCCESSFUL;
+        CloudGatewayConfig config = fetchCredentials(key);
+        importCredentials(config);
+        AuthenticateOuterClass.GetServicesResponse servicesResponse = grpc
+                .getServices(AuthenticateOuterClass.GetServicesRequest.newBuilder().setSystemId(systemId).build());
+        Map<String, AuthenticateOuterClass.Service> services = servicesResponse.getServicesMap();
+        // TODO: Patrick: disable services
+        initGrpcServices();
+        this.currentStatus = ConfigStatus.SUCCESSFUL;
+    }
+
+    private CloudGatewayConfig fetchCredentials(final String key) {
+
+        AuthenticateOuterClass.AuthenticateKeyRequest keyRequest = AuthenticateOuterClass.AuthenticateKeyRequest.newBuilder()
+                .setAuthenticationKey(key)
+                .setSystemUuid(systemId)
+                .build();
+        AuthenticateOuterClass.AuthenticateKeyResponse response = grpc.authenticateKey(keyRequest);
+        return CloudGatewayConfig.builder()
+                .publicKey(response.getCertificate())
+                .privateKey(response.getPrivateKey())
+                .securedGrpcEndpoint(response.getGrpcEndpoint())
+                .build();
+    }
+
+    public void importCredentials(final CloudGatewayConfig config) {
+
+        // retain old values if present
+        Map<String, String> attributes = new HashMap<>();
+        SecureCredentialsVaultUtil scvUtil = new SecureCredentialsVaultUtil(scv);
+        scvUtil.getCredentials()
+                .map(Credentials::getAttributes)
+                .map(Map::entrySet)
+                .stream()
+                .flatMap(Set::stream)
+                .forEach(e -> attributes.put(e.getKey(), e.getValue()));
+
+        // add / override new value
+        attributes.put(SecureCredentialsVaultUtil.Type.privatekey.name(), config.getPrivateKey());
+        attributes.put(SecureCredentialsVaultUtil.Type.publickey.name(), config.getPublicKey());
+        attributes.put(SecureCredentialsVaultUtil.Type.token.name(), config.getToken());
+
+        // Store modified credentials
+        Credentials newCredentials = new ImmutableCredentials("", "", attributes);
+        scv.setCredentials(SCV_ALIAS, newCredentials);
+    }
+
+    public void initGrpcServices() {
+        for(GrpcService service: grpcServices) {
+            try {
+                service.initGrpc();
+            } catch (Exception e) {
+                Log.error("could not initGrpc", e);
+            }
+        }
     }
 
     public ConfigStatus getStatus() {
         return currentStatus;
     }
-
 }

@@ -29,9 +29,7 @@
 
 package org.opennms.plugins.cloud.config;
 
-import static org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil.Type.privatekey;
-import static org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil.Type.publickey;
-import static org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil.Type.token;
+import static org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil.SCV_ALIAS;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -40,7 +38,6 @@ import java.util.Objects;
 
 import org.opennms.integration.api.v1.scv.Credentials;
 import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
-import org.opennms.integration.api.v1.scv.immutables.ImmutableCredentials;
 import org.opennms.plugins.cloud.srv.tsaas.GrpcConnection;
 import org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil;
 import org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil.Type;

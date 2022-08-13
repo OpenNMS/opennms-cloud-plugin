@@ -26,34 +26,8 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.srv.tsaas;
+package org.opennms.plugins.cloud.srv;
 
-import java.util.Objects;
-import java.util.Optional;
-
-import org.opennms.integration.api.v1.scv.Credentials;
-import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
-
-public class SecureCredentialsVaultUtil {
-  public static final String SCV_ALIAS = "plugin.cloud.tsaas";
-
-  public enum Type {
-    truststore, publickey, privatekey, token;
-  }
-
-  private final SecureCredentialsVault scv;
-
-  public SecureCredentialsVaultUtil(SecureCredentialsVault scv) {
-    this.scv = Objects.requireNonNull(scv);
-  }
-
-  public Optional<Credentials> getCredentials() {
-    return Optional.ofNullable(this.scv.getCredentials(SCV_ALIAS));
-  }
-
-  public String getOrNull(Type type) {
-    return getCredentials()
-            .map(c -> c.getAttribute(type.name()))
-            .orElse(null);
-  }
+public interface GrpcService {
+    void initGrpc();
 }

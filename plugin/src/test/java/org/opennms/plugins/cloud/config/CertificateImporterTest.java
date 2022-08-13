@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 
 import org.junit.After;
 import org.junit.Test;
@@ -69,7 +70,7 @@ public class CertificateImporterTest {
     credentialsFile = Files.createTempFile(this.getClass().getSimpleName(), ".zip");
     Files.copy(Path.of("src/test/resources/cert/cloud-credentials.zip"), credentialsFile, StandardCopyOption.REPLACE_EXISTING);
     assertTrue(Files.exists(credentialsFile));
-    ConfigurationManager cm = new ConfigurationManager(scv, TsaasConfig.builder().build());
+    ConfigurationManager cm = new ConfigurationManager(scv, TsaasConfig.builder().build(), new ArrayList<>());
     CertificateImporter importer = new CertificateImporter(credentialsFile.toString(), scv, TsaasConfig.builder().build(), cm);
     importer.doIt();
 

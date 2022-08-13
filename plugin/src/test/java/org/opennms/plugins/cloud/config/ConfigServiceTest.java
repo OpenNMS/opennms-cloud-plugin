@@ -26,61 +26,64 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.srv.tsaas;
+package org.opennms.plugins.cloud.config;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
+import java.util.Collections;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
-import org.opennms.integration.api.v1.timeseries.AbstractStorageIntegrationTest;
-import org.opennms.integration.api.v1.timeseries.InMemoryStorage;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
+import org.opennms.plugins.cloud.srv.GrpcService;
+import org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil;
+import org.opennms.plugins.cloud.srv.tsaas.TsaasConfig;
 import org.opennms.plugins.cloud.testserver.GrpcTestServer;
 import org.opennms.plugins.cloud.testserver.GrpcTestServerInterceptor;
 
-public class TsaasStorageTest extends AbstractStorageIntegrationTest {
+public class ConfigServiceTest {
 
-  private TsaasStorage storage;
   private GrpcTestServer server;
+  private TimeSeriesStorage serverStorage;
+  private TsaasConfig clientConfig;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     TsaasConfig serverConfig = TsaasConfig.builder()
-            .batchSize(1) // set to 1 so that samples are not held back in the queue
+            .batchSize(10)
+            .maxBatchWaitTimeInMilliSeconds(500)
             .port(0)
             .build();
 
-    server = new GrpcTestServer(serverConfig, new GrpcTestServerInterceptor(), new InMemoryStorage());
+    serverStorage = mock(TimeSeriesStorage.class);
+
+    server = new GrpcTestServer(serverConfig, new GrpcTestServerInterceptor(), serverStorage);
     server.startServer();
 
-    TsaasConfig clientConfig = server.getConfig();
-
-    storage = new TsaasStorage(clientConfig, mock(SecureCredentialsVault.class));
-    super.setUp();
+    clientConfig = server.getConfig();
   }
 
   @After
-  public void tearDown() throws InterruptedException {
-    if (storage != null) {
-      storage.destroy();
-    }
+  public void tearDown() {
     if(server !=null) {
       server.stopServer();
     }
   }
 
-  @Override
-  protected TimeSeriesStorage createStorage() throws Exception {
-    return storage;
+  @Test
+  public void shouldGetCloudConfig() {
+    InMemoryScv scv = new InMemoryScv();
+    SecureCredentialsVaultUtil scvUtil = new SecureCredentialsVaultUtil(scv);
+    GrpcService grpc = mock(GrpcService.class);
+    ConfigurationManager cm = new ConfigurationManager(scv, clientConfig, Collections.singletonList(grpc));
+    cm.configure("something");
+    verify(grpc, times(1)).initGrpc();
+    assertTrue(scvUtil.getOrNull(SecureCredentialsVaultUtil.Type.privatekey).startsWith("-----BEGIN PRIVATE KEY-----"));
+    assertTrue(scvUtil.getOrNull(SecureCredentialsVaultUtil.Type.publickey).startsWith("-----BEGIN CERTIFICATE-----"));
   }
 
-  @Test
-  @Ignore("we don't implement delete(), hence @Ignore")
-  @Override
-  public void shouldDeleteMetrics() throws Exception {
-    // we don't support delete...
-  }
 }

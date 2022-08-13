@@ -53,8 +53,8 @@ import org.opennms.integration.api.v1.timeseries.StorageException;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableMetric;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableSample;
-import org.opennms.plugins.cloud.srv.tsaas.testserver.TsaasServer;
-import org.opennms.plugins.cloud.srv.tsaas.testserver.TsassServerInterceptor;
+import org.opennms.plugins.cloud.testserver.GrpcTestServer;
+import org.opennms.plugins.cloud.testserver.GrpcTestServerInterceptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,7 +62,7 @@ public class TsaasStorageNetworkProblemTest {
 
   private static final Logger LOG = LoggerFactory.getLogger(TsaasStorageNetworkProblemTest.class);
 
-  private TsaasServer server;
+  private GrpcTestServer server;
   private TimeSeriesStorage serverStorage;
   private TsaasConfig clientConfig;
 
@@ -74,7 +74,7 @@ public class TsaasStorageNetworkProblemTest {
             .build();
 
     serverStorage = Mockito.mock(TimeSeriesStorage.class);
-    server = new TsaasServer(serverConfig, new TsassServerInterceptor(), serverStorage);
+    server = new GrpcTestServer(serverConfig, new GrpcTestServerInterceptor(), serverStorage);
     server.startServer();
 
     clientConfig = server.getConfig();
@@ -89,7 +89,7 @@ public class TsaasStorageNetworkProblemTest {
 
   @Test
   public void shouldRecoverAfterServerFailure() throws StorageException, InterruptedException {
-    TsaasStorage plugin = new TsaasStorage(clientConfig, mock(SecureCredentialsVault.class), mock(ConfigurationManager.class));
+    TsaasStorage plugin = new TsaasStorage(clientConfig, mock(SecureCredentialsVault.class));
 
     plugin.store(createSamples());
     verify(serverStorage, times(1)).store(any());
@@ -108,7 +108,7 @@ public class TsaasStorageNetworkProblemTest {
 
   @Test
   public void shouldRecoverAfterServerException() throws StorageException, InterruptedException {
-    TsaasStorage plugin = new TsaasStorage(clientConfig, mock(SecureCredentialsVault.class), mock(ConfigurationManager.class));
+    TsaasStorage plugin = new TsaasStorage(clientConfig, mock(SecureCredentialsVault.class));
 
     doThrow(new StorageException("hups")).when(serverStorage).store(any());
     plugin.store(createSamples()); // nothing should happen since this is a non recoverable exception

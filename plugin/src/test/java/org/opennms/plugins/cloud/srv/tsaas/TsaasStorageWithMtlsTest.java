@@ -51,11 +51,8 @@ import org.opennms.integration.api.v1.timeseries.InMemoryStorage;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.plugins.cloud.config.ConfigZipExtractor;
 import org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil.Type;
-import org.opennms.plugins.cloud.srv.tsaas.testserver.TsaasServer;
-import org.opennms.plugins.cloud.srv.tsaas.testserver.TsassServerInterceptor;
-
-import com.google.common.base.Charsets;
-import com.google.common.io.CharStreams;
+import org.opennms.plugins.cloud.testserver.GrpcTestServer;
+import org.opennms.plugins.cloud.testserver.GrpcTestServerInterceptor;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
@@ -63,7 +60,7 @@ import com.google.common.io.CharStreams;
 public class TsaasStorageWithMtlsTest extends AbstractStorageIntegrationTest {
 
   private TsaasStorage storage;
-  private TsaasServer server;
+  private GrpcTestServer server;
 
   @Before
   public void setUp() throws Exception {
@@ -73,7 +70,7 @@ public class TsaasStorageWithMtlsTest extends AbstractStorageIntegrationTest {
         .port(0)
         .build();
 
-    server = new TsaasServer(serverConfig, new TsassServerInterceptor(), new InMemoryStorage());
+    server = new GrpcTestServer(serverConfig, new GrpcTestServerInterceptor(), new InMemoryStorage());
     server.startServer();
 
     TsaasConfig clientConfig = server.getConfig();
@@ -90,7 +87,7 @@ public class TsaasStorageWithMtlsTest extends AbstractStorageIntegrationTest {
     SecureCredentialsVault scv = mock(SecureCredentialsVault.class);
     when(scv.getCredentials(SCV_ALIAS)).thenReturn(new ImmutableCredentials("", "", attributes));
 
-    storage = new TsaasStorage(clientConfig, scv, mock(ConfigurationManager.class));
+    storage = new TsaasStorage(clientConfig, scv);
     super.setUp();
   }
 

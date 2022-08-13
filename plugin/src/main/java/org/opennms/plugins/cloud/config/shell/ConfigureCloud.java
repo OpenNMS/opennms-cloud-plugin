@@ -26,34 +26,32 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.srv.tsaas;
+package org.opennms.plugins.cloud.config.shell;
 
 import java.util.Objects;
-import java.util.Optional;
 
-import org.opennms.integration.api.v1.scv.Credentials;
-import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
+import org.apache.karaf.shell.api.action.Action;
+import org.apache.karaf.shell.api.action.Argument;
+import org.apache.karaf.shell.api.action.Command;
+import org.apache.karaf.shell.api.action.lifecycle.Reference;
+import org.apache.karaf.shell.api.action.lifecycle.Service;
+import org.opennms.plugins.cloud.config.ConfigurationManager;
 
-public class SecureCredentialsVaultUtil {
-  public static final String SCV_ALIAS = "plugin.cloud.tsaas";
+@Command(scope = "opennms-cloud", name = "configure", description = "Contacts cloud gateway and retrieves configuration")
+@Service
+public class ConfigureCloud implements Action {
 
-  public enum Type {
-    truststore, publickey, privatekey, token;
-  }
+    @Reference
+    private ConfigurationManager manager;
 
-  private final SecureCredentialsVault scv;
+    @Argument()
+    String apiKey;
 
-  public SecureCredentialsVaultUtil(SecureCredentialsVault scv) {
-    this.scv = Objects.requireNonNull(scv);
-  }
+    @Override
+    public Object execute() {
+        Objects.requireNonNull(this.apiKey);
+        manager.configure(apiKey);
+        return null;
+    }
 
-  public Optional<Credentials> getCredentials() {
-    return Optional.ofNullable(this.scv.getCredentials(SCV_ALIAS));
-  }
-
-  public String getOrNull(Type type) {
-    return getCredentials()
-            .map(c -> c.getAttribute(type.name()))
-            .orElse(null);
-  }
 }
