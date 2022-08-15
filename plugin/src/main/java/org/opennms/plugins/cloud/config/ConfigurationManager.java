@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -45,10 +46,10 @@ import org.opennms.dataplatform.access.AuthenticateOuterClass;
 import org.opennms.integration.api.v1.scv.Credentials;
 import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
 import org.opennms.integration.api.v1.scv.immutables.ImmutableCredentials;
+import org.opennms.plugins.cloud.grpc.GrpcConnection;
+import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.GrpcService;
-import org.opennms.plugins.cloud.srv.tsaas.GrpcConnection;
 import org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil;
-import org.opennms.plugins.cloud.srv.tsaas.TsaasConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,25 +80,24 @@ public class ConfigurationManager {
 
     private final AuthenticateGrpc.AuthenticateBlockingStub grpc;
 
-    private final TsaasConfig config;
+    private final GrpcConnectionConfig pasConfig;
 
-    public ConfigurationManager(final SecureCredentialsVault scv, final TsaasConfig config, List<GrpcService> grpcServices) {
+    public ConfigurationManager(final SecureCredentialsVault scv, final GrpcConnectionConfig pasConfig, List<GrpcService> grpcServices) {
         this(scv,
                 grpcServices,
-                config,
-                new GrpcConnection<>(config,
-                        new SecureCredentialsVaultUtil(scv),
+                pasConfig,
+                new GrpcConnection<>(pasConfig,
                         AuthenticateGrpc::newBlockingStub).get());
     }
 
     public ConfigurationManager(final SecureCredentialsVault scv,
                                 final List<GrpcService> grpcServices,
-                                final TsaasConfig config,
+                                final GrpcConnectionConfig pasConfig,
                                 final AuthenticateGrpc.AuthenticateBlockingStub grpc) {
         this.scv = Objects.requireNonNull(scv);
         this.grpcServices = Objects.requireNonNull(grpcServices);
         this.grpc = Objects.requireNonNull(grpc);
-        this.config = Objects.requireNonNull(config);
+        this.pasConfig = Objects.requireNonNull(pasConfig);
         importCloudCredentialsIfPresent();
     }
 
@@ -108,7 +108,7 @@ public class ConfigurationManager {
                 CertificateImporter importer = new CertificateImporter(
                         cloudCredentialsFile.toString(),
                         scv,
-                        config,
+                        pasConfig,
                         this);
                 importer.doIt();
             } catch (Exception e) {
@@ -119,31 +119,52 @@ public class ConfigurationManager {
 
     public void configure(final String key) {
         Objects.requireNonNull(key);
-        CloudGatewayConfig cloudGatewayConfig = fetchCredentials(key);
+        GrpcConnectionConfig cloudGatewayConfig = fetchCredentialsFromAccessService(key);
         importCredentials(cloudGatewayConfig);
         AuthenticateOuterClass.GetServicesResponse servicesResponse = grpc
                 .getServices(AuthenticateOuterClass.GetServicesRequest.newBuilder().setSystemId(systemId).build());
         Map<String, AuthenticateOuterClass.Service> services = servicesResponse.getServicesMap();
         // TODO: Patrick: disable services
-        initGrpcServices();
+
+        initGrpcServices(cloudGatewayConfig);
         this.currentStatus = ConfigStatus.SUCCESSFUL;
     }
 
-    private CloudGatewayConfig fetchCredentials(final String key) {
+    private GrpcConnectionConfig fetchCredentialsFromAccessService(final String key) {
 
         AuthenticateOuterClass.AuthenticateKeyRequest keyRequest = AuthenticateOuterClass.AuthenticateKeyRequest.newBuilder()
                 .setAuthenticationKey(key)
                 .setSystemUuid(systemId)
                 .build();
         AuthenticateOuterClass.AuthenticateKeyResponse response = grpc.authenticateKey(keyRequest);
-        return CloudGatewayConfig.builder()
+
+        final GrpcConnectionConfig.GrpcConnectionConfigBuilder cloudGatewayConfig = GrpcConnectionConfig.builder();
+
+        Optional
+                .of(response.getGrpcEndpoint())
+                .filter(s -> s.contains(":"))
+                .map(s -> s.split(":"))
+                .map(s -> s[1])
+                .filter(s -> !s.isBlank())
+                .ifPresent(cloudGatewayConfig::host);
+        Optional
+                .of(response.getGrpcEndpoint())
+                .filter(s -> s.contains(":"))
+                .map(s -> s.split(":"))
+                .map(s -> s[1])
+                .filter(s -> !s.isBlank())
+                .map(Integer::parseInt)
+                .ifPresent(cloudGatewayConfig::port);
+        return cloudGatewayConfig
+                .tokenKey("") // TODO: Patrick
+                .tokenValue("") // TODO: Patrick
                 .publicKey(response.getCertificate())
                 .privateKey(response.getPrivateKey())
-                .securedGrpcEndpoint(response.getGrpcEndpoint())
+                .mtlsEnabled(true) // we always enable mtls (just not in tests)
                 .build();
     }
 
-    public void importCredentials(final CloudGatewayConfig config) {
+    public void importCredentials(final GrpcConnectionConfig config) {
 
         // retain old values if present
         Map<String, String> attributes = new HashMap<>();
@@ -158,17 +179,20 @@ public class ConfigurationManager {
         // add / override new value
         attributes.put(SecureCredentialsVaultUtil.Type.privatekey.name(), config.getPrivateKey());
         attributes.put(SecureCredentialsVaultUtil.Type.publickey.name(), config.getPublicKey());
-        attributes.put(SecureCredentialsVaultUtil.Type.token.name(), config.getToken());
+        attributes.put(SecureCredentialsVaultUtil.Type.tokenkey.name(), config.getTokenKey());
+        attributes.put(SecureCredentialsVaultUtil.Type.tokenvalue.name(), config.getTokenValue());
+        attributes.put(SecureCredentialsVaultUtil.Type.grpchost.name(), config.getHost());
+        attributes.put(SecureCredentialsVaultUtil.Type.grpcport.name(), Integer.toString(config.getPort()));
 
         // Store modified credentials
         Credentials newCredentials = new ImmutableCredentials("", "", attributes);
         scv.setCredentials(SCV_ALIAS, newCredentials);
     }
 
-    public void initGrpcServices() {
+    public void initGrpcServices(final GrpcConnectionConfig config) {
         for(GrpcService service: grpcServices) {
             try {
-                service.initGrpc();
+                service.initGrpc(config);
             } catch (Exception e) {
                 Log.error("could not initGrpc", e);
             }

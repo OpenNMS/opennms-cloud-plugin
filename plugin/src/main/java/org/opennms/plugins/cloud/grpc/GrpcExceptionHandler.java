@@ -26,7 +26,7 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.srv.tsaas;
+package org.opennms.plugins.cloud.grpc;
 
 import static io.grpc.Status.Code.DEADLINE_EXCEEDED;
 import static io.grpc.Status.Code.OK;
@@ -67,7 +67,7 @@ public class GrpcExceptionHandler {
     // Utility class
   }
 
-  static <T, R> R executeRpcCall(Supplier<T> callToExecute, Function<T, R> mapper, Supplier<R> defaultFunction) throws StorageException {
+  public static <T, R> R executeRpcCall(Supplier<T> callToExecute, Function<T, R> mapper, Supplier<R> defaultFunction) throws StorageException {
     try {
       T result = callToExecute.get();
       return mapper.apply(result);
@@ -87,7 +87,7 @@ public class GrpcExceptionHandler {
     }
   }
 
-  static <T> void executeRpcCall(Supplier<T> callToExecute) throws StorageException {
+  public static <T> void executeRpcCall(Supplier<T> callToExecute) throws StorageException {
     try {
       callToExecute.get();
     } catch (StatusRuntimeException ex) {

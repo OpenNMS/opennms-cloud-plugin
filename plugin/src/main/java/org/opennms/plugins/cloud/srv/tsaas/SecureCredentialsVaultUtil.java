@@ -38,7 +38,7 @@ public class SecureCredentialsVaultUtil {
   public static final String SCV_ALIAS = "plugin.cloud.tsaas";
 
   public enum Type {
-    truststore, publickey, privatekey, token;
+    truststore, publickey, privatekey, tokenkey, tokenvalue, grpchost, grpcport;
   }
 
   private final SecureCredentialsVault scv;

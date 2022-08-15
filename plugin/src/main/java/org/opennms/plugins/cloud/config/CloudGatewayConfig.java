@@ -37,5 +37,6 @@ public class CloudGatewayConfig {
     private String publicKey;
     private String privateKey;
     private String token;
-    private String securedGrpcEndpoint;
+    private String host;
+    private int port;
 }

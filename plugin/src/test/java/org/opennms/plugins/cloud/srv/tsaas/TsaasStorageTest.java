@@ -28,16 +28,14 @@
 
 package org.opennms.plugins.cloud.srv.tsaas;
 
-import static org.mockito.Mockito.mock;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
 import org.opennms.integration.api.v1.timeseries.AbstractStorageIntegrationTest;
 import org.opennms.integration.api.v1.timeseries.InMemoryStorage;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
+import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.testserver.GrpcTestServer;
 import org.opennms.plugins.cloud.testserver.GrpcTestServerInterceptor;
 
@@ -48,17 +46,20 @@ public class TsaasStorageTest extends AbstractStorageIntegrationTest {
 
   @Before
   public void setUp() throws Exception {
-    TsaasConfig serverConfig = TsaasConfig.builder()
-            .batchSize(1) // set to 1 so that samples are not held back in the queue
+    GrpcConnectionConfig serverConfig = GrpcConnectionConfig.builder()
             .port(0)
             .build();
 
     server = new GrpcTestServer(serverConfig, new GrpcTestServerInterceptor(), new InMemoryStorage());
     server.startServer();
 
-    TsaasConfig clientConfig = server.getConfig();
+    GrpcConnectionConfig clientConfig = server.getConfig();
+    TsaasConfig tsaasConfig = TsaasConfig.builder()
+            .batchSize(1) // set to 1 so that samples are not held back in the queue
+            .build();
 
-    storage = new TsaasStorage(clientConfig, mock(SecureCredentialsVault.class));
+    storage = new TsaasStorage(tsaasConfig);
+    storage.initGrpc(clientConfig);
     super.setUp();
   }
 

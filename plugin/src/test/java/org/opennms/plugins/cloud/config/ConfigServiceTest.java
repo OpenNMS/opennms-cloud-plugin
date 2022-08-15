@@ -29,6 +29,7 @@
 package org.opennms.plugins.cloud.config;
 
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -39,9 +40,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
+import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.GrpcService;
 import org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil;
-import org.opennms.plugins.cloud.srv.tsaas.TsaasConfig;
 import org.opennms.plugins.cloud.testserver.GrpcTestServer;
 import org.opennms.plugins.cloud.testserver.GrpcTestServerInterceptor;
 
@@ -49,13 +50,11 @@ public class ConfigServiceTest {
 
   private GrpcTestServer server;
   private TimeSeriesStorage serverStorage;
-  private TsaasConfig clientConfig;
+  private GrpcConnectionConfig clientConfig;
 
   @Before
   public void setUp() {
-    TsaasConfig serverConfig = TsaasConfig.builder()
-            .batchSize(10)
-            .maxBatchWaitTimeInMilliSeconds(500)
+    GrpcConnectionConfig serverConfig = GrpcConnectionConfig.builder()
             .port(0)
             .build();
 
@@ -81,7 +80,7 @@ public class ConfigServiceTest {
     GrpcService grpc = mock(GrpcService.class);
     ConfigurationManager cm = new ConfigurationManager(scv, clientConfig, Collections.singletonList(grpc));
     cm.configure("something");
-    verify(grpc, times(1)).initGrpc();
+    verify(grpc, times(1)).initGrpc(any());
     assertTrue(scvUtil.getOrNull(SecureCredentialsVaultUtil.Type.privatekey).startsWith("-----BEGIN PRIVATE KEY-----"));
     assertTrue(scvUtil.getOrNull(SecureCredentialsVaultUtil.Type.publickey).startsWith("-----BEGIN CERTIFICATE-----"));
   }

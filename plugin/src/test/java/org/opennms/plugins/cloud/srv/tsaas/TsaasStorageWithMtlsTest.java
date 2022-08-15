@@ -29,9 +29,6 @@
 package org.opennms.plugins.cloud.srv.tsaas;
 
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil.SCV_ALIAS;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -44,13 +41,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
-import org.opennms.integration.api.v1.scv.immutables.ImmutableCredentials;
 import org.opennms.integration.api.v1.timeseries.AbstractStorageIntegrationTest;
 import org.opennms.integration.api.v1.timeseries.InMemoryStorage;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.plugins.cloud.config.ConfigZipExtractor;
-import org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil.Type;
+import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.testserver.GrpcTestServer;
 import org.opennms.plugins.cloud.testserver.GrpcTestServerInterceptor;
 
@@ -64,30 +59,28 @@ public class TsaasStorageWithMtlsTest extends AbstractStorageIntegrationTest {
 
   @Before
   public void setUp() throws Exception {
-    TsaasConfig serverConfig = TsaasConfig.builder()
+    GrpcConnectionConfig serverConfig = GrpcConnectionConfig.builder()
         .mtlsEnabled(true)
-        .batchSize(1) // set to 1 so that samples are not held back in the queue
         .port(0)
         .build();
 
     server = new GrpcTestServer(serverConfig, new GrpcTestServerInterceptor(), new InMemoryStorage());
     server.startServer();
 
-    TsaasConfig clientConfig = server.getConfig();
+    GrpcConnectionConfig.GrpcConnectionConfigBuilder clientConfig = server.getConfig().toBuilder();
 
     Path pathToZipFile = Path.of("src/test/resources/cert/cloud-credentials.zip");
     assertTrue(Files.exists(pathToZipFile));
     ConfigZipExtractor certs = new ConfigZipExtractor(pathToZipFile);
     Map<String, String> attributes = new HashMap<>();
-    attributes.put(Type.publickey.name(), certs.getPublicKey());
-    attributes.put(Type.privatekey.name(), certs.getPrivateKey());
+    clientConfig.publicKey(certs.getPublicKey());
+    clientConfig.privateKey(certs.getPrivateKey());
     // we have self signed certs, so we do need to provide a trust store with our ca:
-    attributes.put(Type.truststore.name(), getCert("clienttruststore.pem"));
+    clientConfig.clientTrustStore(getCert("clienttruststore.pem"));
 
-    SecureCredentialsVault scv = mock(SecureCredentialsVault.class);
-    when(scv.getCredentials(SCV_ALIAS)).thenReturn(new ImmutableCredentials("", "", attributes));
-
-    storage = new TsaasStorage(clientConfig, scv);
+    TsaasConfig tsaasConfig = TsaasConfig.builder().batchSize(1).build(); // set to 1 so that samples are not held back in the queue
+    storage = new TsaasStorage(tsaasConfig);
+    storage.initGrpc(clientConfig.build());
     super.setUp();
   }
 

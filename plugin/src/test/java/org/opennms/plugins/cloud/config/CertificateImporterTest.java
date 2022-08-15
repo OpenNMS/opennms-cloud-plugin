@@ -47,8 +47,8 @@ import org.junit.After;
 import org.junit.Test;
 import org.opennms.integration.api.v1.scv.Credentials;
 import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
+import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil.Type;
-import org.opennms.plugins.cloud.srv.tsaas.TsaasConfig;
 
 public class CertificateImporterTest {
 
@@ -59,7 +59,7 @@ public class CertificateImporterTest {
     credentialsFile = Path.of("IDontExist.file");
     final String file = credentialsFile.toString();
     final SecureCredentialsVault scv = new InMemoryScv();
-    final TsaasConfig config = TsaasConfig.builder().build();
+    final GrpcConnectionConfig config = GrpcConnectionConfig.builder().build();
     final CertificateImporter importer = new CertificateImporter(file, scv, config, mock(ConfigurationManager.class));
     assertThrows(IllegalArgumentException.class, importer::doIt);
   }
@@ -70,8 +70,8 @@ public class CertificateImporterTest {
     credentialsFile = Files.createTempFile(this.getClass().getSimpleName(), ".zip");
     Files.copy(Path.of("src/test/resources/cert/cloud-credentials.zip"), credentialsFile, StandardCopyOption.REPLACE_EXISTING);
     assertTrue(Files.exists(credentialsFile));
-    ConfigurationManager cm = new ConfigurationManager(scv, TsaasConfig.builder().build(), new ArrayList<>());
-    CertificateImporter importer = new CertificateImporter(credentialsFile.toString(), scv, TsaasConfig.builder().build(), cm);
+    ConfigurationManager cm = new ConfigurationManager(scv, GrpcConnectionConfig.builder().build(), new ArrayList<>());
+    CertificateImporter importer = new CertificateImporter(credentialsFile.toString(), scv, GrpcConnectionConfig.builder().build(), cm);
     importer.doIt();
 
     Credentials credentials = scv.getCredentials(SCV_ALIAS);
@@ -82,7 +82,7 @@ public class CertificateImporterTest {
     value = credentials.getAttribute(Type.privatekey.name());
     assertNotNull(value);
     assertTrue(value.startsWith("-----BEGIN PRIVATE KEY-----"));
-    value = credentials.getAttribute(Type.token.name());
+    value = credentials.getAttribute(Type.tokenvalue.name());
     assertNotNull(value);
     assertTrue(value.startsWith("acme"));
 
@@ -97,7 +97,7 @@ public class CertificateImporterTest {
     credentialsFile = Files.createTempFile(this.getClass().getSimpleName(), ".zip");
     Files.copy(Path.of("src/test/resources/cert/cloud-credentials.zip"), credentialsFile, StandardCopyOption.REPLACE_EXISTING);
     assertTrue(Files.exists(credentialsFile));
-    CertificateImporter importer = new CertificateImporter(credentialsFile.toString(), scv, TsaasConfig.builder().build(), mock(ConfigurationManager.class));
+    CertificateImporter importer = new CertificateImporter(credentialsFile.toString(), scv, GrpcConnectionConfig.builder().build(), mock(ConfigurationManager.class));
     importer.doIt();
 
     // Check if file has been deleted. We expect that the file is not deleted after an unsuccessful import:

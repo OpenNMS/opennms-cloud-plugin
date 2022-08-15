@@ -28,11 +28,12 @@
 
 package org.opennms.plugins.cloud.srv.faas;
 
+import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.GrpcService;
 
 public class Faas implements GrpcService {
     @Override
-    public void initGrpc() {
+    public void initGrpc(final GrpcConnectionConfig grpcConfig) {
         // implement me.
     }
 }

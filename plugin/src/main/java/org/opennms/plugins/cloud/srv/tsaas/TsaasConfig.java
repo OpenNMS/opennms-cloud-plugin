@@ -28,53 +28,23 @@
 
 package org.opennms.plugins.cloud.srv.tsaas;
 
-import java.util.Objects;
-
 import lombok.Builder;
 import lombok.Data;
 
 @Builder(toBuilder = true)
 @Data
 public class TsaasConfig {
-
-    private final String host;
-    private final int port;
-    private final String tokenKey;
-    private final String tokenValue;
-    private final boolean mtlsEnabled;
     private final int batchSize;
     private final long maxBatchWaitTimeInMilliSeconds;
 
     public TsaasConfig(
-            final String host,
-            final int port,
-            final String tokenKey,
-            final String tokenValue,
-            final boolean mtlsEnabled,
             final int batchSize,
             final long maxBatchWaitTimeInMilliSeconds) {
-        this.host = Objects.requireNonNull(host);
-        this.port = requirePositiveNumber(port);
-        this.tokenKey = Objects.requireNonNull(tokenKey);
-        this.tokenValue = Objects.requireNonNull(tokenValue);
-        this.mtlsEnabled = mtlsEnabled;
         this.batchSize = batchSize;
         this.maxBatchWaitTimeInMilliSeconds = maxBatchWaitTimeInMilliSeconds;
     }
 
-    private int requirePositiveNumber(int value) {
-        if (value < 0) {
-            throw new IllegalArgumentException(String.format("A positive number is required but was %s", value));
-        }
-        return value;
-    }
-
     public static class TsaasConfigBuilder {
-        private String host = "localhost";
-        private int port = 5001;
-        private String tokenKey = "token";
-        private String tokenValue = "acme";
-        private boolean mtlsEnabled = false;
         private int batchSize = 1000;
         private long maxBatchWaitTimeInMilliSeconds = 5000;
     }

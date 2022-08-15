@@ -35,6 +35,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 
+import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
+
 /**
  * The Zip file looks like this:
  * cloud-credentials.zip/
@@ -54,11 +56,11 @@ public class ConfigZipExtractor {
         }
     }
 
-    public CloudGatewayConfig get() throws IOException {
-        return CloudGatewayConfig.builder()
+    public GrpcConnectionConfig get() throws IOException {
+        return GrpcConnectionConfig.builder()
                 .publicKey(getPublicKey())
                 .privateKey(getPrivateKey())
-                .token(getJwtToken())
+                .tokenValue(getJwtToken())
                 .build();
     }
 

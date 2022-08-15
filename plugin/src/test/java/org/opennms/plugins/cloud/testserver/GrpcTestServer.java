@@ -38,7 +38,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
-import org.opennms.plugins.cloud.srv.tsaas.TsaasConfig;
+import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.tsaas.grpc.comp.ZStdCodecRegisterUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,14 +56,14 @@ public class GrpcTestServer {
 
     private static final Logger LOG = LoggerFactory.getLogger(GrpcTestServer.class);
 
-    private TsaasConfig config;
+    private GrpcConnectionConfig config;
     private Server server;
     private final TsaasGrpcImpl timeSeriesService;
     private final ConfigGrpcImpl configGrpcService;
     private final GrpcTestServerInterceptor serverInterceptor;
 
 
-    public GrpcTestServer(final TsaasConfig config,
+    public GrpcTestServer(final GrpcConnectionConfig config,
                           final GrpcTestServerInterceptor serverInterceptor,
                           final TimeSeriesStorage storage) {
         this.configGrpcService = new ConfigGrpcImpl(config);
@@ -122,5 +122,5 @@ public class GrpcTestServer {
         LOG.info("Grpc Server stopped");
     }
 
-    public TsaasConfig getConfig() { return config; }
+    public GrpcConnectionConfig getConfig() { return config; }
 }

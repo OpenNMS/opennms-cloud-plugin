@@ -29,7 +29,7 @@
 package org.opennms.plugins.cloud.testserver;
 
 import org.opennms.integration.api.v1.timeseries.InMemoryStorage;
-import org.opennms.plugins.cloud.srv.tsaas.TsaasConfig;
+import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 
 /**
  * Starts a mock server to simulate the serverside of the grpc gateway.
@@ -39,7 +39,7 @@ import org.opennms.plugins.cloud.srv.tsaas.TsaasConfig;
 public class TestserverMain {
 
   public static void main(String[] args) throws InterruptedException {
-    TsaasConfig config = TsaasConfig.builder().build();
+    GrpcConnectionConfig config = GrpcConnectionConfig.builder().build();
     GrpcTestServer server = new GrpcTestServer(config, new GrpcTestServerInterceptor(), new InMemoryStorage());
     server.startServer();
     Thread.sleep(Long.MAX_VALUE); // wait till the end of time.

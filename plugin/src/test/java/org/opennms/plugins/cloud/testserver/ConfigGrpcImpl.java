@@ -35,7 +35,7 @@ import java.util.Objects;
 import org.opennms.dataplatform.access.AuthenticateGrpc;
 import org.opennms.dataplatform.access.AuthenticateOuterClass;
 import org.opennms.plugins.cloud.config.ConfigZipExtractor;
-import org.opennms.plugins.cloud.srv.tsaas.TsaasConfig;
+import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,9 +48,9 @@ public class ConfigGrpcImpl extends AuthenticateGrpc.AuthenticateImplBase implem
     private static final Logger LOG = LoggerFactory.getLogger(ConfigGrpcImpl.class);
 
 
-    private final TsaasConfig config;
+    private final GrpcConnectionConfig config;
 
-    public ConfigGrpcImpl(final TsaasConfig config) {
+    public ConfigGrpcImpl(final GrpcConnectionConfig config) {
         this.config = Objects.requireNonNull(config);
     }
 

@@ -13,27 +13,17 @@
         <cm:default-properties>
             <cm:property name="pas.host" value="localhost"/>
             <cm:property name="pas.port" value="5001"/>
-            <cm:property name="tsaas.host" value="localhost"/>
-            <cm:property name="tsaas.port" value="5001"/>
-            <cm:property name="tsaas.tokenKey" value="token"/>
-            <cm:property name="tsaas.tokenValue" value="--not defined--"/><!-- fallback if not imported via cloud-credentials.zip -->
-            <cm:property name="tsaas.mtlsEnabled" value="false"/>
             <cm:property name="tsaas.batchSize" value="1000"/>
             <cm:property name="tsaas.maxBatchWaitTimeInMilliSeconds" value="5000" />
         </cm:default-properties>
     </cm:property-placeholder>
 
-    <bean id="pasConfig" class="org.opennms.plugins.cloud.config.PasConfig" >
+    <bean id="pasConfig" class="org.opennms.plugins.cloud.grpc.GrpcConnectionConfig" >
         <argument value="${pas.host}"/>
         <argument value="${pas.port}"/>
     </bean>
 
     <bean id="tsaasConfig" class="org.opennms.plugins.cloud.srv.tsaas.TsaasConfig" >
-        <argument value="${tsaas.host}"/>
-        <argument value="${tsaas.port}"/>
-        <argument value="${tsaas.tokenKey}"/>
-        <argument value="${tsaas.tokenValue}"/>
-        <argument value="${tsaas.mtlsEnabled}"/>
         <argument value="${tsaas.batchSize}"/>
         <argument value="${tsaas.maxBatchWaitTimeInMilliSeconds}"/>
     </bean>

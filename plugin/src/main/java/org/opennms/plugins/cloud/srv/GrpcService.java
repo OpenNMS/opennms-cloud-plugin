@@ -28,6 +28,13 @@
 
 package org.opennms.plugins.cloud.srv;
 
+import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
+
 public interface GrpcService {
-    void initGrpc();
+    /**
+     * Initializes the grpc connection.
+     * This method can be called anytime.
+     * This method can be called multiple times.
+     */
+    void initGrpc(final GrpcConnectionConfig grpcConfig);
 }

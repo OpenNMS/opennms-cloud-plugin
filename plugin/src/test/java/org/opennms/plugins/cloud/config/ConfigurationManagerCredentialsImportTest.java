@@ -44,8 +44,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.opennms.integration.api.v1.scv.Credentials;
+import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil;
-import org.opennms.plugins.cloud.srv.tsaas.TsaasConfig;
 
 public class ConfigurationManagerCredentialsImportTest {
 
@@ -63,7 +63,7 @@ public class ConfigurationManagerCredentialsImportTest {
     public void shouldImportCloudCredentialsIfPresent() throws Exception {
 
         InMemoryScv scv = new InMemoryScv();
-        ConfigurationManager cm = new ConfigurationManager(scv, TsaasConfig.builder().build(), new ArrayList<>());
+        ConfigurationManager cm = new ConfigurationManager(scv, GrpcConnectionConfig.builder().build(), new ArrayList<>());
         openNmsHome = Files.createTempDirectory(this.getClass().getSimpleName());
         System.setProperty(OPENNMS_HOME, openNmsHome.toString());
         Files.createDirectory(Path.of(openNmsHome.toString(), "etc"));
