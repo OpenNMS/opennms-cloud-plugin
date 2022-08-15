@@ -49,6 +49,10 @@ public class ConfigureCloud implements Action {
 
     @Override
     public Object execute() {
+        if(apiKey == null || apiKey.isBlank()) {
+            System.out.println("please enter api key");
+            return null;
+        }
         Objects.requireNonNull(this.apiKey);
         manager.configure(apiKey);
         return null;

@@ -56,7 +56,7 @@ public class ConfigZipExtractor {
         }
     }
 
-    public GrpcConnectionConfig get() throws IOException {
+    public GrpcConnectionConfig getGrpcConnectionConfig() throws IOException {
         return GrpcConnectionConfig.builder()
                 .publicKey(getPublicKey())
                 .privateKey(getPrivateKey())

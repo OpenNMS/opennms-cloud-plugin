@@ -32,13 +32,16 @@ import static org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil.SCV
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.jline.utils.Log;
 import org.opennms.dataplatform.access.AuthenticateGrpc;
@@ -49,6 +52,7 @@ import org.opennms.integration.api.v1.scv.immutables.ImmutableCredentials;
 import org.opennms.plugins.cloud.grpc.GrpcConnection;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.GrpcService;
+import org.opennms.plugins.cloud.srv.ServiceManager;
 import org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,28 +80,36 @@ public class ConfigurationManager {
 
     private final SecureCredentialsVault scv;
 
+    private final ServiceManager serviceManager;
     private final List<GrpcService> grpcServices;
 
     private final AuthenticateGrpc.AuthenticateBlockingStub grpc;
 
     private final GrpcConnectionConfig pasConfig;
 
-    public ConfigurationManager(final SecureCredentialsVault scv, final GrpcConnectionConfig pasConfig, List<GrpcService> grpcServices) {
+    public ConfigurationManager(final SecureCredentialsVault scv,
+                                final GrpcConnectionConfig pasConfig,
+                                final ServiceManager serviceManager,
+                                final List<GrpcService> grpcServices
+                                ) {
         this(scv,
-                grpcServices,
                 pasConfig,
+                serviceManager,
+                grpcServices,
                 new GrpcConnection<>(pasConfig,
                         AuthenticateGrpc::newBlockingStub).get());
     }
 
     public ConfigurationManager(final SecureCredentialsVault scv,
-                                final List<GrpcService> grpcServices,
                                 final GrpcConnectionConfig pasConfig,
+                                final ServiceManager serviceManager,
+                                final List<GrpcService> grpcServices,
                                 final AuthenticateGrpc.AuthenticateBlockingStub grpc) {
         this.scv = Objects.requireNonNull(scv);
+        this.pasConfig = Objects.requireNonNull(pasConfig);
+        this.serviceManager = Objects.requireNonNull(serviceManager);
         this.grpcServices = Objects.requireNonNull(grpcServices);
         this.grpc = Objects.requireNonNull(grpc);
-        this.pasConfig = Objects.requireNonNull(pasConfig);
         importCloudCredentialsIfPresent();
     }
 
@@ -120,14 +132,42 @@ public class ConfigurationManager {
     public void configure(final String key) {
         Objects.requireNonNull(key);
         GrpcConnectionConfig cloudGatewayConfig = fetchCredentialsFromAccessService(key);
-        importCredentials(cloudGatewayConfig);
-        AuthenticateOuterClass.GetServicesResponse servicesResponse = grpc
-                .getServices(AuthenticateOuterClass.GetServicesRequest.newBuilder().setSystemId(systemId).build());
-        Map<String, AuthenticateOuterClass.Service> services = servicesResponse.getServicesMap();
-        // TODO: Patrick: disable services
-
-        initGrpcServices(cloudGatewayConfig);
+        Set<ServiceManager.Service> activeServices = getActiveServices();
+        String activeServicesAsString = getActiveServices().stream()
+                .map(Enum::name)
+                .collect(Collectors.joining( "," ));
+        storeCredentials(cloudGatewayConfig, activeServicesAsString);
+        initGrpcServices(cloudGatewayConfig); // give all grpc services the new config
+        activateServices(activeServices);
         this.currentStatus = ConfigStatus.SUCCESSFUL;
+    }
+
+    private Set<ServiceManager.Service> getActiveServices() {
+        AuthenticateOuterClass.GetServicesResponse servicesResponse = grpc
+                .getServices(
+                        AuthenticateOuterClass.GetServicesRequest.newBuilder()
+                        .setSystemId(systemId)
+                                .build());
+        return servicesResponse
+                .getServicesMap()
+                .entrySet()
+                .stream()
+                .filter(e -> e.getValue().getEnabled())
+                .map(Map.Entry::getKey)
+                .map(ServiceManager.Service::valueOf)
+                .collect(Collectors.toSet());
+    }
+
+    /** Registers the active services with OpenNMS. */
+    private void activateServices(final Set<ServiceManager.Service> activeServices){
+        Set<ServiceManager.Service> inactiveServices =  new HashSet<>(Arrays.asList(ServiceManager.Service.values()));
+        inactiveServices.removeAll(activeServices);
+        for(ServiceManager.Service service : inactiveServices ) {
+            this.serviceManager.deregister(service);
+        }
+        for(ServiceManager.Service service : activeServices ) {
+            this.serviceManager.register(service);
+        }
     }
 
     private GrpcConnectionConfig fetchCredentialsFromAccessService(final String key) {
@@ -164,7 +204,7 @@ public class ConfigurationManager {
                 .build();
     }
 
-    public void importCredentials(final GrpcConnectionConfig config) {
+    public void storeCredentials(final GrpcConnectionConfig config, String activeServices) {
 
         // retain old values if present
         Map<String, String> attributes = new HashMap<>();
@@ -183,6 +223,7 @@ public class ConfigurationManager {
         attributes.put(SecureCredentialsVaultUtil.Type.tokenvalue.name(), config.getTokenValue());
         attributes.put(SecureCredentialsVaultUtil.Type.grpchost.name(), config.getHost());
         attributes.put(SecureCredentialsVaultUtil.Type.grpcport.name(), Integer.toString(config.getPort()));
+        attributes.put(SecureCredentialsVaultUtil.Type.activeservices.name(), activeServices);
 
         // Store modified credentials
         Credentials newCredentials = new ImmutableCredentials("", "", attributes);

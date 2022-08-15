@@ -20,6 +20,19 @@ public class GrpcConnectionConfig {
 
     public GrpcConnectionConfig(
             final String host,
+            final int port) {
+        this(
+                host,
+                port,
+                null,
+                null,
+                false,
+                null,
+                null,
+                null);
+    }
+    public GrpcConnectionConfig(
+            final String host,
             final int port,
             final String tokenKey,
             final String tokenValue,
@@ -29,8 +42,8 @@ public class GrpcConnectionConfig {
             final String clientTrustStore) {
         this.host = Objects.requireNonNull(host);
         this.port = requirePositiveNumber(port);
-        this.tokenKey = Objects.requireNonNull(tokenKey);
-        this.tokenValue = Objects.requireNonNull(tokenValue);
+        this.tokenKey = tokenKey;
+        this.tokenValue = tokenValue;
         this.mtlsEnabled = mtlsEnabled;
         this.publicKey = publicKey;
         this.privateKey = privateKey;

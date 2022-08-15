@@ -136,7 +136,9 @@ public class GrpcConnection<T extends AbstractBlockingStub<T>> {
             return new ForwardingClientCall.SimpleForwardingClientCall<>(next.newCall(method, callOptions)) {
                 @Override
                 public void start(final Listener<O> responseListener, final Metadata headers) {
-                    headers.put(Metadata.Key.of(tokenKey, Metadata.ASCII_STRING_MARSHALLER), tokenValue);
+                    if(tokenKey != null && !tokenKey.isBlank() && tokenValue != null && !tokenValue.isBlank()) {
+                        headers.put(Metadata.Key.of(tokenKey, Metadata.ASCII_STRING_MARSHALLER), tokenValue);
+                    }
                     super.start(responseListener, headers);
                 }
             };

@@ -81,8 +81,8 @@ public class CertificateImporter {
             throw new IllegalArgumentException(String.format("%s is not a readable.", fileParam));
         }
 
-        final GrpcConnectionConfig cloudGatewayConfig = new ConfigZipExtractor(file).get();
-        configManager.importCredentials(cloudGatewayConfig);
+        final GrpcConnectionConfig cloudGatewayConfig = new ConfigZipExtractor(file).getGrpcConnectionConfig();
+        configManager.storeCredentials(cloudGatewayConfig, ""); // per default we activate no services
         LOG.info("Imported certificates from {}", fileParam);
 
         if (isConfigStored(cloudGatewayConfig)) {

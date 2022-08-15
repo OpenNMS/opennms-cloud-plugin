@@ -28,37 +28,17 @@
 
 package org.opennms.plugins.cloud.srv.tsaas;
 
-import java.util.Objects;
-import java.util.Optional;
+import static org.junit.Assert.fail;
 
-import org.opennms.integration.api.v1.scv.Credentials;
-import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
+import org.junit.Test;
 
-public class SecureCredentialsVaultUtil {
-  public static final String SCV_ALIAS = "plugin.cloud.tsaas";
-
-  /**
-   * All enums must be lower case.
-   * Otherwise scv won't save them correctly.
-   */
-  public enum Type {
-    truststore, publickey, privatekey, tokenkey, tokenvalue, grpchost, grpcport,
-    activeservices;
-  }
-
-  private final SecureCredentialsVault scv;
-
-  public SecureCredentialsVaultUtil(SecureCredentialsVault scv) {
-    this.scv = Objects.requireNonNull(scv);
-  }
-
-  public Optional<Credentials> getCredentials() {
-    return Optional.ofNullable(this.scv.getCredentials(SCV_ALIAS));
-  }
-
-  public String getOrNull(Type type) {
-    return getCredentials()
-            .map(c -> c.getAttribute(type.name()))
-            .orElse(null);
-  }
+public class SecureCredentialsVaultUtilTypeTest {
+    @Test
+    public void typeNamesMustBeLowerCase() {
+        for(SecureCredentialsVaultUtil.Type type : SecureCredentialsVaultUtil.Type .values()) {
+            if(!type.name().equals(type.name().toLowerCase())) {
+                fail(type.name() + " must be lower case. Otherwise the scv won't work properly.");
+            }
+        }
+    }
 }
