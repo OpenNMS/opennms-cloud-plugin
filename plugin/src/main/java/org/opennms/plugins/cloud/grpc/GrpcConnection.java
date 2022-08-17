@@ -69,10 +69,10 @@ public class GrpcConnection<T extends AbstractBlockingStub<T>> {
 
     public GrpcConnection(final GrpcConnectionConfig config, final Function<ManagedChannel,T> stubCreator) {
         final NettyChannelBuilder builder = NettyChannelBuilder.forAddress(config.getHost(), config.getPort());
-        if (config.isMtlsEnabled()) {
-            builder.sslContext(createSslContext(config));
-        } else {
+        if (GrpcConnectionConfig.Security.PLAIN_TEXT == config.getSecurity()) {
             builder.usePlaintext();
+        } else {
+            builder.sslContext(createSslContext(config));
         }
         // setup message size
         builder.maxInboundMessageSize(MAX_MESSAGE_SIZE).maxInboundMetadataSize(MAX_MESSAGE_SIZE);
@@ -102,11 +102,12 @@ public class GrpcConnection<T extends AbstractBlockingStub<T>> {
                 LOG.info("Will use truststore from SecureCredentialsVault.");
                 context.trustManager(new ByteArrayInputStream(truststore.getBytes(StandardCharsets.UTF_8)));
             }
-
-            context.keyManager(
-                    new ByteArrayInputStream(config.getPublicKey().getBytes(StandardCharsets.UTF_8)),
-                    new ByteArrayInputStream(config.getPrivateKey().getBytes(StandardCharsets.UTF_8)))
-                    .clientAuth(ClientAuth.REQUIRE);
+            if (GrpcConnectionConfig.Security.MTLS == config.getSecurity()) {
+                context.keyManager(
+                                new ByteArrayInputStream(config.getPublicKey().getBytes(StandardCharsets.UTF_8)),
+                                new ByteArrayInputStream(config.getPrivateKey().getBytes(StandardCharsets.UTF_8)))
+                        .clientAuth(ClientAuth.REQUIRE);
+            }
             return context.build();
         } catch (SSLException e) {
             throw new RuntimeException(e);

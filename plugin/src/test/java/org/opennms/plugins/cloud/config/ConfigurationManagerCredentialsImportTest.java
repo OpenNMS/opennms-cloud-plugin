@@ -46,7 +46,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.opennms.integration.api.v1.scv.Credentials;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
-import org.opennms.plugins.cloud.srv.ServiceManager;
+import org.opennms.plugins.cloud.srv.RegistrationManager;
 import org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil;
 
 public class ConfigurationManagerCredentialsImportTest {
@@ -65,15 +65,15 @@ public class ConfigurationManagerCredentialsImportTest {
     public void shouldImportCloudCredentialsIfPresent() throws Exception {
 
         InMemoryScv scv = new InMemoryScv();
-        ConfigurationManager cm = new ConfigurationManager(scv, GrpcConnectionConfig.builder().build()
-                , mock(ServiceManager.class), new ArrayList<>());
+        ConfigurationManager registrationManager = new ConfigurationManager(scv, GrpcConnectionConfig.builder().build()
+                , mock(RegistrationManager.class), new ArrayList<>());
         openNmsHome = Files.createTempDirectory(this.getClass().getSimpleName());
         System.setProperty(OPENNMS_HOME, openNmsHome.toString());
         Files.createDirectory(Path.of(openNmsHome.toString(), "etc"));
         Path credentialsFile = Path.of(openNmsHome.toString(), "etc", "cloud-credentials.zip");
         Files.copy(Path.of("src/test/resources/cert/cloud-credentials.zip"), credentialsFile);
         assertTrue(Files.exists(credentialsFile));
-        cm.importCloudCredentialsIfPresent();
+        registrationManager.importCloudCredentialsIfPresent();
         Credentials credentials = scv.getCredentials(SCV_ALIAS);
         assertNotNull(credentials);
         String value = credentials.getAttribute(SecureCredentialsVaultUtil.Type.publickey.name());

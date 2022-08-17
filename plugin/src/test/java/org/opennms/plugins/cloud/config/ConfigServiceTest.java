@@ -42,7 +42,7 @@ import org.junit.Test;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.GrpcService;
-import org.opennms.plugins.cloud.srv.ServiceManager;
+import org.opennms.plugins.cloud.srv.RegistrationManager;
 import org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil;
 import org.opennms.plugins.cloud.testserver.GrpcTestServer;
 import org.opennms.plugins.cloud.testserver.GrpcTestServerInterceptor;
@@ -79,7 +79,7 @@ public class ConfigServiceTest {
     InMemoryScv scv = new InMemoryScv();
     SecureCredentialsVaultUtil scvUtil = new SecureCredentialsVaultUtil(scv);
     GrpcService grpc = mock(GrpcService.class);
-    ConfigurationManager cm = new ConfigurationManager(scv, clientConfig, mock(ServiceManager.class), Collections.singletonList(grpc));
+    ConfigurationManager cm = new ConfigurationManager(scv, clientConfig, mock(RegistrationManager.class), Collections.singletonList(grpc));
     cm.configure("something");
     verify(grpc, times(1)).initGrpc(any());
     assertTrue(scvUtil.getOrNull(SecureCredentialsVaultUtil.Type.privatekey).startsWith("-----BEGIN PRIVATE KEY-----"));

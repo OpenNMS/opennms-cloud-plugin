@@ -48,7 +48,7 @@ import org.junit.Test;
 import org.opennms.integration.api.v1.scv.Credentials;
 import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
-import org.opennms.plugins.cloud.srv.ServiceManager;
+import org.opennms.plugins.cloud.srv.RegistrationManager;
 import org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil.Type;
 
 public class CertificateImporterTest {
@@ -74,7 +74,7 @@ public class CertificateImporterTest {
     ConfigurationManager cm = new ConfigurationManager(
             scv,
             GrpcConnectionConfig.builder().build(),
-            mock(ServiceManager.class),
+            mock(RegistrationManager.class),
             new ArrayList<>());
     CertificateImporter importer = new CertificateImporter(credentialsFile.toString(), scv, GrpcConnectionConfig.builder().build(), cm);
     importer.doIt();

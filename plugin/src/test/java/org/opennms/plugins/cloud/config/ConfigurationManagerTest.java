@@ -40,7 +40,7 @@ import org.junit.Test;
 import org.opennms.dataplatform.access.AuthenticateGrpc;
 import org.opennms.dataplatform.access.AuthenticateOuterClass;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
-import org.opennms.plugins.cloud.srv.ServiceManager;
+import org.opennms.plugins.cloud.srv.RegistrationManager;
 import org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil;
 
 import io.grpc.ManagedChannel;
@@ -104,7 +104,7 @@ public class ConfigurationManagerTest {
         ConfigurationManager cm = new ConfigurationManager(
                 scv,
                 GrpcConnectionConfig.builder().build(),
-                mock(ServiceManager.class),
+                mock(RegistrationManager.class),
                 new ArrayList<>(),
                 grpc);
         assertEquals(ConfigurationManager.ConfigStatus.NOT_ATTEMPTED, cm.getStatus());

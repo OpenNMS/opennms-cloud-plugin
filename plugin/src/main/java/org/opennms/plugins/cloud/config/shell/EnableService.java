@@ -33,22 +33,22 @@ import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
-import org.opennms.plugins.cloud.srv.ServiceManager;
+import org.opennms.plugins.cloud.srv.RegistrationManager;
 
 @Command(scope = "opennms-cloud", name = "enableService", description = "Enables a Cloud Service (e.g. Tsaas)")
 @Service
 public class EnableService implements Action {
 
     @Reference
-    private ServiceManager manager;
+    private RegistrationManager manager;
 
     @Argument()
     String service;
 
     @Override
     public Object execute() throws Exception {
-        if (ServiceManager.Service.contains(this.service)) {
-            manager.register(ServiceManager.Service.valueOf(service));
+        if (RegistrationManager.Service.contains(this.service)) {
+            manager.register(RegistrationManager.Service.valueOf(service));
         } else {
             System.out.println("Unknown service " + service);
         }

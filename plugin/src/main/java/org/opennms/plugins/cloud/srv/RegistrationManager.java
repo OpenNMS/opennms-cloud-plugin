@@ -47,9 +47,9 @@ import org.slf4j.LoggerFactory;
  * Responsible for registering cloud services at OpenNMS.
  * Currently we support tsaas.
  */
-public class ServiceManager {
+public class RegistrationManager {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ServiceManager.class);
+    private static final Logger LOG = LoggerFactory.getLogger(RegistrationManager.class);
 
     public enum Service {
         tsaas, faas;
@@ -67,8 +67,8 @@ public class ServiceManager {
 
     private final Map<Service, ServiceRegistration<?>> registrations = new EnumMap<>(Service.class);
 
-    public ServiceManager(final BundleContext context,
-                          final TsaasStorage tsaas) {
+    public RegistrationManager(final BundleContext context,
+                               final TsaasStorage tsaas) {
         this.context = Objects.requireNonNull(context);
         this.tsaas = Objects.requireNonNull(tsaas);
         register(Service.tsaas); // TODO: Patrick: this should be later conditional, depending if the client enabled tsaas

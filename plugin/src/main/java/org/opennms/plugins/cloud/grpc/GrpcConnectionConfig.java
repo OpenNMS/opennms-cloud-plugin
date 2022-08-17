@@ -8,11 +8,17 @@ import lombok.Data;
 @Builder(toBuilder = true)
 @Data
 public class GrpcConnectionConfig {
+
+    public enum Security {
+        PLAIN_TEXT,
+        TLS,
+        MTLS
+    }
     private final String host;
     private final int port;
     private final String tokenKey;
     private final String tokenValue;
-    private final boolean mtlsEnabled;
+    private final Security security;
 
     private final String publicKey;
     private final String privateKey;
@@ -20,13 +26,14 @@ public class GrpcConnectionConfig {
 
     public GrpcConnectionConfig(
             final String host,
-            final int port) {
+            final int port,
+            final Security security) {
         this(
                 host,
                 port,
                 null,
                 null,
-                false,
+                security,
                 null,
                 null,
                 null);
@@ -36,7 +43,7 @@ public class GrpcConnectionConfig {
             final int port,
             final String tokenKey,
             final String tokenValue,
-            final boolean mtlsEnabled,
+            final Security security,
             final String publicKey,
             final String privateKey,
             final String clientTrustStore) {
@@ -44,7 +51,7 @@ public class GrpcConnectionConfig {
         this.port = requirePositiveNumber(port);
         this.tokenKey = tokenKey;
         this.tokenValue = tokenValue;
-        this.mtlsEnabled = mtlsEnabled;
+        this.security = security;
         this.publicKey = publicKey;
         this.privateKey = privateKey;
         this.clientTrustStore = clientTrustStore;
@@ -62,6 +69,6 @@ public class GrpcConnectionConfig {
         private int port = 5001; // default value
         private String tokenKey = "token"; // default value
         private String tokenValue = "acme"; // default value
-        private boolean mtlsEnabled = false; // default value
+        private Security security = Security.PLAIN_TEXT; // default value
     }
 }

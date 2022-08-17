@@ -52,7 +52,7 @@ import org.opennms.integration.api.v1.scv.immutables.ImmutableCredentials;
 import org.opennms.plugins.cloud.grpc.GrpcConnection;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.GrpcService;
-import org.opennms.plugins.cloud.srv.ServiceManager;
+import org.opennms.plugins.cloud.srv.RegistrationManager;
 import org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,7 +80,7 @@ public class ConfigurationManager {
 
     private final SecureCredentialsVault scv;
 
-    private final ServiceManager serviceManager;
+    private final RegistrationManager serviceManager;
     private final List<GrpcService> grpcServices;
 
     private final AuthenticateGrpc.AuthenticateBlockingStub grpc;
@@ -89,7 +89,7 @@ public class ConfigurationManager {
 
     public ConfigurationManager(final SecureCredentialsVault scv,
                                 final GrpcConnectionConfig pasConfig,
-                                final ServiceManager serviceManager,
+                                final RegistrationManager serviceManager,
                                 final List<GrpcService> grpcServices
                                 ) {
         this(scv,
@@ -102,7 +102,7 @@ public class ConfigurationManager {
 
     public ConfigurationManager(final SecureCredentialsVault scv,
                                 final GrpcConnectionConfig pasConfig,
-                                final ServiceManager serviceManager,
+                                final RegistrationManager serviceManager,
                                 final List<GrpcService> grpcServices,
                                 final AuthenticateGrpc.AuthenticateBlockingStub grpc) {
         this.scv = Objects.requireNonNull(scv);
@@ -132,7 +132,7 @@ public class ConfigurationManager {
     public void configure(final String key) {
         Objects.requireNonNull(key);
         GrpcConnectionConfig cloudGatewayConfig = fetchCredentialsFromAccessService(key);
-        Set<ServiceManager.Service> activeServices = getActiveServices();
+        Set<RegistrationManager.Service> activeServices = getActiveServices();
         String activeServicesAsString = getActiveServices().stream()
                 .map(Enum::name)
                 .collect(Collectors.joining( "," ));
@@ -142,7 +142,7 @@ public class ConfigurationManager {
         this.currentStatus = ConfigStatus.SUCCESSFUL;
     }
 
-    private Set<ServiceManager.Service> getActiveServices() {
+    private Set<RegistrationManager.Service> getActiveServices() {
         AuthenticateOuterClass.GetServicesResponse servicesResponse = grpc
                 .getServices(
                         AuthenticateOuterClass.GetServicesRequest.newBuilder()
@@ -154,18 +154,18 @@ public class ConfigurationManager {
                 .stream()
                 .filter(e -> e.getValue().getEnabled())
                 .map(Map.Entry::getKey)
-                .map(ServiceManager.Service::valueOf)
+                .map(RegistrationManager.Service::valueOf)
                 .collect(Collectors.toSet());
     }
 
     /** Registers the active services with OpenNMS. */
-    private void activateServices(final Set<ServiceManager.Service> activeServices){
-        Set<ServiceManager.Service> inactiveServices =  new HashSet<>(Arrays.asList(ServiceManager.Service.values()));
+    private void activateServices(final Set<RegistrationManager.Service> activeServices){
+        Set<RegistrationManager.Service> inactiveServices =  new HashSet<>(Arrays.asList(RegistrationManager.Service.values()));
         inactiveServices.removeAll(activeServices);
-        for(ServiceManager.Service service : inactiveServices ) {
+        for(RegistrationManager.Service service : inactiveServices ) {
             this.serviceManager.deregister(service);
         }
-        for(ServiceManager.Service service : activeServices ) {
+        for(RegistrationManager.Service service : activeServices ) {
             this.serviceManager.register(service);
         }
     }
@@ -200,7 +200,7 @@ public class ConfigurationManager {
                 .tokenValue("") // TODO: Patrick
                 .publicKey(response.getCertificate())
                 .privateKey(response.getPrivateKey())
-                .mtlsEnabled(true) // we always enable mtls (just not in tests)
+                .security(GrpcConnectionConfig.Security.MTLS) // we always enable mtls (just not in tests)
                 .build();
     }
 

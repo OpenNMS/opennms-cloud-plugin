@@ -60,7 +60,7 @@ public class TsaasStorageWithMtlsTest extends AbstractStorageIntegrationTest {
   @Before
   public void setUp() throws Exception {
     GrpcConnectionConfig serverConfig = GrpcConnectionConfig.builder()
-        .mtlsEnabled(true)
+        .security(GrpcConnectionConfig.Security.MTLS)
         .port(0)
         .build();
 
