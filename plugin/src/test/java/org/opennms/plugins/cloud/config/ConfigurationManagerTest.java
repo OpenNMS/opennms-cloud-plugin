@@ -108,6 +108,9 @@ public class ConfigurationManagerTest {
                 GrpcConnectionConfig.builder()
                         .clientTrustStore(Files.readString(Path.of("src/test/resources/cert/clienttruststore.pem")))
                         .build(),
+                GrpcConnectionConfig.builder()
+                        .clientTrustStore(Files.readString(Path.of("src/test/resources/cert/clienttruststore.pem")))
+                        .build(),
                 mock(RegistrationManager.class),
                 new ArrayList<>(),
                 grpc);

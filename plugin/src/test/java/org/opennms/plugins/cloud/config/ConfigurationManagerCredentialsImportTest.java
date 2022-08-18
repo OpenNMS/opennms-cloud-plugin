@@ -64,8 +64,10 @@ public class ConfigurationManagerCredentialsImportTest {
     public void shouldImportCloudCredentialsIfPresent() throws Exception {
 
         InMemoryScv scv = new InMemoryScv();
-        ConfigurationManager registrationManager = new ConfigurationManager(scv, GrpcConnectionConfig.builder().build()
-                , mock(RegistrationManager.class), new ArrayList<>());
+        ConfigurationManager registrationManager = new ConfigurationManager(scv,
+                GrpcConnectionConfig.builder().build(),
+                GrpcConnectionConfig.builder().build(),
+                mock(RegistrationManager.class), new ArrayList<>());
         openNmsHome = Files.createTempDirectory(this.getClass().getSimpleName());
         System.setProperty(OPENNMS_HOME, openNmsHome.toString());
         Files.createDirectory(Path.of(openNmsHome.toString(), "etc"));

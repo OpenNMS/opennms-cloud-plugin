@@ -74,6 +74,7 @@ public class CertificateImporterTest {
     ConfigurationManager cm = new ConfigurationManager(
             scv,
             GrpcConnectionConfig.builder().build(),
+            GrpcConnectionConfig.builder().build(),
             mock(RegistrationManager.class),
             new ArrayList<>());
     CertificateImporter importer = new CertificateImporter(credentialsFile.toString(),

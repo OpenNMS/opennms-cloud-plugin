@@ -77,28 +77,33 @@ public class ConfigurationManager {
 
     private final AuthenticateGrpc.AuthenticateBlockingStub grpc;
 
-    private final GrpcConnectionConfig pasConfig;
+    private final GrpcConnectionConfig pasConfigTls;
+    private final GrpcConnectionConfig pasConfigMtls;
 
     public ConfigurationManager(final SecureCredentialsVault scv,
-                                final GrpcConnectionConfig pasConfig,
+                                final GrpcConnectionConfig pasConfigTls,
+                                final GrpcConnectionConfig pasConfigMtls,
                                 final RegistrationManager serviceManager,
                                 final List<GrpcService> grpcServices
                                 ) {
         this(scv,
-                pasConfig,
+                pasConfigTls,
+                pasConfigMtls,
                 serviceManager,
                 grpcServices,
-                new GrpcConnection<>(pasConfig,
+                new GrpcConnection<>(pasConfigTls,
                         AuthenticateGrpc::newBlockingStub).get());
     }
 
     public ConfigurationManager(final SecureCredentialsVault scv,
-                                final GrpcConnectionConfig pasConfig,
+                                final GrpcConnectionConfig pasConfigTls,
+                                final GrpcConnectionConfig pasConfigMtls,
                                 final RegistrationManager serviceManager,
                                 final List<GrpcService> grpcServices,
                                 final AuthenticateGrpc.AuthenticateBlockingStub grpc) {
         this.scv = new SecureCredentialsVaultUtil(Objects.requireNonNull(scv));
-        this.pasConfig = Objects.requireNonNull(pasConfig);
+        this.pasConfigTls = Objects.requireNonNull(pasConfigTls);
+        this.pasConfigMtls = Objects.requireNonNull(pasConfigMtls);
         this.serviceManager = Objects.requireNonNull(serviceManager);
         this.grpcServices = Objects.requireNonNull(grpcServices);
         this.grpc = Objects.requireNonNull(grpc);
@@ -112,7 +117,7 @@ public class ConfigurationManager {
                 CertificateImporter importer = new CertificateImporter(
                         cloudCredentialsFile.toString(),
                         scv,
-                        pasConfig,
+                        pasConfigTls,
                         this);
                 importer.doIt();
             } catch (Exception e) {
@@ -134,21 +139,16 @@ public class ConfigurationManager {
             Objects.requireNonNull(key);
 
             LOG.info("Starting configuration of cloud connection.");
+
+            // Fetching initial credentials via TLS and cloud key
             GrpcConnectionConfig cloudGatewayConfig = fetchCredentialsFromAccessService(key);
             LOG.info("Cloud configuration received from PAS (Platform Access Service).");
 
             storeCredentials(cloudGatewayConfig);
             LOG.info("Cloud configuration stored in OpenNMS.");
 
-            GrpcConnectionConfig mtlsConfig = cloudGatewayConfig
-                    .toBuilder()
-                    .host(pasConfig.getHost())
-                    .port(pasConfig.getPort())
-                    .clientTrustStore(pasConfig.getClientTrustStore())
-                    .build();
-            GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> grpcWithMtls = new GrpcConnection<>(
-                    mtlsConfig,
-                    AuthenticateGrpc::newBlockingStub);
+            // From now on we need to communicate via MTLS
+            GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> grpcWithMtls = createGrpcWithMtls(cloudGatewayConfig);
             Set<RegistrationManager.Service> activeServices = getActiveServices(grpcWithMtls.get());
             String activeServicesAsString = activeServices.stream()
                     .map(Enum::name)
@@ -169,6 +169,16 @@ public class ConfigurationManager {
             LOG.error("configure failed.", e);
             throw e;
         }
+    }
+
+    GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> createGrpcWithMtls(final GrpcConnectionConfig cloudGatewayConfig) {
+        GrpcConnectionConfig mtlsConfig = pasConfigMtls.toBuilder()
+                .privateKey(cloudGatewayConfig.getPrivateKey())
+                .publicKey(cloudGatewayConfig.getPublicKey())
+                .build();
+        return new GrpcConnection<>(
+                mtlsConfig,
+                AuthenticateGrpc::newBlockingStub);
     }
 
     private Set<RegistrationManager.Service> getActiveServices(final AuthenticateGrpc.AuthenticateBlockingStub grpc) {
@@ -214,7 +224,7 @@ public class ConfigurationManager {
                 .of(response.getGrpcEndpoint())
                 .filter(s -> s.contains(":"))
                 .map(s -> s.split(":"))
-                .map(s -> s[1])
+                .map(s -> s[0])
                 .filter(s -> !s.isBlank())
                 .ifPresent(cloudGatewayConfig::host);
         Optional
