@@ -30,9 +30,11 @@ package org.opennms.plugins.cloud.config;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
-import static org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil.Type;
+import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.Type;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 
 import org.junit.Rule;
@@ -41,7 +43,6 @@ import org.opennms.dataplatform.access.AuthenticateGrpc;
 import org.opennms.dataplatform.access.AuthenticateOuterClass;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.RegistrationManager;
-import org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil;
 
 import io.grpc.ManagedChannel;
 import io.grpc.Server;
@@ -57,12 +58,13 @@ public class ConfigurationManagerTest {
 
     @Test
     public void shouldConfigure() throws IOException {
+        ConfigZipExtractor zip =  new ConfigZipExtractor(Path.of("src/test/resources/cert/cloud-credentials.zip"));
         InMemoryScv scv = new InMemoryScv();
         final String endpoint = "endpoint";
-        final String privateKey = "privatekey";
-        final String certificate = "certificate";
+        final String privateKey = zip.getPrivateKey();
+        final String certificate = zip.getPublicKey();
 
-        AuthenticateGrpc.AuthenticateImplBase service =
+        AuthenticateGrpc.AuthenticateImplBase authService =
                 new AuthenticateGrpc.AuthenticateImplBase() {
                     @Override
                     public void authenticateKey(AuthenticateOuterClass.AuthenticateKeyRequest request, StreamObserver<AuthenticateOuterClass.AuthenticateKeyResponse> responseObserver) {
@@ -91,7 +93,7 @@ public class ConfigurationManagerTest {
         Server server = grpcCleanup.register(
                 InProcessServerBuilder.forName(ConfigurationManagerTest.class.getSimpleName())
                         .directExecutor()
-                        .addService(service)
+                        .addService(authService)
                         .build()
                         .start());
         ManagedChannel channel = grpcCleanup.register(
@@ -103,13 +105,15 @@ public class ConfigurationManagerTest {
 
         ConfigurationManager cm = new ConfigurationManager(
                 scv,
-                GrpcConnectionConfig.builder().build(),
+                GrpcConnectionConfig.builder()
+                        .clientTrustStore(Files.readString(Path.of("src/test/resources/cert/clienttruststore.pem")))
+                        .build(),
                 mock(RegistrationManager.class),
                 new ArrayList<>(),
                 grpc);
         assertEquals(ConfigurationManager.ConfigStatus.NOT_ATTEMPTED, cm.getStatus());
-        cm.configure("something");
-        assertEquals(ConfigurationManager.ConfigStatus.SUCCESSFUL, cm.getStatus());
+        GrpcConnectionConfig grpcConnectionConfig = cm.fetchCredentialsFromAccessService("something");
+        cm.storeCredentials(grpcConnectionConfig);
         SecureCredentialsVaultUtil scvUtil = new SecureCredentialsVaultUtil(scv);
         assertEquals(certificate, scvUtil.getOrNull(Type.publickey));
         assertEquals(privateKey, scvUtil.getOrNull(Type.privatekey));

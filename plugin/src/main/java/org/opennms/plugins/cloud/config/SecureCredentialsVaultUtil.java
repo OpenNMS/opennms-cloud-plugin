@@ -26,16 +26,25 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.srv.tsaas;
+package org.opennms.plugins.cloud.config;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import org.opennms.integration.api.v1.scv.Credentials;
 import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
+import org.opennms.integration.api.v1.scv.immutables.ImmutableCredentials;
 
+/**
+ * A thin wrapper around the SecureCredentialsVault.
+ * Makes the accessing properties easier.
+ */
 public class SecureCredentialsVaultUtil {
-  public static final String SCV_ALIAS = "plugin.cloud.tsaas";
+  public static final String SCV_ALIAS = "plugin.cloud";
 
   /**
    * All enums must be lower case.
@@ -43,7 +52,7 @@ public class SecureCredentialsVaultUtil {
    */
   public enum Type {
     truststore, publickey, privatekey, tokenkey, tokenvalue, grpchost, grpcport,
-    activeservices;
+    activeservices
   }
 
   private final SecureCredentialsVault scv;
@@ -61,4 +70,30 @@ public class SecureCredentialsVaultUtil {
             .map(c -> c.getAttribute(type.name()))
             .orElse(null);
   }
+
+  public void putProperty(final Type key, String value) {
+    Objects.requireNonNull(key);
+    Objects.requireNonNull(value);
+    putProperties(Collections.singletonMap(key, value));
+  }
+  public void putProperties(final Map<Type, String> properties) {
+    Objects.requireNonNull(properties);
+
+    // retain old values if present
+    Map<String, String> propertiesToSave = new HashMap<>();
+    SecureCredentialsVaultUtil scvUtil = new SecureCredentialsVaultUtil(scv);
+    scvUtil.getCredentials()
+            .map(Credentials::getAttributes)
+            .map(Map::entrySet)
+            .stream()
+            .flatMap(Set::stream)
+            .forEach(e -> propertiesToSave.put(e.getKey(), e.getValue()));
+    properties
+            .forEach((key, value) -> propertiesToSave.put(key.name(), value));
+
+    // Store modified credentials
+    Credentials newCredentials = new ImmutableCredentials("", "", propertiesToSave);
+    scv.setCredentials(SCV_ALIAS, newCredentials);
+  }
+
 }

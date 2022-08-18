@@ -82,7 +82,8 @@ public class GrpcTestServer {
                     .decompressorRegistry(ZStdCodecRegisterUtil.createDecompressorRegistry())
                     .compressorRegistry(ZStdCodecRegisterUtil.createCompressorRegistry())
                     .intercept(serverInterceptor);
-            if(GrpcConnectionConfig.Security.MTLS == this.config.getSecurity()) {
+            if(GrpcConnectionConfig.Security.TLS  == this.config.getSecurity()
+                    || GrpcConnectionConfig.Security.MTLS == this.config.getSecurity()) {
                 File keyCertChainFile = new File("src/test/resources/cert/server.crt"); // an X.509 certificate chain file in PEM format
                 File privateKeyFile = new File("src/test/resources/cert/server_pkcs8_key.pem");
                 builder.sslContext(

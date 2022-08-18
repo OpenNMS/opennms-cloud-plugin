@@ -23,25 +23,24 @@ When the plugin is started it will import the cloud credentials automatically an
 
 ***Properties***
 
-The default configuration has the following settings:
-```
-host=localhost
-port=5001
-tokenKey=token
-mtlsEnabled=false
-batchSize=1000
-```
-
-Change configuration via Karaf shell:
+Change configuration via Karaf shell for the initial setting:
 ```
 config:edit org.opennms.plugins.cloud
-property-set host localhost
-property-set port 5001
-property-set tokenKey token
-property-set mtlsEnabled false
-property-set batchSize 1000
+property-set pas.host access-test.staging.nonprod.dataservice.opennms.com
+property-set pas.port 443
+property-set pas.security TLS
+property-set tsaas.batchSize 1000
+property-set tsaas.maxBatchWaitTimeInMilliSeconds 5000
 config:update
 ```
+
+Configure cloud access via Karaf shell:
+```
+opennms-cloud:configure <access token>
+```
+or via web interface.
+
+This will get the cloud credentials from the Platform Acess Service (PAS) and configure the enabled services.
 
 ***Verify***
 

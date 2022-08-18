@@ -32,7 +32,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
-import static org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil.SCV_ALIAS;
+import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.SCV_ALIAS;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,7 +47,6 @@ import org.junit.Test;
 import org.opennms.integration.api.v1.scv.Credentials;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.RegistrationManager;
-import org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil;
 
 public class ConfigurationManagerCredentialsImportTest {
 

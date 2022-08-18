@@ -29,19 +29,14 @@
 
 package org.opennms.plugins.cloud.config;
 
-import static org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil.SCV_ALIAS;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 
-import org.opennms.integration.api.v1.scv.Credentials;
-import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
+import org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.Type;
 import org.opennms.plugins.cloud.grpc.GrpcConnection;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
-import org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil;
-import org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil.Type;
 import org.opennms.tsaas.TimeseriesGrpc;
 import org.opennms.tsaas.Tsaas;
 import org.slf4j.Logger;
@@ -54,14 +49,14 @@ public class CertificateImporter {
 
     private final GrpcConnectionConfig config;
 
-    private final SecureCredentialsVault scv;
+    private final SecureCredentialsVaultUtil scv;
 
     private final ConfigurationManager configManager;
 
     private static final Logger LOG = LoggerFactory.getLogger(CertificateImporter.class);
 
     public CertificateImporter(final String fileParam,
-                               final SecureCredentialsVault scv,
+                               final SecureCredentialsVaultUtil scv,
                                final GrpcConnectionConfig config,
                                final ConfigurationManager configManager) {
         this.fileParam = Objects.requireNonNull(fileParam);
@@ -82,7 +77,7 @@ public class CertificateImporter {
         }
 
         final GrpcConnectionConfig cloudGatewayConfig = new ConfigZipExtractor(file).getGrpcConnectionConfig();
-        configManager.storeCredentials(cloudGatewayConfig, ""); // per default we activate no services
+        configManager.storeCredentials(cloudGatewayConfig);
         LOG.info("Imported certificates from {}", fileParam);
 
         if (isConfigStored(cloudGatewayConfig)) {
@@ -93,29 +88,25 @@ public class CertificateImporter {
             LOG.info("Will abort.");
         }
 
-        tryConnection(scv);
+        tryConnection();
     }
 
     public boolean isConfigStored(final GrpcConnectionConfig config) {
-        Credentials credFromScv = scv.getCredentials(SCV_ALIAS);
-        return Objects.equals(config.getPrivateKey(), credFromScv.getAttribute(Type.privatekey.name()))
-                && Objects.equals(config.getPublicKey(), credFromScv.getAttribute(Type.publickey.name()))
-                && Objects.equals(config.getTokenValue(), credFromScv.getAttribute(Type.tokenvalue.name()));
+        return Objects.equals(config.getPrivateKey(), scv.getOrNull(Type.privatekey))
+                && Objects.equals(config.getPublicKey(), scv.getOrNull(Type.publickey))
+                && Objects.equals(config.getTokenValue(), scv.getOrNull(Type.tokenvalue));
     }
 
-    boolean tryConnection(final SecureCredentialsVault scv) {
+    void tryConnection() {
         // Check if the connection can be established
         LOG.info("Checking if connection to server works");
         try {
-            SecureCredentialsVaultUtil scvUtil = new SecureCredentialsVaultUtil(scv);
             GrpcConnection<TimeseriesGrpc.TimeseriesBlockingStub> grpc = new GrpcConnection<>(this.config, TimeseriesGrpc::newBlockingStub);
             Tsaas.CheckHealthResponse response = grpc.get().checkHealth(Tsaas.CheckHealthRequest.newBuilder().build());
             LOG.info("Connection to cloud server: OK");
             LOG.info("Status of cloud server: {}", response.getStatus().name());
         } catch (Exception e) {
             LOG.info("Warning: Connection to cloud was not successful: {}", e.getMessage());
-            return false;
         }
-        return true;
     }
 }

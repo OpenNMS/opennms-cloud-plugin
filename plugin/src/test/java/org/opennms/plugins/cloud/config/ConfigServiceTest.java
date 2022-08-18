@@ -34,6 +34,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 
 import org.junit.After;
@@ -43,7 +46,6 @@ import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.GrpcService;
 import org.opennms.plugins.cloud.srv.RegistrationManager;
-import org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil;
 import org.opennms.plugins.cloud.testserver.GrpcTestServer;
 import org.opennms.plugins.cloud.testserver.GrpcTestServerInterceptor;
 
@@ -54,17 +56,19 @@ public class ConfigServiceTest {
   private GrpcConnectionConfig clientConfig;
 
   @Before
-  public void setUp() {
+  public void setUp() throws IOException {
     GrpcConnectionConfig serverConfig = GrpcConnectionConfig.builder()
             .port(0)
+            .security(GrpcConnectionConfig.Security.TLS)
             .build();
-
     serverStorage = mock(TimeSeriesStorage.class);
-
     server = new GrpcTestServer(serverConfig, new GrpcTestServerInterceptor(), serverStorage);
     server.startServer();
-
-    clientConfig = server.getConfig();
+    clientConfig = server
+            .getConfig()
+            .toBuilder()
+            .clientTrustStore(Files.readString(Path.of("src/test/resources/cert/clienttruststore.pem")))
+            .build();
   }
 
   @After

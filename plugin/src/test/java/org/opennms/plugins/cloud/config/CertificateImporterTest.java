@@ -35,7 +35,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil.SCV_ALIAS;
+import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.SCV_ALIAS;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -47,19 +47,19 @@ import org.junit.After;
 import org.junit.Test;
 import org.opennms.integration.api.v1.scv.Credentials;
 import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
+import org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.Type;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.RegistrationManager;
-import org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil.Type;
 
 public class CertificateImporterTest {
 
   private Path credentialsFile;
 
   @Test
-  public void shouldRejectMissingFiles() throws Exception {
+  public void shouldRejectMissingFiles() {
     credentialsFile = Path.of("IDontExist.file");
     final String file = credentialsFile.toString();
-    final SecureCredentialsVault scv = new InMemoryScv();
+    final SecureCredentialsVaultUtil scv = new SecureCredentialsVaultUtil(new InMemoryScv());
     final GrpcConnectionConfig config = GrpcConnectionConfig.builder().build();
     final CertificateImporter importer = new CertificateImporter(file, scv, config, mock(ConfigurationManager.class));
     assertThrows(IllegalArgumentException.class, importer::doIt);
@@ -76,7 +76,8 @@ public class CertificateImporterTest {
             GrpcConnectionConfig.builder().build(),
             mock(RegistrationManager.class),
             new ArrayList<>());
-    CertificateImporter importer = new CertificateImporter(credentialsFile.toString(), scv, GrpcConnectionConfig.builder().build(), cm);
+    CertificateImporter importer = new CertificateImporter(credentialsFile.toString(),
+            new SecureCredentialsVaultUtil(scv), GrpcConnectionConfig.builder().build(), cm);
     importer.doIt();
 
     Credentials credentials = scv.getCredentials(SCV_ALIAS);
@@ -102,7 +103,9 @@ public class CertificateImporterTest {
     credentialsFile = Files.createTempFile(this.getClass().getSimpleName(), ".zip");
     Files.copy(Path.of("src/test/resources/cert/cloud-credentials.zip"), credentialsFile, StandardCopyOption.REPLACE_EXISTING);
     assertTrue(Files.exists(credentialsFile));
-    CertificateImporter importer = new CertificateImporter(credentialsFile.toString(), scv, GrpcConnectionConfig.builder().build(), mock(ConfigurationManager.class));
+    CertificateImporter importer = new CertificateImporter(credentialsFile.toString(),
+            new SecureCredentialsVaultUtil(scv),
+            GrpcConnectionConfig.builder().build(), mock(ConfigurationManager.class));
     importer.doIt();
 
     // Check if file has been deleted. We expect that the file is not deleted after an unsuccessful import:

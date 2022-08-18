@@ -26,7 +26,7 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.srv.tsaas;
+package org.opennms.plugins.cloud.config;
 
 import static org.junit.Assert.fail;
 
