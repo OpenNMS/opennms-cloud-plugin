@@ -130,34 +130,45 @@ public class ConfigurationManager {
      * // 10.) getAccessToken (cert, system-uuid, service) return token
      */
     public void configure(final String key) {
-        Objects.requireNonNull(key);
-        LOG.info("Starting configuration of cloud connection.");
-        GrpcConnectionConfig cloudGatewayConfig = fetchCredentialsFromAccessService(key);
-        LOG.info("Cloud configuration received from AccesService.");
-        storeCredentials(cloudGatewayConfig);
-        LOG.info("Cloud configuration stored in OpenNMS.");
+        try {
+            Objects.requireNonNull(key);
 
-        GrpcConnectionConfig mtlsConfig = cloudGatewayConfig
-                .toBuilder()
-                .host(pasConfig.getHost())
-                .port(pasConfig.getPort())
-                .clientTrustStore(pasConfig.getClientTrustStore())
-                .build();
-        GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> grpcWithMtls = new GrpcConnection<>(
-                mtlsConfig,
-                AuthenticateGrpc::newBlockingStub);
-        Set<RegistrationManager.Service> activeServices = getActiveServices(grpcWithMtls.get());
-        String activeServicesAsString = activeServices.stream()
-                .map(Enum::name)
-                .collect(Collectors.joining( "," ));
-        LOG.info("Active services received: {}.", activeServicesAsString);
-        scv.putProperty(SecureCredentialsVaultUtil.Type.activeservices, activeServicesAsString);
-        LOG.info("Active services stored in OpenNMS.");
-        initGrpcServices(cloudGatewayConfig); // give all grpc services the new config
-        LOG.info("All services configured with grpc config.");
-        activateServices(activeServices);
-        LOG.info("Active services registered with OpenNMS.");
-        this.currentStatus = ConfigStatus.SUCCESSFUL;
+            LOG.info("Starting configuration of cloud connection.");
+            GrpcConnectionConfig cloudGatewayConfig = fetchCredentialsFromAccessService(key);
+
+            LOG.info("Cloud configuration received from AccesService.");
+            storeCredentials(cloudGatewayConfig);
+            LOG.info("Cloud configuration stored in OpenNMS.");
+
+            GrpcConnectionConfig mtlsConfig = cloudGatewayConfig
+                    .toBuilder()
+                    .host(pasConfig.getHost())
+                    .port(pasConfig.getPort())
+                    .clientTrustStore(pasConfig.getClientTrustStore())
+                    .build();
+            GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> grpcWithMtls = new GrpcConnection<>(
+                    mtlsConfig,
+                    AuthenticateGrpc::newBlockingStub);
+            Set<RegistrationManager.Service> activeServices = getActiveServices(grpcWithMtls.get());
+            String activeServicesAsString = activeServices.stream()
+                    .map(Enum::name)
+                    .collect(Collectors.joining(","));
+            LOG.info("Active services received: {}.", activeServicesAsString);
+
+            scv.putProperty(SecureCredentialsVaultUtil.Type.activeservices, activeServicesAsString);
+            LOG.info("Active services stored in OpenNMS.");
+
+            initGrpcServices(cloudGatewayConfig); // give all grpc services the new config
+            LOG.info("All services configured with grpc config.");
+
+            activateServices(activeServices);
+            LOG.info("Active services registered with OpenNMS.");
+            this.currentStatus = ConfigStatus.SUCCESSFUL;
+        } catch (Exception e) {
+            this.currentStatus = ConfigStatus.FAILED;
+            LOG.error("configure failed.", e);
+            throw e;
+        }
     }
 
     private Set<RegistrationManager.Service> getActiveServices(final AuthenticateGrpc.AuthenticateBlockingStub grpc) {
