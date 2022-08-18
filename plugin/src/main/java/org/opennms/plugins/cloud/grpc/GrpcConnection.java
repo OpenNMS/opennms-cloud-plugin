@@ -64,7 +64,7 @@ public class GrpcConnection<T extends AbstractBlockingStub<T>> {
     // 100M sync with cortex server
     private static final int MAX_MESSAGE_SIZE = 104857600;
     @VisibleForTesting
-    final public ManagedChannel managedChannel;
+    public final ManagedChannel managedChannel;
     private final T clientStub;
 
     public GrpcConnection(final GrpcConnectionConfig config, final Function<ManagedChannel,T> stubCreator) {

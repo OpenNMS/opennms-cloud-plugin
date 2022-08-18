@@ -45,8 +45,8 @@ public class TsaasConfig {
     }
 
     public static class TsaasConfigBuilder {
-        private int batchSize = 1000;
-        private long maxBatchWaitTimeInMilliSeconds = 5000;
+        private int batchSize = 1000; // default value
+        private long maxBatchWaitTimeInMilliSeconds = 5000;  // default value
     }
 
 

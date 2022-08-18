@@ -31,7 +31,7 @@ package org.opennms.plugins.cloud.config;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -223,7 +223,7 @@ public class ConfigurationManager {
 
     @VisibleForTesting
     void storeCredentials(final GrpcConnectionConfig config) {
-        Map<SecureCredentialsVaultUtil.Type, String> attributes = new HashMap<>();
+        Map<SecureCredentialsVaultUtil.Type, String> attributes = new EnumMap<>(SecureCredentialsVaultUtil.Type.class);
         attributes.put(SecureCredentialsVaultUtil.Type.privatekey, config.getPrivateKey());
         attributes.put(SecureCredentialsVaultUtil.Type.publickey, config.getPublicKey());
         attributes.put(SecureCredentialsVaultUtil.Type.tokenkey, config.getTokenKey());

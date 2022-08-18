@@ -24,6 +24,7 @@ public class GrpcConnectionConfig {
     private final String privateKey;
     private final String clientTrustStore;
 
+    /** Called by blueprint.xml. */
     public GrpcConnectionConfig(
             final String host,
             final int port,
@@ -38,7 +39,7 @@ public class GrpcConnectionConfig {
                 null,
                 null);
     }
-    public GrpcConnectionConfig(
+    private GrpcConnectionConfig(
             final String host,
             final int port,
             final String tokenKey,
