@@ -135,8 +135,8 @@ public class ConfigurationManager {
 
             LOG.info("Starting configuration of cloud connection.");
             GrpcConnectionConfig cloudGatewayConfig = fetchCredentialsFromAccessService(key);
+            LOG.info("Cloud configuration received from PAS (Platform Access Service).");
 
-            LOG.info("Cloud configuration received from AccesService.");
             storeCredentials(cloudGatewayConfig);
             LOG.info("Cloud configuration stored in OpenNMS.");
 

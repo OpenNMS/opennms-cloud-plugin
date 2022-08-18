@@ -7,4 +7,4 @@ These classes provide access to _Time Series as a Service_.
 
 ## Interfaces exposed to OpenNMS:
 Interfaces exposed via OpenNMS Integration API (OIA):
-* _TsaasStorage_ implements _TimeSeriesStorage_ will be picked up by [TimeseriesStorageManager](https://github.com/OpenNMS/opennms/blob/develop/features/timeseries/src/main/java/org/opennms/netmgt/timeseries/TimeseriesStorageManager.java)
+* _TsaasStorage_ implements _TimeSeriesStorage_, will be picked up by [TimeseriesStorageManager](https://github.com/OpenNMS/opennms/blob/develop/features/timeseries/src/main/java/org/opennms/netmgt/timeseries/TimeseriesStorageManager.java)

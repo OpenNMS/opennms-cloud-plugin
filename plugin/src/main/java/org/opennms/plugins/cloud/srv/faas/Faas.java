@@ -34,6 +34,6 @@ import org.opennms.plugins.cloud.srv.GrpcService;
 public class Faas implements GrpcService {
     @Override
     public void initGrpc(final GrpcConnectionConfig grpcConfig) {
-        // implement me.
+        // Freddy, implement me :-)
     }
 }
