@@ -20,7 +20,7 @@ feature:install opennms-cloud-plugin
 #### Via Web Interface
 
 Before the Cloud Plugin can be used with the OpenNMS Cloud it needs to be configured.
-In order to configure it you need to obtain a access key for your organisation.
+In order to configure it you need to obtain an access key for your organisation.
 Once you have the access key you can enter it into the cloud plugin configuration page within OpenNMS.
 
 #### Via Karaf Shell
@@ -52,14 +52,14 @@ config:update
 
 # Verify / Monitoring
 
-***Health Check***
+## Health Check
 Check the cloud status with:
 ```
 opennms:health-check
 ```
 
 # Development
-***Import Certificates***
+## Import Certificates
 
 The initializing can happen via a zip file as an alternative to using PAS.
 

@@ -28,6 +28,8 @@
 
 package org.opennms.plugins.cloud.config;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -36,14 +38,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.jline.utils.Log;
 import org.opennms.dataplatform.access.AuthenticateGrpc;
-import org.opennms.dataplatform.access.AuthenticateOuterClass;
 import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
 import org.opennms.plugins.cloud.grpc.GrpcConnection;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
@@ -51,8 +51,6 @@ import org.opennms.plugins.cloud.srv.GrpcService;
 import org.opennms.plugins.cloud.srv.RegistrationManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.annotations.VisibleForTesting;
 
 public class ConfigurationManager {
 
@@ -67,15 +65,13 @@ public class ConfigurationManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConfigurationManager.class);
 
-    final String systemId =  UUID.randomUUID().toString(); // TODO: Patrick get from OpenNMS
+    private final String systemId;
     private ConfigStatus currentStatus = ConfigStatus.NOT_ATTEMPTED;
 
     private final SecureCredentialsVaultUtil scv;
 
     private final RegistrationManager serviceManager;
     private final List<GrpcService> grpcServices;
-
-    private final AuthenticateGrpc.AuthenticateBlockingStub grpc;
 
     private final GrpcConnectionConfig pasConfigTls;
     private final GrpcConnectionConfig pasConfigMtls;
@@ -86,28 +82,21 @@ public class ConfigurationManager {
                                 final RegistrationManager serviceManager,
                                 final List<GrpcService> grpcServices
                                 ) {
-        this(scv,
-                pasConfigTls,
-                pasConfigMtls,
-                serviceManager,
-                grpcServices,
-                new GrpcConnection<>(pasConfigTls,
-                        AuthenticateGrpc::newBlockingStub).get());
-    }
-
-    public ConfigurationManager(final SecureCredentialsVault scv,
-                                final GrpcConnectionConfig pasConfigTls,
-                                final GrpcConnectionConfig pasConfigMtls,
-                                final RegistrationManager serviceManager,
-                                final List<GrpcService> grpcServices,
-                                final AuthenticateGrpc.AuthenticateBlockingStub grpc) {
         this.scv = new SecureCredentialsVaultUtil(Objects.requireNonNull(scv));
         this.pasConfigTls = Objects.requireNonNull(pasConfigTls);
         this.pasConfigMtls = Objects.requireNonNull(pasConfigMtls);
         this.serviceManager = Objects.requireNonNull(serviceManager);
         this.grpcServices = Objects.requireNonNull(grpcServices);
-        this.grpc = Objects.requireNonNull(grpc);
+        this.systemId = getSystemId();
         importCloudCredentialsIfPresent();
+    }
+
+    private String getSystemId() {
+        try {
+            return InetAddress.getLocalHost().getHostName(); // TODO: Patrick get from OpenNMS, see DC-266
+        } catch (UnknownHostException e) {
+            return UUID.randomUUID().toString();
+        }
     }
 
     void importCloudCredentialsIfPresent() {
@@ -141,7 +130,10 @@ public class ConfigurationManager {
             LOG.info("Starting configuration of cloud connection.");
 
             // Fetching initial credentials via TLS and cloud key
-            GrpcConnectionConfig cloudGatewayConfig = fetchCredentialsFromAccessService(key);
+            GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> grpcWithTls = new GrpcConnection<>(pasConfigTls,
+                    AuthenticateGrpc::newBlockingStub);
+            final PasAccess pasWithTls = new PasAccess(grpcWithTls);
+            GrpcConnectionConfig cloudGatewayConfig = pasWithTls.fetchCredentialsFromAccessService(key, systemId);
             LOG.info("Cloud configuration received from PAS (Platform Access Service).");
 
             storeCredentials(cloudGatewayConfig);
@@ -149,7 +141,9 @@ public class ConfigurationManager {
 
             // From now on we need to communicate via MTLS
             GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> grpcWithMtls = createGrpcWithMtls(cloudGatewayConfig);
-            Set<RegistrationManager.Service> activeServices = getActiveServices(grpcWithMtls.get());
+            final PasAccess pasWithMtls = new PasAccess(grpcWithMtls);
+
+            Set<RegistrationManager.Service> activeServices = pasWithMtls.getActiveServices(systemId);
             String activeServicesAsString = activeServices.stream()
                     .map(Enum::name)
                     .collect(Collectors.joining(","));
@@ -158,11 +152,19 @@ public class ConfigurationManager {
             scv.putProperty(SecureCredentialsVaultUtil.Type.activeservices, activeServicesAsString);
             LOG.info("Active services stored in OpenNMS.");
 
+            // receive token
+            final String token = pasWithMtls.getToken(activeServices, systemId);
+            EnumMap<SecureCredentialsVaultUtil.Type, String> properties = new EnumMap<>(SecureCredentialsVaultUtil.Type.class);
+            properties.put(SecureCredentialsVaultUtil.Type.tokenkey, "acme");
+            properties.put(SecureCredentialsVaultUtil.Type.tokenvalue, token);
+            scv.putProperties(properties);
+
             initGrpcServices(cloudGatewayConfig); // give all grpc services the new config
             LOG.info("All services configured with grpc config.");
 
             activateServices(activeServices);
             LOG.info("Active services registered with OpenNMS.");
+
             this.currentStatus = ConfigStatus.SUCCESSFUL;
         } catch (Exception e) {
             this.currentStatus = ConfigStatus.FAILED;
@@ -181,22 +183,6 @@ public class ConfigurationManager {
                 AuthenticateGrpc::newBlockingStub);
     }
 
-    private Set<RegistrationManager.Service> getActiveServices(final AuthenticateGrpc.AuthenticateBlockingStub grpc) {
-        AuthenticateOuterClass.GetServicesResponse servicesResponse = grpc
-                .getServices(
-                        AuthenticateOuterClass.GetServicesRequest.newBuilder()
-                        .setSystemId(systemId)
-                                .build());
-        return servicesResponse
-                .getServicesMap()
-                .entrySet()
-                .stream()
-                .filter(e -> e.getValue().getEnabled())
-                .map(Map.Entry::getKey)
-                .map(RegistrationManager.Service::valueOf)
-                .collect(Collectors.toSet());
-    }
-
     /** Registers the active services with OpenNMS. */
     private void activateServices(final Set<RegistrationManager.Service> activeServices){
         Set<RegistrationManager.Service> inactiveServices =  new HashSet<>(Arrays.asList(RegistrationManager.Service.values()));
@@ -209,40 +195,6 @@ public class ConfigurationManager {
         }
     }
 
-    @VisibleForTesting
-    GrpcConnectionConfig fetchCredentialsFromAccessService(final String key) {
-
-        AuthenticateOuterClass.AuthenticateKeyRequest keyRequest = AuthenticateOuterClass.AuthenticateKeyRequest.newBuilder()
-                .setAuthenticationKey(key)
-                .setSystemUuid(systemId)
-                .build();
-        AuthenticateOuterClass.AuthenticateKeyResponse response = grpc.authenticateKey(keyRequest);
-
-        final GrpcConnectionConfig.GrpcConnectionConfigBuilder cloudGatewayConfig = GrpcConnectionConfig.builder();
-
-        Optional
-                .of(response.getGrpcEndpoint())
-                .filter(s -> s.contains(":"))
-                .map(s -> s.split(":"))
-                .map(s -> s[0])
-                .filter(s -> !s.isBlank())
-                .ifPresent(cloudGatewayConfig::host);
-        Optional
-                .of(response.getGrpcEndpoint())
-                .filter(s -> s.contains(":"))
-                .map(s -> s.split(":"))
-                .map(s -> s[1])
-                .filter(s -> !s.isBlank())
-                .map(Integer::parseInt)
-                .ifPresent(cloudGatewayConfig::port);
-        return cloudGatewayConfig
-                .publicKey(response.getCertificate())
-                .privateKey(response.getPrivateKey())
-                .security(GrpcConnectionConfig.Security.MTLS) // we always enable mtls (just not in tests)
-                .build();
-    }
-
-    @VisibleForTesting
     void storeCredentials(final GrpcConnectionConfig config) {
         Map<SecureCredentialsVaultUtil.Type, String> attributes = new EnumMap<>(SecureCredentialsVaultUtil.Type.class);
         attributes.put(SecureCredentialsVaultUtil.Type.privatekey, config.getPrivateKey());

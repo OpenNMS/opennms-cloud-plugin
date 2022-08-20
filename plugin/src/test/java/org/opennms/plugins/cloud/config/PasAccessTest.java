@@ -29,18 +29,17 @@
 package org.opennms.plugins.cloud.config;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.Type;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.opennms.dataplatform.access.AuthenticateGrpc;
 import org.opennms.dataplatform.access.AuthenticateOuterClass;
+import org.opennms.plugins.cloud.grpc.GrpcConnection;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.RegistrationManager;
 
@@ -51,7 +50,7 @@ import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.stub.StreamObserver;
 import io.grpc.testing.GrpcCleanupRule;
 
-public class ConfigurationManagerTest {
+public class PasAccessTest {
 
     @Rule
     public final GrpcCleanupRule grpcCleanup = new GrpcCleanupRule();
@@ -60,7 +59,8 @@ public class ConfigurationManagerTest {
     public void shouldConfigure() throws IOException {
         ConfigZipExtractor zip =  new ConfigZipExtractor(Path.of("src/test/resources/cert/cloud-credentials.zip"));
         InMemoryScv scv = new InMemoryScv();
-        final String endpoint = "endpoint";
+        final String serverHost = "myHost";
+        final int serverPort = 12345;
         final String privateKey = zip.getPrivateKey();
         final String certificate = zip.getPublicKey();
 
@@ -69,7 +69,7 @@ public class ConfigurationManagerTest {
                     @Override
                     public void authenticateKey(AuthenticateOuterClass.AuthenticateKeyRequest request, StreamObserver<AuthenticateOuterClass.AuthenticateKeyResponse> responseObserver) {
                         responseObserver.onNext(AuthenticateOuterClass.AuthenticateKeyResponse.newBuilder()
-                                .setGrpcEndpoint(endpoint)
+                                .setGrpcEndpoint(serverHost + ":"+ serverPort)
                                 .setPrivateKey(privateKey)
                                 .setCertificate(certificate)
                                 .build());
@@ -79,49 +79,48 @@ public class ConfigurationManagerTest {
                     @Override
                     public void getServices(AuthenticateOuterClass.GetServicesRequest request, StreamObserver<AuthenticateOuterClass.GetServicesResponse> responseObserver) {
                         responseObserver.onNext(AuthenticateOuterClass.GetServicesResponse.newBuilder()
-                                .putServices("tsaas", AuthenticateOuterClass.Service.newBuilder()
+                                .putServices(RegistrationManager.Service.TSAAS.name(), AuthenticateOuterClass.Service.newBuilder()
                                         .setEnabled(true)
                                         .build())
-                                .putServices("faas", AuthenticateOuterClass.Service.newBuilder()
+                                .putServices(RegistrationManager.Service.FAAS.name(), AuthenticateOuterClass.Service.newBuilder()
                                         .setEnabled(false)
                                         .build())
                                 .build());
                         responseObserver.onCompleted();
                     }
+
+                    @Override
+                    public void getAccessToken(AuthenticateOuterClass.GetAccessTokenRequest request, StreamObserver<AuthenticateOuterClass.GetAccessTokenResponse> responseObserver) {
+                        responseObserver.onNext(AuthenticateOuterClass.GetAccessTokenResponse.newBuilder()
+                                        .setToken("myToken")
+                                        .build());
+                        responseObserver.onCompleted();
+                    }
                 };
 
         Server server = grpcCleanup.register(
-                InProcessServerBuilder.forName(ConfigurationManagerTest.class.getSimpleName())
+                InProcessServerBuilder.forName(PasAccessTest.class.getSimpleName())
                         .directExecutor()
                         .addService(authService)
                         .build()
                         .start());
         ManagedChannel channel = grpcCleanup.register(
-                InProcessChannelBuilder.forName(ConfigurationManagerTest.class.getSimpleName())
+                InProcessChannelBuilder.forName(PasAccessTest.class.getSimpleName())
                         .directExecutor()
                         .build());
-        AuthenticateGrpc.AuthenticateBlockingStub grpc = AuthenticateGrpc.newBlockingStub(channel);
 
+        AuthenticateGrpc.AuthenticateBlockingStub stub = AuthenticateGrpc.newBlockingStub(channel);
+        GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> grpc = new GrpcConnection<>(stub, channel);
+        PasAccess pas = new PasAccess(grpc);
 
-        ConfigurationManager cm = new ConfigurationManager(
-                scv,
-                GrpcConnectionConfig.builder()
-                        .clientTrustStore(Files.readString(Path.of("src/test/resources/cert/clienttruststore.pem")))
-                        .build(),
-                GrpcConnectionConfig.builder()
-                        .clientTrustStore(Files.readString(Path.of("src/test/resources/cert/clienttruststore.pem")))
-                        .build(),
-                mock(RegistrationManager.class),
-                new ArrayList<>(),
-                grpc);
-        assertEquals(ConfigurationManager.ConfigStatus.NOT_ATTEMPTED, cm.getStatus());
-        GrpcConnectionConfig grpcConnectionConfig = cm.fetchCredentialsFromAccessService("something");
-        cm.storeCredentials(grpcConnectionConfig);
-        SecureCredentialsVaultUtil scvUtil = new SecureCredentialsVaultUtil(scv);
-        assertEquals(certificate, scvUtil.getOrNull(Type.publickey));
-        assertEquals(privateKey, scvUtil.getOrNull(Type.privatekey));
-
-        // TODO: check for token assertEquals(certificate, scvUtil.getOrNull(Type.token));
+        GrpcConnectionConfig config = pas.fetchCredentialsFromAccessService("key", "systemId");
+        assertEquals(serverHost, config.getHost());
+        assertEquals(serverPort, config.getPort());
+        assertEquals(privateKey, config.getPrivateKey());
+        assertEquals(certificate, config.getPublicKey());
+        // FAAS shouldn't show up since it is not enabled:
+        assertEquals(Set.of(RegistrationManager.Service.TSAAS), pas.getActiveServices("systemId"));
+        assertEquals("myToken", pas.getToken(new HashSet<>(), "systemId"));
         server.shutdown();
     }
 

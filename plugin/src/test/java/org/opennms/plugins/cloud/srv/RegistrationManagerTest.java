@@ -65,16 +65,16 @@ public class RegistrationManagerTest {
     public void shouldRegisterOnlyWhenNotRegistered() {
         verify(context, times(1)).registerService(eq(TimeSeriesStorage.class), eq(tsaas), any());
         reset(context);
-        manager.register(RegistrationManager.Service.tsaas);
+        manager.register(RegistrationManager.Service.TSAAS);
         verify(context, never()).registerService(eq(TimeSeriesStorage.class), eq(tsaas), any());
     }
 
     @Test
     public void shouldDeregisterOnlyWhenRegistered() {
-        manager.deregister(RegistrationManager.Service.tsaas);
+        manager.deregister(RegistrationManager.Service.TSAAS);
         verify(registration, times(1)).unregister();
         reset(registration);
-        manager.deregister(RegistrationManager.Service.tsaas);
+        manager.deregister(RegistrationManager.Service.TSAAS);
         verify(registration, never()).unregister(); // we already deregisterd => no more deregistering
     }
 

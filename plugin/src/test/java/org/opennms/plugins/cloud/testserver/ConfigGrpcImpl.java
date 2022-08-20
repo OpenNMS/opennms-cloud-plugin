@@ -36,6 +36,7 @@ import org.opennms.dataplatform.access.AuthenticateGrpc;
 import org.opennms.dataplatform.access.AuthenticateOuterClass;
 import org.opennms.plugins.cloud.config.ConfigZipExtractor;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
+import org.opennms.plugins.cloud.srv.RegistrationManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,12 +76,20 @@ public class ConfigGrpcImpl extends AuthenticateGrpc.AuthenticateImplBase implem
     @Override
     public void getServices(AuthenticateOuterClass.GetServicesRequest request, StreamObserver<AuthenticateOuterClass.GetServicesResponse> responseObserver) {
         responseObserver.onNext(AuthenticateOuterClass.GetServicesResponse.newBuilder()
-                .putServices("tsaas", AuthenticateOuterClass.Service.newBuilder()
+                .putServices(RegistrationManager.Service.TSAAS.name(), AuthenticateOuterClass.Service.newBuilder()
                         .setEnabled(true)
                         .build())
-                .putServices("faas", AuthenticateOuterClass.Service.newBuilder()
+                .putServices(RegistrationManager.Service.FAAS.name(), AuthenticateOuterClass.Service.newBuilder()
                         .setEnabled(false)
                         .build())
+                .build());
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getAccessToken(AuthenticateOuterClass.GetAccessTokenRequest request, StreamObserver<AuthenticateOuterClass.GetAccessTokenResponse> responseObserver) {
+        responseObserver.onNext(AuthenticateOuterClass.GetAccessTokenResponse.newBuilder()
+                .setToken("myToken")
                 .build());
         responseObserver.onCompleted();
     }

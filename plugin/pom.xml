@@ -139,7 +139,7 @@
         <dependency>
             <groupId>org.opennms.tsaas.platform</groupId>
             <artifactId>tsaas-authenticate-grpc</artifactId>
-            <version>${configClientVersion}</version>
+            <version>${pasClientVersion}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

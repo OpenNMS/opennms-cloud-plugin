@@ -85,6 +85,11 @@ public class GrpcConnection<T extends AbstractBlockingStub<T>> {
                 .withInterceptors(new TokenAddingInterceptor(config));
     }
 
+    public GrpcConnection(T clientStub, ManagedChannel managedChannel) {
+        this.clientStub = Objects.requireNonNull(clientStub);
+        this.managedChannel = Objects.requireNonNull(managedChannel);
+    }
+
     public T get() {
         return this.clientStub;
     }
