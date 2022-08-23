@@ -52,7 +52,10 @@ public class SecureCredentialsVaultUtil {
    */
   public enum Type {
     truststore, publickey, privatekey, tokenkey, tokenvalue, grpchost, grpcport,
-    activeservices
+    activeservices,
+    /** Defines if plugin was already configured via ConfigurationManager.
+     * See ConfigurationManager.ConfigStatus */
+    configstatus
   }
 
   private final SecureCredentialsVault scv;
@@ -66,9 +69,13 @@ public class SecureCredentialsVaultUtil {
   }
 
   public String getOrNull(Type type) {
-    return getCredentials()
-            .map(c -> c.getAttribute(type.name()))
+    return get(type)
             .orElse(null);
+  }
+
+  public Optional<String> get(Type type) {
+    return getCredentials()
+            .map(c -> c.getAttribute(type.name()));
   }
 
   public void putProperty(final Type key, String value) {

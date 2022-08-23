@@ -33,14 +33,15 @@ import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.opennms.dataplatform.access.AuthenticateGrpc;
 import org.opennms.dataplatform.access.AuthenticateOuterClass;
+import org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.Type;
 import org.opennms.plugins.cloud.grpc.GrpcConnection;
-import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.RegistrationManager;
 
 import io.grpc.ManagedChannel;
@@ -113,11 +114,11 @@ public class PasAccessTest {
         GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> grpc = new GrpcConnection<>(stub, channel);
         PasAccess pas = new PasAccess(grpc);
 
-        GrpcConnectionConfig config = pas.fetchCredentialsFromAccessService("key", "systemId");
-        assertEquals(serverHost, config.getHost());
-        assertEquals(serverPort, config.getPort());
-        assertEquals(privateKey, config.getPrivateKey());
-        assertEquals(certificate, config.getPublicKey());
+        Map<Type, String> config = pas.fetchCredentialsFromAccessService("key", "systemId");
+        assertEquals(serverHost, config.get(Type.grpchost));
+        assertEquals(Integer.toString(serverPort), config.get(Type.grpcport));
+        assertEquals(privateKey, config.get(Type.privatekey));
+        assertEquals(certificate, config.get(Type.publickey));
         // FAAS shouldn't show up since it is not enabled:
         assertEquals(Set.of(RegistrationManager.Service.TSAAS), pas.getActiveServices("systemId"));
         assertEquals("myToken", pas.getToken(new HashSet<>(), "systemId"));

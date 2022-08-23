@@ -28,6 +28,7 @@
 
 package org.opennms.plugins.cloud.config;
 
+import java.util.EnumMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -36,48 +37,44 @@ import java.util.stream.Collectors;
 
 import org.opennms.dataplatform.access.AuthenticateGrpc;
 import org.opennms.dataplatform.access.AuthenticateOuterClass;
+import org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.Type;
 import org.opennms.plugins.cloud.grpc.GrpcConnection;
-import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.RegistrationManager;
 
 /** Handles calls to PAS (Platform Access Service). */
 class PasAccess {
 
     final GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> grpc;
+
     PasAccess(final GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> grpc) {
         this.grpc = Objects.requireNonNull(grpc);
     }
 
-    GrpcConnectionConfig fetchCredentialsFromAccessService(final String key, final String systemId) {
+    Map<Type, String> fetchCredentialsFromAccessService(final String key, final String systemId) {
 
         AuthenticateOuterClass.AuthenticateKeyRequest keyRequest = AuthenticateOuterClass.AuthenticateKeyRequest.newBuilder()
                 .setAuthenticationKey(key)
                 .setSystemUuid(systemId)
                 .build();
         AuthenticateOuterClass.AuthenticateKeyResponse response = grpc.get().authenticateKey(keyRequest);
-
-        final GrpcConnectionConfig.GrpcConnectionConfigBuilder cloudGatewayConfig = GrpcConnectionConfig.builder();
-
+        Map<Type, String> attributes = new EnumMap<>(SecureCredentialsVaultUtil.Type.class);
         Optional
                 .of(response.getGrpcEndpoint())
                 .filter(s -> s.contains(":"))
                 .map(s -> s.split(":"))
                 .map(s -> s[0])
                 .filter(s -> !s.isBlank())
-                .ifPresent(cloudGatewayConfig::host);
+                .ifPresent(s -> attributes.put(Type.grpchost, s));
         Optional
                 .of(response.getGrpcEndpoint())
                 .filter(s -> s.contains(":"))
                 .map(s -> s.split(":"))
                 .map(s -> s[1])
                 .filter(s -> !s.isBlank())
-                .map(Integer::parseInt)
-                .ifPresent(cloudGatewayConfig::port);
-        return cloudGatewayConfig
-                .publicKey(response.getCertificate())
-                .privateKey(response.getPrivateKey())
-                .security(GrpcConnectionConfig.Security.MTLS) // we always enable mtls (just not in tests)
-                .build();
+                .ifPresent(s -> attributes.put(Type.grpcport, s));
+        attributes.put(Type.privatekey, response.getPrivateKey());
+        attributes.put(Type.publickey, response.getCertificate());
+        return attributes;
     }
 
     Set<RegistrationManager.Service> getActiveServices(final String systemId) {

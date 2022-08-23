@@ -33,9 +33,11 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.Objects;
 
-import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
+import org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.Type;
 
 /**
  * The Zip file looks like this:
@@ -56,12 +58,12 @@ public class ConfigZipExtractor {
         }
     }
 
-    public GrpcConnectionConfig getGrpcConnectionConfig() throws IOException {
-        return GrpcConnectionConfig.builder()
-                .publicKey(getPublicKey())
-                .privateKey(getPrivateKey())
-                .tokenValue(getJwtToken())
-                .build();
+    public Map<Type, String> getGrpcConnectionConfig() throws IOException {
+        Map<Type, String> properties = new EnumMap<>(Type.class);
+        properties.put(Type.publickey, getPublicKey());
+        properties.put(Type.privatekey, getPrivateKey());
+        properties.put(Type.tokenvalue, getJwtToken());
+        return properties;
     }
 
     public String getPrivateKey() throws IOException {

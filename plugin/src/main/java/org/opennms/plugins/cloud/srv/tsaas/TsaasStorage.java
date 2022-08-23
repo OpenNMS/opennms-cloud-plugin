@@ -84,7 +84,7 @@ public class TsaasStorage implements TimeSeriesStorage, GrpcService {
         this.grpc = new GrpcConnection<>(grpcConfig, TimeseriesGrpc::newBlockingStub);
         if(oldGrpc != null) {
             try {
-                grpc.shutDown();
+                oldGrpc.shutDown();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }

@@ -32,6 +32,7 @@ package org.opennms.plugins.cloud.config;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Objects;
 
 import org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.Type;
@@ -76,8 +77,8 @@ public class CertificateImporter {
             throw new IllegalArgumentException(String.format("%s is not a readable.", fileParam));
         }
 
-        final GrpcConnectionConfig cloudGatewayConfig = new ConfigZipExtractor(file).getGrpcConnectionConfig();
-        configManager.storeCredentials(cloudGatewayConfig);
+        final Map<Type, String> cloudGatewayConfig = new ConfigZipExtractor(file).getGrpcConnectionConfig();
+        scv.putProperties(cloudGatewayConfig);
         LOG.info("Imported certificates from {}", fileParam);
 
         if (isConfigStored(cloudGatewayConfig)) {
@@ -91,10 +92,10 @@ public class CertificateImporter {
         tryConnection();
     }
 
-    public boolean isConfigStored(final GrpcConnectionConfig config) {
-        return Objects.equals(config.getPrivateKey(), scv.getOrNull(Type.privatekey))
-                && Objects.equals(config.getPublicKey(), scv.getOrNull(Type.publickey))
-                && Objects.equals(config.getTokenValue(), scv.getOrNull(Type.tokenvalue));
+    public boolean isConfigStored(final Map<Type, String> config) {
+        return Objects.equals(config.get(Type.privatekey), scv.getOrNull(Type.privatekey))
+                && Objects.equals(config.get(Type.publickey), scv.getOrNull(Type.publickey))
+                && Objects.equals(config.get(Type.tokenvalue), scv.getOrNull(Type.tokenvalue));
     }
 
     void tryConnection() {

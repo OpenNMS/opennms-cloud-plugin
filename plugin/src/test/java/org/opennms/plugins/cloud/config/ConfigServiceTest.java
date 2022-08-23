@@ -84,7 +84,8 @@ public class ConfigServiceTest {
     SecureCredentialsVaultUtil scvUtil = new SecureCredentialsVaultUtil(scv);
     GrpcService grpc = mock(GrpcService.class);
     ConfigurationManager cm = new ConfigurationManager(scv, clientConfig, clientConfig, mock(RegistrationManager.class), Collections.singletonList(grpc));
-    cm.configure("something");
+    cm.initConfiguration("something");
+    cm.configure();
     verify(grpc, times(1)).initGrpc(any());
     assertTrue(scvUtil.getOrNull(SecureCredentialsVaultUtil.Type.privatekey).startsWith("-----BEGIN PRIVATE KEY-----"));
     assertTrue(scvUtil.getOrNull(SecureCredentialsVaultUtil.Type.publickey).startsWith("-----BEGIN CERTIFICATE-----"));

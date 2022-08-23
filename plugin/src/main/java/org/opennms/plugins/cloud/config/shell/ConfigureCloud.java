@@ -54,7 +54,8 @@ public class ConfigureCloud implements Action {
             return null;
         }
         Objects.requireNonNull(this.apiKey);
-        manager.configure(apiKey);
+        manager.initConfiguration(apiKey);
+        manager.configure();
         return null;
     }
 
