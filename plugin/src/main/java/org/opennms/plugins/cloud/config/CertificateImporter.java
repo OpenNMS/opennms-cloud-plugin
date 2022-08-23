@@ -52,18 +52,14 @@ public class CertificateImporter {
 
     private final SecureCredentialsVaultUtil scv;
 
-    private final ConfigurationManager configManager;
-
     private static final Logger LOG = LoggerFactory.getLogger(CertificateImporter.class);
 
     public CertificateImporter(final String fileParam,
                                final SecureCredentialsVaultUtil scv,
-                               final GrpcConnectionConfig config,
-                               final ConfigurationManager configManager) {
+                               final GrpcConnectionConfig config) {
         this.fileParam = Objects.requireNonNull(fileParam);
         this.scv = Objects.requireNonNull(scv);
         this.config = Objects.requireNonNull(config);
-        this.configManager = Objects.requireNonNull(configManager);
     }
 
     public void doIt() throws IOException {

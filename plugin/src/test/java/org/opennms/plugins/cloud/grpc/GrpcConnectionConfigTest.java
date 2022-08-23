@@ -36,6 +36,7 @@ public class GrpcConnectionConfigTest {
 
     @Test
     public void shouldRejectNegativePorts() {
-        assertThrows(IllegalArgumentException.class, () -> GrpcConnectionConfig.builder().port(-1).build());
+        GrpcConnectionConfig.GrpcConnectionConfigBuilder builder = GrpcConnectionConfig.builder().port(-1);
+        assertThrows(IllegalArgumentException.class, builder::build);
     }
 }

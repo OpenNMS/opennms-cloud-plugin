@@ -117,8 +117,7 @@ public class ConfigurationManager {
                 CertificateImporter importer = new CertificateImporter(
                         cloudCredentialsFile.toString(),
                         scv,
-                        pasConfigTls,
-                        this);
+                        pasConfigTls);
                 importer.doIt();
             } catch (Exception e) {
                 LOG.warn("Could not import {}. Will continue with old credentials.", cloudCredentialsFile, e);

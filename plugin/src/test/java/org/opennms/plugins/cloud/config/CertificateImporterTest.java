@@ -61,7 +61,7 @@ public class CertificateImporterTest {
     final String file = credentialsFile.toString();
     final SecureCredentialsVaultUtil scv = new SecureCredentialsVaultUtil(new InMemoryScv());
     final GrpcConnectionConfig config = GrpcConnectionConfig.builder().build();
-    final CertificateImporter importer = new CertificateImporter(file, scv, config, mock(ConfigurationManager.class));
+    final CertificateImporter importer = new CertificateImporter(file, scv, config);
     assertThrows(IllegalArgumentException.class, importer::doIt);
   }
 
@@ -78,7 +78,7 @@ public class CertificateImporterTest {
             mock(RegistrationManager.class),
             new ArrayList<>());
     CertificateImporter importer = new CertificateImporter(credentialsFile.toString(),
-            new SecureCredentialsVaultUtil(scv), GrpcConnectionConfig.builder().build(), cm);
+            new SecureCredentialsVaultUtil(scv), GrpcConnectionConfig.builder().build());
     importer.doIt();
 
     Credentials credentials = scv.getCredentials(SCV_ALIAS);
@@ -106,7 +106,7 @@ public class CertificateImporterTest {
     assertTrue(Files.exists(credentialsFile));
     CertificateImporter importer = new CertificateImporter(credentialsFile.toString(),
             new SecureCredentialsVaultUtil(scv),
-            GrpcConnectionConfig.builder().build(), mock(ConfigurationManager.class));
+            GrpcConnectionConfig.builder().build());
     importer.doIt();
 
     // Check if file has been deleted. We expect that the file is not deleted after an unsuccessful import:
