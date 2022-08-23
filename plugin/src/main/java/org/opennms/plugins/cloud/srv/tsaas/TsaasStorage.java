@@ -69,7 +69,7 @@ public class TsaasStorage implements TimeSeriesStorage, GrpcService {
     private final ConcurrentLinkedDeque<Tsaas.Sample> queue; // holds samples to be batched
     private Instant lastBatchSentTs;
     @VisibleForTesting
-    public GrpcConnection<TimeseriesGrpc.TimeseriesBlockingStub> grpc;
+    GrpcConnection<TimeseriesGrpc.TimeseriesBlockingStub> grpc;
 
     public TsaasStorage(TsaasConfig config) {
         this.config = Objects.requireNonNull(config);

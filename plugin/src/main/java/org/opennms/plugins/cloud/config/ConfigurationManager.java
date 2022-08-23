@@ -166,6 +166,8 @@ public class ConfigurationManager {
             GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> pasWithMtlsConfig = createPasGrpc(cloudGatewayConfig);
             final PasAccess pasWithMtls = new PasAccess(pasWithMtlsConfig);
 
+            // TODO: Patrick: step 7.)
+
             Set<RegistrationManager.Service> activeServices = pasWithMtls.getActiveServices(systemId);
             String activeServicesAsString = activeServices.stream()
                     .map(Enum::name)

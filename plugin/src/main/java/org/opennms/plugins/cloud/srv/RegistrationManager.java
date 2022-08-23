@@ -71,7 +71,6 @@ public class RegistrationManager {
                                final TsaasStorage tsaas) {
         this.context = Objects.requireNonNull(context);
         this.tsaas = Objects.requireNonNull(tsaas);
-        register(Service.TSAAS); // TODO: Patrick: this should be later conditional, depending if the client enabled tsaas
     }
 
     public void register(final Service service) {

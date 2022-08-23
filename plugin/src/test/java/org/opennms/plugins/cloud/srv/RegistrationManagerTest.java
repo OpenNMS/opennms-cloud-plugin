@@ -63,6 +63,7 @@ public class RegistrationManagerTest {
 
     @Test
     public void shouldRegisterOnlyWhenNotRegistered() {
+        manager.register(RegistrationManager.Service.TSAAS);
         verify(context, times(1)).registerService(eq(TimeSeriesStorage.class), eq(tsaas), any());
         reset(context);
         manager.register(RegistrationManager.Service.TSAAS);
@@ -71,6 +72,7 @@ public class RegistrationManagerTest {
 
     @Test
     public void shouldDeregisterOnlyWhenRegistered() {
+        manager.register(RegistrationManager.Service.TSAAS);
         manager.deregister(RegistrationManager.Service.TSAAS);
         verify(registration, times(1)).unregister();
         reset(registration);
@@ -80,6 +82,7 @@ public class RegistrationManagerTest {
 
     @Test
     public void destroyShouldDeregisterAllServices() {
+        manager.register(RegistrationManager.Service.TSAAS);
         manager.destroy();
         verify(registration, times(1)).unregister();
     }

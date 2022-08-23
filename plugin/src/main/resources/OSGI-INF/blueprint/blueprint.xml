@@ -11,11 +11,11 @@
     <cm:property-placeholder id="tsaas-pocPluginProperties" persistent-id="org.opennms.plugins.cloud"
                              update-strategy="reload">
         <cm:default-properties>
-            <cm:property name="pas.tls.host" value="localhost"/>
-            <cm:property name="pas.tls.port" value="5001"/>
+            <cm:property name="pas.tls.host" value="access-test.staging.nonprod.dataservice.opennms.com"/>
+            <cm:property name="pas.tls.port" value="443"/>
             <cm:property name="pas.tls.security" value ="TLS" />
-            <cm:property name="pas.mtls.host" value="localhost"/>
-            <cm:property name="pas.mtls.port" value="5001"/>
+            <cm:property name="pas.mtls.host" value="authenticate.access-test.staging.nonprod.dataservice.opennms.com"/>
+            <cm:property name="pas.mtls.port" value="443"/>
             <cm:property name="pas.mtls.security" value ="MTLS" />
             <cm:property name="tsaas.batchSize" value="1000"/>
             <cm:property name="tsaas.maxBatchWaitTimeInMilliSeconds" value="5000" />

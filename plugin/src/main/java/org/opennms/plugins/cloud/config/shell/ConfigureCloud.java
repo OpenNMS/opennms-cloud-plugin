@@ -37,7 +37,7 @@ import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.opennms.plugins.cloud.config.ConfigurationManager;
 
-@Command(scope = "opennms-cloud", name = "configure", description = "Contacts cloud gateway and retrieves configuration")
+@Command(scope = "opennms-cloud", name = "configure", description = "Contacts platform access service (PAS) and retrieves configuration")
 @Service
 public class ConfigureCloud implements Action {
 
