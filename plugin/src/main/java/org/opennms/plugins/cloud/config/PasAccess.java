@@ -31,7 +31,6 @@ package org.opennms.plugins.cloud.config;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -58,20 +57,11 @@ class PasAccess {
                 .build();
         AuthenticateOuterClass.AuthenticateKeyResponse response = grpc.get().authenticateKey(keyRequest);
         Map<Type, String> attributes = new EnumMap<>(SecureCredentialsVaultUtil.Type.class);
-        Optional
-                .of(response.getGrpcEndpoint())
-                .filter(s -> s.contains(":"))
-                .map(s -> s.split(":"))
-                .map(s -> s[0])
-                .filter(s -> !s.isBlank())
-                .ifPresent(s -> attributes.put(Type.grpchost, s));
-        Optional
-                .of(response.getGrpcEndpoint())
-                .filter(s -> s.contains(":"))
-                .map(s -> s.split(":"))
-                .map(s -> s[1])
-                .filter(s -> !s.isBlank())
-                .ifPresent(s -> attributes.put(Type.grpcport, s));
+        if(response.getGrpcEndpoint() != null && response.getGrpcEndpoint().contains(":")) {
+            String[] split = response.getGrpcEndpoint().split(":");
+            attributes.put(Type.grpchost, split[0]);
+            attributes.put(Type.grpcport, split[1]);
+        }
         attributes.put(Type.privatekey, response.getPrivateKey());
         attributes.put(Type.publickey, response.getCertificate());
         return attributes;

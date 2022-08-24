@@ -45,6 +45,7 @@ import org.opennms.integration.api.v1.scv.immutables.ImmutableCredentials;
  */
 public class SecureCredentialsVaultUtil {
   public static final String SCV_ALIAS = "plugin.cloud";
+  public final static String TOKEN_KEY_ACME = "acme";
 
   /**
    * All enums must be lower case.

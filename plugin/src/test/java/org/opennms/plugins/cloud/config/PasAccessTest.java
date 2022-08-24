@@ -70,7 +70,7 @@ public class PasAccessTest {
                     @Override
                     public void authenticateKey(AuthenticateOuterClass.AuthenticateKeyRequest request, StreamObserver<AuthenticateOuterClass.AuthenticateKeyResponse> responseObserver) {
                         responseObserver.onNext(AuthenticateOuterClass.AuthenticateKeyResponse.newBuilder()
-                                .setGrpcEndpoint(serverHost + ":"+ serverPort)
+                                .setGrpcEndpoint(serverHost + ":" + serverPort)
                                 .setPrivateKey(privateKey)
                                 .setCertificate(certificate)
                                 .build());

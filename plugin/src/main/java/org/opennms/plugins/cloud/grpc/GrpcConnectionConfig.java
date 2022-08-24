@@ -1,5 +1,7 @@
 package org.opennms.plugins.cloud.grpc;
 
+import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.TOKEN_KEY_ACME;
+
 import java.util.Objects;
 
 import lombok.Builder;
@@ -69,7 +71,7 @@ public class GrpcConnectionConfig {
         private String host = "localhost"; // default value
         private int port = 5001; // default value
         private String tokenKey = "token"; // default value
-        private String tokenValue = "acme"; // default value
+        private String tokenValue = TOKEN_KEY_ACME; // default value
         private Security security = Security.PLAIN_TEXT; // default value
     }
 }

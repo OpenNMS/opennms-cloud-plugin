@@ -30,6 +30,7 @@ package org.opennms.plugins.cloud.config;
 
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.AUTHENTCATED;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.CONFIGURED;
+import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.TOKEN_KEY_ACME;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -165,18 +166,20 @@ public class ConfigurationManager {
             GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> pasWithMtlsConfig = createPasGrpc(cloudGatewayConfig);
             final PasAccess pasWithMtls = new PasAccess(pasWithMtlsConfig);
 
-            // TODO: Patrick: step 7.)
+            // step 7: identify
+            // as discussed in the Green Twine meeting: we skip this call for now. Not necessary for TSAAS.
 
+            // step 8: getServices
             Set<RegistrationManager.Service> activeServices = pasWithMtls.getActiveServices(systemId);
             String activeServicesAsString = activeServices.stream()
                     .map(Enum::name)
                     .collect(Collectors.joining(","));
             LOG.info("Active services received: {}.", activeServicesAsString);
 
-            // receive token
+            // step 10: getAccessToken
             final String token = pasWithMtls.getToken(activeServices, systemId);
             cloudGatewayConfig = cloudGatewayConfig.toBuilder()
-                    .tokenKey("acme")
+                    .tokenKey(TOKEN_KEY_ACME)
                     .tokenValue(token)
                     .security(GrpcConnectionConfig.Security.MTLS)
                     .build();
