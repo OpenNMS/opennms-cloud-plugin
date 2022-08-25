@@ -26,22 +26,17 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.srv.tsaas;
-
-import static org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil.SCV_ALIAS;
-import static org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil.Type.privatekey;
-import static org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil.Type.publickey;
+package org.opennms.plugins.cloud.grpc;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import javax.net.ssl.SSLException;
 
-import org.opennms.integration.api.v1.scv.Credentials;
 import org.opennms.plugins.cloud.srv.tsaas.grpc.comp.ZStdCodecRegisterUtil;
-import org.opennms.tsaas.TimeseriesGrpc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,21 +57,22 @@ import io.grpc.netty.shaded.io.netty.handler.ssl.OpenSsl;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
+import io.grpc.stub.AbstractBlockingStub;
 
-public class GrpcConnection {
+public class GrpcConnection<T extends AbstractBlockingStub<T>> {
     private static final Logger LOG = LoggerFactory.getLogger(GrpcConnection.class);
     // 100M sync with cortex server
     private static final int MAX_MESSAGE_SIZE = 104857600;
     @VisibleForTesting
-    final ManagedChannel managedChannel;
-    private final TimeseriesGrpc.TimeseriesBlockingStub clientStub;
+    public final ManagedChannel managedChannel;
+    private final T clientStub;
 
-    public GrpcConnection(final TsaasConfig config, final SecureCredentialsVaultUtil scvUtil) {
+    public GrpcConnection(final GrpcConnectionConfig config, final Function<ManagedChannel,T> stubCreator) {
         final NettyChannelBuilder builder = NettyChannelBuilder.forAddress(config.getHost(), config.getPort());
-        if (config.isMtlsEnabled()) {
-            builder.sslContext(createSslContext(scvUtil));
-        } else {
+        if (GrpcConnectionConfig.Security.PLAIN_TEXT == config.getSecurity()) {
             builder.usePlaintext();
+        } else {
+            builder.sslContext(createSslContext(config));
         }
         // setup message size
         builder.maxInboundMessageSize(MAX_MESSAGE_SIZE).maxInboundMetadataSize(MAX_MESSAGE_SIZE);
@@ -84,47 +80,43 @@ public class GrpcConnection {
                 .compressorRegistry(ZStdCodecRegisterUtil.createCompressorRegistry())
                 .decompressorRegistry(ZStdCodecRegisterUtil.createDecompressorRegistry())
                 .build();
-        clientStub = TimeseriesGrpc.newBlockingStub(managedChannel)
+        clientStub = stubCreator.apply(managedChannel)
                 .withCompression("gzip") // ZStdGrpcCodec.ZSTD
-                .withInterceptors(new TokenAddingInterceptor(config, scvUtil));
+                .withInterceptors(new TokenAddingInterceptor(config));
     }
 
-    public TimeseriesGrpc.TimeseriesBlockingStub get() {
+    public GrpcConnection(T clientStub, ManagedChannel managedChannel) {
+        this.clientStub = Objects.requireNonNull(clientStub);
+        this.managedChannel = Objects.requireNonNull(managedChannel);
+    }
+
+    public T get() {
         return this.clientStub;
     }
 
-    private SslContext createSslContext(final SecureCredentialsVaultUtil scvUtil) {
-        Objects.requireNonNull(scvUtil);
-        Credentials credentials = scvUtil.getCredentials()
-                .orElseThrow(() -> new NullPointerException(
-                        String.format("Could no find credentials in SecureCredentialsVault for %s. Please import via Karaf shell: opennms-cloud:import-cert", SCV_ALIAS)));
-
+    private SslContext createSslContext(final GrpcConnectionConfig config) {
+        Objects.requireNonNull(config);
         try {
             final SslProvider provider = OpenSsl.isAvailable() && SslProvider.isAlpnSupported(SslProvider.OPENSSL) ? SslProvider.OPENSSL : SslProvider.JDK;
             LOG.info("Using SSL provider {}, ", provider);
             SslContextBuilder context = GrpcSslContexts.configure(GrpcSslContexts.forClient(), provider);
-            String truststore = credentials.getAttribute(SecureCredentialsVaultUtil.Type.truststore.name());
+            final String truststore = config.getClientTrustStore();
             if (truststore == null) {
                 LOG.info("Will use jvm truststore.");
             } else {
                 LOG.info("Will use truststore from SecureCredentialsVault.");
                 context.trustManager(new ByteArrayInputStream(truststore.getBytes(StandardCharsets.UTF_8)));
             }
-
-            context.keyManager(
-                            getStreamFromAttribute(credentials, publickey),
-                            getStreamFromAttribute(credentials, privatekey))
-                    .clientAuth(ClientAuth.REQUIRE);
+            if (GrpcConnectionConfig.Security.MTLS == config.getSecurity()) {
+                context.keyManager(
+                                new ByteArrayInputStream(config.getPublicKey().getBytes(StandardCharsets.UTF_8)),
+                                new ByteArrayInputStream(config.getPrivateKey().getBytes(StandardCharsets.UTF_8)))
+                        .clientAuth(ClientAuth.REQUIRE);
+            }
             return context.build();
         } catch (SSLException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private ByteArrayInputStream getStreamFromAttribute(Credentials credentials, SecureCredentialsVaultUtil.Type key) {
-        String attribute = Objects.requireNonNull(credentials.getAttribute(key.name()),
-                String.format("Could no find attribute %s in SecureCredentialsVault for %s", key, SCV_ALIAS));
-        return new ByteArrayInputStream(attribute.getBytes(StandardCharsets.UTF_8));
     }
 
     public void shutDown() throws InterruptedException {
@@ -139,15 +131,9 @@ public class GrpcConnection {
         final String tokenKey;
         final String tokenValue;
 
-        TokenAddingInterceptor(final TsaasConfig config, final SecureCredentialsVaultUtil scvUtil) {
+        TokenAddingInterceptor(final GrpcConnectionConfig config) {
             this.tokenKey = config.getTokenKey();
-            String token = scvUtil.getCredentials()
-                    .map(c -> c.getAttribute(SecureCredentialsVaultUtil.Type.token.name()))
-                    .orElse(config.getTokenValue()); // fallback
-            if (token == null || token.isEmpty()) {
-                token = "--not defined--";
-            }
-            this.tokenValue = token;
+            this.tokenValue = config.getTokenValue();
         }
 
         @Override
@@ -156,7 +142,9 @@ public class GrpcConnection {
             return new ForwardingClientCall.SimpleForwardingClientCall<>(next.newCall(method, callOptions)) {
                 @Override
                 public void start(final Listener<O> responseListener, final Metadata headers) {
-                    headers.put(Metadata.Key.of(tokenKey, Metadata.ASCII_STRING_MARSHALLER), tokenValue);
+                    if(tokenKey != null && !tokenKey.isBlank() && tokenValue != null && !tokenValue.isBlank()) {
+                        headers.put(Metadata.Key.of(tokenKey, Metadata.ASCII_STRING_MARSHALLER), tokenValue);
+                    }
                     super.start(responseListener, headers);
                 }
             };

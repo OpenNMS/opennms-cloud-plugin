@@ -31,7 +31,6 @@ package org.opennms.plugins.cloud.srv.tsaas;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.clearInvocations;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -44,33 +43,31 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
 import org.opennms.integration.api.v1.timeseries.IntrinsicTagNames;
 import org.opennms.integration.api.v1.timeseries.Sample;
 import org.opennms.integration.api.v1.timeseries.StorageException;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableMetric;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableSample;
-import org.opennms.plugins.cloud.srv.tsaas.testserver.TsaasServer;
-import org.opennms.plugins.cloud.srv.tsaas.testserver.TsassServerInterceptor;
+import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
+import org.opennms.plugins.cloud.testserver.GrpcTestServer;
+import org.opennms.plugins.cloud.testserver.GrpcTestServerInterceptor;
 
 public class TsaasStorageBatchStoringTest {
 
-  private TsaasServer server;
+  private GrpcTestServer server;
   private TimeSeriesStorage serverStorage;
-  private TsaasConfig clientConfig;
+  private GrpcConnectionConfig clientConfig;
 
   @Before
-  public void setUp() throws Exception {
-    TsaasConfig serverConfig = TsaasConfig.builder()
-            .batchSize(10)
-            .maxBatchWaitTimeInMilliSeconds(500)
+  public void setUp() {
+    GrpcConnectionConfig serverConfig = GrpcConnectionConfig.builder()
             .port(0)
             .build();
 
     serverStorage = Mockito.mock(TimeSeriesStorage.class);
 
-    server = new TsaasServer(serverConfig, new TsassServerInterceptor(), serverStorage);
+    server = new GrpcTestServer(serverConfig, new GrpcTestServerInterceptor(), serverStorage);
     server.startServer();
 
     clientConfig = server.getConfig();
@@ -85,7 +82,12 @@ public class TsaasStorageBatchStoringTest {
 
   @Test
   public void shouldSendStoreSamplesAfterWaitTime() throws StorageException, InterruptedException {
-    TsaasStorage plugin = new TsaasStorage(clientConfig, mock(SecureCredentialsVault.class));
+    TsaasConfig tsaasConfig = TsaasConfig.builder()
+            .batchSize(10)
+            .maxBatchWaitTimeInMilliSeconds(500)
+            .build();
+    TsaasStorage plugin = new TsaasStorage(tsaasConfig);
+    plugin.initGrpc(clientConfig);
 
     // store 2 samples. The batch size is 10 => should only call server when 10 samples are reached or maxBatchWaitTime has passed:
     plugin.store(createSamples());
@@ -93,7 +95,7 @@ public class TsaasStorageBatchStoringTest {
     verify(serverStorage, never()).store(any());
 
     // let's wait until maxBatchWaitTime time has passed
-    Thread.sleep(clientConfig.getMaxBatchWaitTimeInMilliSeconds() + 10);
+    Thread.sleep(tsaasConfig.getMaxBatchWaitTimeInMilliSeconds() + 10);
     plugin.store(createSamples());
 
     // we expect 3 samples, one from each call:
@@ -107,7 +109,7 @@ public class TsaasStorageBatchStoringTest {
     verify(serverStorage, never()).store(any());
 
     // let's wait until maxBatchWaitTime time has passed
-    Thread.sleep(clientConfig.getMaxBatchWaitTimeInMilliSeconds() + 10);
+    Thread.sleep(tsaasConfig.getMaxBatchWaitTimeInMilliSeconds() + 10);
     plugin.store(createSamples());
 
     // we expect 3 samples, one from each call:

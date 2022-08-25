@@ -26,32 +26,14 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.config.shell;
+package org.opennms.plugins.cloud.srv.faas;
 
-import org.apache.karaf.shell.api.action.Action;
-import org.apache.karaf.shell.api.action.Argument;
-import org.apache.karaf.shell.api.action.Command;
-import org.apache.karaf.shell.api.action.lifecycle.Reference;
-import org.apache.karaf.shell.api.action.lifecycle.Service;
-import org.opennms.plugins.cloud.srv.RegistrationManager;
+import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
+import org.opennms.plugins.cloud.srv.GrpcService;
 
-@Command(scope = "opennms-cloud", name = "enableService", description = "Enables a Cloud Service (e.g. Tsaas)")
-@Service
-public class EnableService implements Action {
-
-    @Reference
-    private RegistrationManager manager;
-
-    @Argument()
-    String service;
-
+public class Faas implements GrpcService {
     @Override
-    public Object execute() throws Exception {
-        if (RegistrationManager.Service.contains(this.service)) {
-            manager.register(RegistrationManager.Service.valueOf(service));
-        } else {
-            System.out.println("Unknown service " + service);
-        }
-        return null;
+    public void initGrpc(final GrpcConnectionConfig grpcConfig) {
+        // Freddy, implement me :-)
     }
 }

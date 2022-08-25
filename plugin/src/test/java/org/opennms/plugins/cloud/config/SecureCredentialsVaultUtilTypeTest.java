@@ -26,32 +26,19 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.config.shell;
+package org.opennms.plugins.cloud.config;
 
-import org.apache.karaf.shell.api.action.Action;
-import org.apache.karaf.shell.api.action.Argument;
-import org.apache.karaf.shell.api.action.Command;
-import org.apache.karaf.shell.api.action.lifecycle.Reference;
-import org.apache.karaf.shell.api.action.lifecycle.Service;
-import org.opennms.plugins.cloud.srv.RegistrationManager;
+import static org.junit.Assert.fail;
 
-@Command(scope = "opennms-cloud", name = "enableService", description = "Enables a Cloud Service (e.g. Tsaas)")
-@Service
-public class EnableService implements Action {
+import org.junit.Test;
 
-    @Reference
-    private RegistrationManager manager;
-
-    @Argument()
-    String service;
-
-    @Override
-    public Object execute() throws Exception {
-        if (RegistrationManager.Service.contains(this.service)) {
-            manager.register(RegistrationManager.Service.valueOf(service));
-        } else {
-            System.out.println("Unknown service " + service);
+public class SecureCredentialsVaultUtilTypeTest {
+    @Test
+    public void typeNamesMustBeLowerCase() {
+        for(SecureCredentialsVaultUtil.Type type : SecureCredentialsVaultUtil.Type .values()) {
+            if(!type.name().equals(type.name().toLowerCase())) {
+                fail(type.name() + " must be lower case. Otherwise the scv won't work properly.");
+            }
         }
-        return null;
     }
 }

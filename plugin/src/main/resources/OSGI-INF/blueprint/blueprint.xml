@@ -11,27 +11,49 @@
     <cm:property-placeholder id="tsaas-pocPluginProperties" persistent-id="org.opennms.plugins.cloud"
                              update-strategy="reload">
         <cm:default-properties>
-            <cm:property name="host" value="localhost"/>
-            <cm:property name="port" value="5001"/>
-            <cm:property name="tokenKey" value="token"/>
-            <cm:property name="tokenValue" value="--not defined--"/><!-- fallback if not imported via cloud-credentials.zip -->
-            <cm:property name="mtlsEnabled" value="false"/>
-            <cm:property name="batchSize" value="1000"/>
-            <cm:property name="maxBatchWaitTimeInMilliSeconds" value="5000" />
+            <cm:property name="pas.tls.host" value="access-test.staging.nonprod.dataservice.opennms.com"/>
+            <cm:property name="pas.tls.port" value="443"/>
+            <cm:property name="pas.tls.security" value ="TLS" />
+            <cm:property name="pas.mtls.host" value="authenticate.access-test.staging.nonprod.dataservice.opennms.com"/>
+            <cm:property name="pas.mtls.port" value="443"/>
+            <cm:property name="pas.mtls.security" value ="MTLS" />
+            <cm:property name="tsaas.batchSize" value="1000"/>
+            <cm:property name="tsaas.maxBatchWaitTimeInMilliSeconds" value="5000" />
         </cm:default-properties>
     </cm:property-placeholder>
 
-    <bean id="tsaasConfig" class="org.opennms.plugins.cloud.srv.tsaas.TsaasConfig" >
-        <argument value="${host}"/>
-        <argument value="${port}"/>
-        <argument value="${tokenKey}"/>
-        <argument value="${tokenValue}"/>
-        <argument value="${mtlsEnabled}"/>
-        <argument value="${batchSize}"/>
-        <argument value="${maxBatchWaitTimeInMilliSeconds}"/>
+    <!-- Config for the AuthenticateKey call -->
+    <bean id="pasConfigTls" class="org.opennms.plugins.cloud.grpc.GrpcConnectionConfig" >
+        <argument value="${pas.tls.host}"/>
+        <argument value="${pas.tls.port}"/>
+        <argument value="${pas.tls.security}"/>
     </bean>
 
-    <bean id="cloudConfigManager" class="org.opennms.plugins.cloud.config.ConfigurationManager" />
+    <!-- Config for all other calls to PAS -->
+    <bean id="pasConfigMtls" class="org.opennms.plugins.cloud.grpc.GrpcConnectionConfig" >
+        <argument value="${pas.mtls.host}"/>
+        <argument value="${pas.mtls.port}"/>
+        <argument value="${pas.mtls.security}"/>
+    </bean>
+
+    <bean id="tsaasConfig" class="org.opennms.plugins.cloud.srv.tsaas.TsaasConfig" >
+        <argument value="${tsaas.batchSize}"/>
+        <argument value="${tsaas.maxBatchWaitTimeInMilliSeconds}"/>
+    </bean>
+
+    <bean id="cloudConfigManager" class="org.opennms.plugins.cloud.config.ConfigurationManager">
+        <argument ref="secureCredentialsVault" />
+        <argument ref="pasConfigTls"/>
+        <argument ref="pasConfigMtls"/>
+        <argument ref="registrationManager" />
+        <argument>
+            <list>
+                <ref component-id="timeSeriesStorage" />
+                <ref component-id="faas" />
+            </list>
+        </argument>
+    </bean>
+    <service ref="cloudConfigManager" interface="org.opennms.plugins.cloud.config.ConfigurationManager" />
 
     <!-- HEALTH -->
     <bean id="cloudHealthCheck" class="org.opennms.plugins.cloud.srv.tsaas.CloudHealthCheck">
@@ -64,16 +86,19 @@
     </service>
 
     <!-- SERVICES -->
-    <bean id="cloudServiceManager" class="org.opennms.plugins.cloud.srv.ServiceManager" destroy-method="destroy">
+    <bean id="registrationManager" class="org.opennms.plugins.cloud.srv.RegistrationManager" destroy-method="destroy">
         <argument ref="blueprintBundleContext"/>
         <argument ref="timeSeriesStorage"/>
     </bean>
-    <service ref="cloudServiceManager" interface="org.opennms.plugins.cloud.srv.ServiceManager" />
+    <service ref="registrationManager" interface="org.opennms.plugins.cloud.srv.RegistrationManager" />
+
+    <!-- SERVICE: FAAS -->
+    <bean id="faas" class="org.opennms.plugins.cloud.srv.faas.Faas" >
+    </bean>
 
     <!-- SERVICE: TSAAS -->
     <bean id="timeSeriesStorage" class="org.opennms.plugins.cloud.srv.tsaas.TsaasStorage" destroy-method="destroy">
         <argument ref="tsaasConfig"/>
-        <argument ref="secureCredentialsVault" />
     </bean>
     <service ref="timeSeriesStorage" interface="org.opennms.plugins.cloud.srv.tsaas.TsaasStorage" />
 </blueprint>

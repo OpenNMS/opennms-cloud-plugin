@@ -3,54 +3,65 @@
 The OpenNMS Cloud Plugin enables OpenNMS to store data in the cloud.
 Initially it will provide storage for time series data (tsaas).
 
-**Build** and install the plugin into your local Maven repository using:
+# Installation
+## Build and Install
+Build and install the plugin into your local Maven repository using:
 ```
 mvn clean install
 ```
 
-**Install** via OpenNMS Karaf shell:
+Install into OpenNMS via Karaf shell:
 ```
 feature:repo-add mvn:org.opennms.plugins.cloud/karaf-features/1.0.0-SNAPSHOT/xml
 feature:install opennms-cloud-plugin
 ```
-**Configure**
+## Configuration
+### Initializing
+#### Via Web Interface
 
-***Import Certificates***
+Before the Cloud Plugin can be used with the OpenNMS Cloud it needs to be configured.
+In order to configure it you need to obtain an access key for your organisation.
+Once you have the access key you can enter it into the cloud plugin configuration page within OpenNMS.
 
-Before mtls can be enabled, we need to import the certificates.
-Move the cloud credentials file to: `[opennms.home]/etc/cloud-credentials.zip`.
-When the plugin is started it will import the cloud credentials automatically and delete the file after successful import.
+#### Via Karaf Shell
 
-***Properties***
-
-The default configuration has the following settings:
 ```
-host=localhost
-port=5001
-tokenKey=token
-mtlsEnabled=false
-batchSize=1000
+opennms-cloud:configure <access token>
 ```
 
-Change configuration via Karaf shell:
+#### Configuration sequence
+In either case the following happens:
+* The Cloud Plugin contacts PAS (Platform Access Service) to obtain certificates for MTLS.
+  From now on all communication is MTLS secured.
+* The Cloud Plugin retrieves all enabled services from PAS.
+* All enabled services are configured and enabled in OpenNMS.
+
+### Configuration Properties
+The initial properties should be good to go.
+However it is possible to change properties via Karaf shell:
+
 ```
 config:edit org.opennms.plugins.cloud
-property-set host localhost
-property-set port 5001
-property-set tokenKey token
-property-set mtlsEnabled false
-property-set batchSize 1000
+property-set pas.host access-test.staging.nonprod.dataservice.opennms.com
+property-set pas.port 443
+property-set pas.security TLS
+property-set tsaas.batchSize 1000
+property-set tsaas.maxBatchWaitTimeInMilliSeconds 5000
 config:update
 ```
 
-***Verify***
+# Verify / Monitoring
 
-Check the cloud status with: 
+## Health Check
+Check the cloud status with:
 ```
 opennms:health-check
 ```
 
-**Update bundle** automatically (only relevant for development):
-```
-bundle:watch *
-```
+# Development
+## Import Certificates
+
+The initializing can happen via a zip file as an alternative to using PAS.
+
+Move the cloud credentials file to: `[opennms.home]/etc/cloud-credentials.zip`.
+When the plugin is started it will import the cloud credentials automatically and delete the file after successful import.

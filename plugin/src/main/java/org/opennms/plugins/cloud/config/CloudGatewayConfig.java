@@ -28,18 +28,15 @@
 
 package org.opennms.plugins.cloud.config;
 
-import static org.junit.Assert.assertEquals;
+import lombok.Builder;
+import lombok.Data;
 
-import org.junit.Test;
-
-public class ConfigurationManagerTest {
-
-    @Test
-    public void shouldConfigure(){
-        ConfigurationManager cm = new ConfigurationManager();
-        assertEquals(ConfigurationManager.ConfigStatus.NOT_ATTEMPTED, cm.getStatus());
-        cm.configure("something");
-        assertEquals(ConfigurationManager.ConfigStatus.SUCCESSFUL, cm.getStatus());
-    }
-
+@Data
+@Builder
+public class CloudGatewayConfig {
+    private String publicKey;
+    private String privateKey;
+    private String token;
+    private String host;
+    private int port;
 }

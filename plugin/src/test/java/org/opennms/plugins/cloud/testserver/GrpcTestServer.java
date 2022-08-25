@@ -26,7 +26,7 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.srv.tsaas.testserver;
+package org.opennms.plugins.cloud.testserver;
 
 import static org.awaitility.Awaitility.await;
 
@@ -38,7 +38,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
-import org.opennms.plugins.cloud.srv.tsaas.TsaasConfig;
+import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.tsaas.grpc.comp.ZStdCodecRegisterUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,20 +52,22 @@ import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
  * It is backed by an InMemoryStorage.
  * We use it to verify that our grpc implementation works.
  */
-public class TsaasServer {
+public class GrpcTestServer {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TsaasServer.class);
+    private static final Logger LOG = LoggerFactory.getLogger(GrpcTestServer.class);
 
-    private TsaasConfig config;
+    private GrpcConnectionConfig config;
     private Server server;
-    private final TimeseriesGrpcImpl timeseriesService;
-    private final TsassServerInterceptor serverInterceptor;
+    private final TsaasGrpcImpl timeSeriesService;
+    private final ConfigGrpcImpl configGrpcService;
+    private final GrpcTestServerInterceptor serverInterceptor;
 
 
-    public TsaasServer(final TsaasConfig config,
-        final TsassServerInterceptor serverInterceptor,
-        final TimeSeriesStorage storage) {
-        this.timeseriesService = new TimeseriesGrpcImpl(storage);
+    public GrpcTestServer(final GrpcConnectionConfig config,
+                          final GrpcTestServerInterceptor serverInterceptor,
+                          final TimeSeriesStorage storage) {
+        this.configGrpcService = new ConfigGrpcImpl(config);
+        this.timeSeriesService = new TsaasGrpcImpl(storage);
         this.config = config;
         this.serverInterceptor = serverInterceptor;
     }
@@ -75,11 +77,13 @@ public class TsaasServer {
         try {
             NettyServerBuilder builder = NettyServerBuilder
                     .forPort(config.getPort())
-                    .addService(timeseriesService)
+                    .addService(configGrpcService)
+                    .addService(timeSeriesService)
                     .decompressorRegistry(ZStdCodecRegisterUtil.createDecompressorRegistry())
                     .compressorRegistry(ZStdCodecRegisterUtil.createCompressorRegistry())
                     .intercept(serverInterceptor);
-            if(this.config.isMtlsEnabled()) {
+            if(GrpcConnectionConfig.Security.TLS  == this.config.getSecurity()
+                    || GrpcConnectionConfig.Security.MTLS == this.config.getSecurity()) {
                 File keyCertChainFile = new File("src/test/resources/cert/server.crt"); // an X.509 certificate chain file in PEM format
                 File privateKeyFile = new File("src/test/resources/cert/server_pkcs8_key.pem");
                 builder.sslContext(
@@ -95,12 +99,12 @@ public class TsaasServer {
             LOG.info("Grpc Server started, listening on {}", server.getPort());
             if (server.getPort() != config.getPort()) {
                 LOG.info("saving port {} into config", server.getPort());
-                config = config.cloneIntoBuilder().port(server.getPort()).build();
+                config = config.toBuilder().port(server.getPort()).build();
             }
             CompletableFuture.runAsync(() -> {
                 try {
                     server.awaitTermination();
-                    this.timeseriesService.shutdown();
+                    this.timeSeriesService.shutdown();
                 } catch (InterruptedException ex) {
                     LOG.error(ex.getMessage(), ex);
                 }
@@ -119,5 +123,5 @@ public class TsaasServer {
         LOG.info("Grpc Server stopped");
     }
 
-    public TsaasConfig getConfig() { return config; }
+    public GrpcConnectionConfig getConfig() { return config; }
 }

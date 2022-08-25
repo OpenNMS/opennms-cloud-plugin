@@ -33,7 +33,11 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.Objects;
+
+import org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.Type;
 
 /**
  * The Zip file looks like this:
@@ -52,6 +56,14 @@ public class ConfigZipExtractor {
         if (!Files.exists(configZipFile)) {
             throw new IllegalArgumentException("Zip file does not exist: " + configZipFile.toAbsolutePath());
         }
+    }
+
+    public Map<Type, String> getGrpcConnectionConfig() throws IOException {
+        Map<Type, String> properties = new EnumMap<>(Type.class);
+        properties.put(Type.publickey, getPublicKey());
+        properties.put(Type.privatekey, getPrivateKey());
+        properties.put(Type.tokenvalue, getJwtToken());
+        return properties;
     }
 
     public String getPrivateKey() throws IOException {

@@ -146,5 +146,11 @@
             <version>${tsaasClientVersion}</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.opennms.tsaas.platform</groupId>
+            <artifactId>tsaas-authenticate-grpc</artifactId>
+            <version>${pasClientVersion}</version>
+            <scope>provided</scope>
+        </dependency>
 </dependencies>
 </project>

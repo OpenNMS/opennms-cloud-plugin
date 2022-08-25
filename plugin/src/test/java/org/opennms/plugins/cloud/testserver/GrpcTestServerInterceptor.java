@@ -26,7 +26,7 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.srv.tsaas.testserver;
+package org.opennms.plugins.cloud.testserver;
 
 import io.grpc.Context;
 import io.grpc.Contexts;
@@ -36,7 +36,7 @@ import io.grpc.ServerCallHandler;
 import io.grpc.ServerInterceptor;
 import io.grpc.Status;
 
-public class TsassServerInterceptor implements ServerInterceptor {
+public class GrpcTestServerInterceptor implements ServerInterceptor {
 
     protected static final Context.Key<String> CLIENT_ID = Context.key("clientID");
     private static final Metadata.Key<String> TOKEN = Metadata.Key.of("token", Metadata.ASCII_STRING_MARSHALLER);

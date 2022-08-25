@@ -28,12 +28,10 @@
 
 package org.opennms.plugins.cloud.srv.tsaas;
 
-import static org.opennms.plugins.cloud.srv.tsaas.GrpcExceptionHandler.executeRpcCall;
+import static org.opennms.plugins.cloud.grpc.GrpcExceptionHandler.executeRpcCall;
 import static org.opennms.plugins.cloud.srv.tsaas.grpc.GrpcObjectMapper.toMetric;
 import static org.opennms.plugins.cloud.srv.tsaas.grpc.GrpcObjectMapper.toTimestamp;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
@@ -42,7 +40,6 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.stream.Collectors;
 
-import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
 import org.opennms.integration.api.v1.timeseries.Aggregation;
 import org.opennms.integration.api.v1.timeseries.Metric;
 import org.opennms.integration.api.v1.timeseries.Sample;
@@ -50,8 +47,11 @@ import org.opennms.integration.api.v1.timeseries.StorageException;
 import org.opennms.integration.api.v1.timeseries.TagMatcher;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesFetchRequest;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
-import org.opennms.plugins.cloud.config.CertificateImporter;
+import org.opennms.plugins.cloud.grpc.GrpcConnection;
+import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
+import org.opennms.plugins.cloud.srv.GrpcService;
 import org.opennms.plugins.cloud.srv.tsaas.grpc.GrpcObjectMapper;
+import org.opennms.tsaas.TimeseriesGrpc;
 import org.opennms.tsaas.Tsaas;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,37 +63,30 @@ import com.google.common.annotations.VisibleForTesting;
  * <p>
  * This implementation forwards time series requests to the OpenNMS time series service running in the cloud.
  */
-public class TsaasStorage implements TimeSeriesStorage {
+public class TsaasStorage implements TimeSeriesStorage, GrpcService {
     private static final Logger LOG = LoggerFactory.getLogger(TsaasStorage.class);
-
     private final TsaasConfig config;
     private final ConcurrentLinkedDeque<Tsaas.Sample> queue; // holds samples to be batched
     private Instant lastBatchSentTs;
     @VisibleForTesting
-    final GrpcConnection grpc;
+    GrpcConnection<TimeseriesGrpc.TimeseriesBlockingStub> grpc;
 
-    public TsaasStorage(TsaasConfig config, SecureCredentialsVault scv) {
+    public TsaasStorage(TsaasConfig config) {
         this.config = Objects.requireNonNull(config);
-        importCloudCredentialsIfPresent(scv);
-        SecureCredentialsVaultUtil scvUtil = new SecureCredentialsVaultUtil(scv);
-        this.grpc = new GrpcConnection(config, scvUtil);
-        LOG.debug("Starting with host {} and port {}", config.getHost(), config.getPort());
         queue = new ConcurrentLinkedDeque<>();
         lastBatchSentTs = Instant.now();
     }
 
-    void importCloudCredentialsIfPresent(final SecureCredentialsVault scv) {
-
-        Path cloudCredentialsFile = Path.of(System.getProperty("opennms.home") + "/etc/cloud-credentials.zip");
-        if (Files.exists(cloudCredentialsFile)) {
+    @Override
+    public void initGrpc(GrpcConnectionConfig grpcConfig) {
+        GrpcConnection<TimeseriesGrpc.TimeseriesBlockingStub> oldGrpc = this.grpc;
+        LOG.debug("Initializing Grpc Connection with host {} and port {}", grpcConfig.getHost(), grpcConfig.getPort());
+        this.grpc = new GrpcConnection<>(grpcConfig, TimeseriesGrpc::newBlockingStub);
+        if(oldGrpc != null) {
             try {
-                CertificateImporter importer = new CertificateImporter(
-                        cloudCredentialsFile.toString(),
-                        scv,
-                        config);
-                importer.doIt();
-            } catch (Exception e) {
-                LOG.warn("Could not import {}. Will continue with old credentials.", cloudCredentialsFile, e);
+                oldGrpc.shutDown();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
         }
     }

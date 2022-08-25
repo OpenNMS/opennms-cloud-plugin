@@ -41,10 +41,20 @@ public class CloudConfigRestServiceImpl implements CloudConfigRestService {
         this.cm = Objects.requireNonNull(cm);
     }
 
-    @Override // {"key":{"__v_isShallow":false,"dep":{"w":0,"n":0},"__v_isRef":true,"_rawValue":"aaa","_value":"aaa"}}
-    public Response putActivationKey(final String key) {
-        this.cm.configure(key);
+    @Override
+    public Response putActivationKey(final String keyJson) {
+        String key = extractKey(keyJson);
+        this.cm.initConfiguration(key);
+        this.cm.configure();
         return getStatus();
+    }
+
+    private String extractKey(final String json) {
+        // TODO: Patrick: check why we get the key in such a strange format.
+        // {"key":{"__v_isShallow":false,"dep":{"w":0,"n":0},"__v_isRef":true,"_rawValue":"aaa","_value":"aaa"}}
+        String before = "\"_rawValue\":\"";
+        String key = json.substring(json.indexOf(before) + before.length());
+        return key.substring(0, key.indexOf("\""));
     }
 
     @Override

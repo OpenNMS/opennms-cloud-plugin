@@ -28,30 +28,35 @@
 
 package org.opennms.plugins.cloud.config.shell;
 
+import java.util.Objects;
+
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
-import org.opennms.plugins.cloud.srv.RegistrationManager;
+import org.opennms.plugins.cloud.config.ConfigurationManager;
 
-@Command(scope = "opennms-cloud", name = "enableService", description = "Enables a Cloud Service (e.g. Tsaas)")
+@Command(scope = "opennms-cloud", name = "configure", description = "Contacts platform access service (PAS) and retrieves configuration")
 @Service
-public class EnableService implements Action {
+public class ConfigureCloud implements Action {
 
     @Reference
-    private RegistrationManager manager;
+    private ConfigurationManager manager;
 
     @Argument()
-    String service;
+    String apiKey;
 
     @Override
-    public Object execute() throws Exception {
-        if (RegistrationManager.Service.contains(this.service)) {
-            manager.register(RegistrationManager.Service.valueOf(service));
-        } else {
-            System.out.println("Unknown service " + service);
+    public Object execute() {
+        if(apiKey == null || apiKey.isBlank()) {
+            System.out.println("please enter api key");
+            return null;
         }
+        Objects.requireNonNull(this.apiKey);
+        manager.initConfiguration(apiKey);
+        manager.configure();
         return null;
     }
+
 }

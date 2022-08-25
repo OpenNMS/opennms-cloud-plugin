@@ -26,7 +26,7 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.srv.tsaas.testserver;
+package org.opennms.plugins.cloud.testserver;
 
 import static org.opennms.plugins.cloud.srv.tsaas.grpc.GrpcObjectMapper.toMetric;
 
@@ -54,20 +54,20 @@ import io.grpc.stub.StreamObserver;
 /**
  * Provides endpoint for grpc time series calls and translates and forwards them to the given TimeseriesStorage implementation.
  */
-public class TimeseriesGrpcImpl extends TimeseriesGrpc.TimeseriesImplBase implements BindableService {
+public class TsaasGrpcImpl extends TimeseriesGrpc.TimeseriesImplBase implements BindableService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TimeseriesGrpcImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TsaasGrpcImpl.class);
 
     private final TimeSeriesStorage storage;
 
-    public TimeseriesGrpcImpl(final TimeSeriesStorage storage) {
+    public TsaasGrpcImpl(final TimeSeriesStorage storage) {
         this.storage = Objects.requireNonNull(storage);
     }
 
     @Override
     public void store(org.opennms.tsaas.Tsaas.Samples request,
                       io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
-        String clientID = TsassServerInterceptor.CLIENT_ID.get();
+        String clientID = GrpcTestServerInterceptor.CLIENT_ID.get();
         LOG.debug("Store endpoint received {} samples with clientID {}", request.getSamplesCount(), clientID);
         List<Sample> samples = request
                 .getSamplesList()
@@ -88,7 +88,7 @@ public class TimeseriesGrpcImpl extends TimeseriesGrpc.TimeseriesImplBase implem
     @Override
     public void findMetrics(org.opennms.tsaas.Tsaas.TagMatchers request,
                            io.grpc.stub.StreamObserver<Tsaas.Metrics> responseObserver) {
-        String clientID = TsassServerInterceptor.CLIENT_ID.get();
+        String clientID = GrpcTestServerInterceptor.CLIENT_ID.get();
         LOG.debug("findMetrics called with client ID {}", clientID);
         Collection<TagMatcher> tagMatchers = request.getMatchersList().stream().map(GrpcObjectMapper::toTagMatcher).collect(Collectors.toList());
         try {
@@ -107,7 +107,7 @@ public class TimeseriesGrpcImpl extends TimeseriesGrpc.TimeseriesImplBase implem
     @Override
     public void getTimeseriesData(Tsaas.FetchRequest request,
                               io.grpc.stub.StreamObserver<Tsaas.TimeseriesData> responseObserver) {
-        String clientID = TsassServerInterceptor.CLIENT_ID.get();
+        String clientID = GrpcTestServerInterceptor.CLIENT_ID.get();
         LOG.debug("getTimeseries called with client ID {}", clientID);
         TimeSeriesFetchRequest fetchRequest = GrpcObjectMapper.toTimeseriesFetchRequest(request);
         try {

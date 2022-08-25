@@ -35,30 +35,33 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil.SCV_ALIAS;
+import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.SCV_ALIAS;
+import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.TOKEN_KEY_ACME;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 
 import org.junit.After;
 import org.junit.Test;
 import org.opennms.integration.api.v1.scv.Credentials;
 import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
-import org.opennms.plugins.cloud.srv.tsaas.SecureCredentialsVaultUtil.Type;
-import org.opennms.plugins.cloud.srv.tsaas.TsaasConfig;
+import org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.Type;
+import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
+import org.opennms.plugins.cloud.srv.RegistrationManager;
 
 public class CertificateImporterTest {
 
   private Path credentialsFile;
 
   @Test
-  public void shouldRejectMissingFiles() throws Exception {
+  public void shouldRejectMissingFiles() {
     credentialsFile = Path.of("IDontExist.file");
     final String file = credentialsFile.toString();
-    final SecureCredentialsVault scv = new InMemoryScv();
-    final TsaasConfig config = TsaasConfig.builder().build();
+    final SecureCredentialsVaultUtil scv = new SecureCredentialsVaultUtil(new InMemoryScv());
+    final GrpcConnectionConfig config = GrpcConnectionConfig.builder().build();
     final CertificateImporter importer = new CertificateImporter(file, scv, config);
     assertThrows(IllegalArgumentException.class, importer::doIt);
   }
@@ -69,7 +72,14 @@ public class CertificateImporterTest {
     credentialsFile = Files.createTempFile(this.getClass().getSimpleName(), ".zip");
     Files.copy(Path.of("src/test/resources/cert/cloud-credentials.zip"), credentialsFile, StandardCopyOption.REPLACE_EXISTING);
     assertTrue(Files.exists(credentialsFile));
-    CertificateImporter importer = new CertificateImporter(credentialsFile.toString(), scv, TsaasConfig.builder().build());
+    ConfigurationManager cm = new ConfigurationManager(
+            scv,
+            GrpcConnectionConfig.builder().build(),
+            GrpcConnectionConfig.builder().build(),
+            mock(RegistrationManager.class),
+            new ArrayList<>());
+    CertificateImporter importer = new CertificateImporter(credentialsFile.toString(),
+            new SecureCredentialsVaultUtil(scv), GrpcConnectionConfig.builder().build());
     importer.doIt();
 
     Credentials credentials = scv.getCredentials(SCV_ALIAS);
@@ -80,9 +90,9 @@ public class CertificateImporterTest {
     value = credentials.getAttribute(Type.privatekey.name());
     assertNotNull(value);
     assertTrue(value.startsWith("-----BEGIN PRIVATE KEY-----"));
-    value = credentials.getAttribute(Type.token.name());
+    value = credentials.getAttribute(Type.tokenvalue.name());
     assertNotNull(value);
-    assertTrue(value.startsWith("acme"));
+    assertTrue(value.startsWith(TOKEN_KEY_ACME));
 
     // Check if file has been deleted. we expect that the file is deleted after a successful import:
     assertFalse(Files.exists(credentialsFile));
@@ -95,7 +105,9 @@ public class CertificateImporterTest {
     credentialsFile = Files.createTempFile(this.getClass().getSimpleName(), ".zip");
     Files.copy(Path.of("src/test/resources/cert/cloud-credentials.zip"), credentialsFile, StandardCopyOption.REPLACE_EXISTING);
     assertTrue(Files.exists(credentialsFile));
-    CertificateImporter importer = new CertificateImporter(credentialsFile.toString(), scv, TsaasConfig.builder().build());
+    CertificateImporter importer = new CertificateImporter(credentialsFile.toString(),
+            new SecureCredentialsVaultUtil(scv),
+            GrpcConnectionConfig.builder().build());
     importer.doIt();
 
     // Check if file has been deleted. We expect that the file is not deleted after an unsuccessful import:

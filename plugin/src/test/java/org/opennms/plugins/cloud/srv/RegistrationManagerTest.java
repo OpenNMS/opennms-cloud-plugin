@@ -44,11 +44,11 @@ import org.opennms.plugins.cloud.srv.tsaas.TsaasStorage;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 
-public class ServiceManagerTest {
+public class RegistrationManagerTest {
 
     private BundleContext context;
     private TsaasStorage tsaas;
-    private ServiceManager manager;
+    private RegistrationManager manager;
     ServiceRegistration<TimeSeriesStorage> registration;
 
     @Before
@@ -57,29 +57,32 @@ public class ServiceManagerTest {
         registration = mock(ServiceRegistration.class);
         tsaas = mock(TsaasStorage.class);
         when(context.registerService(eq(TimeSeriesStorage.class), eq(tsaas), any())).thenReturn(registration);
-        manager = new ServiceManager(context, tsaas); // registers tsaas
+        manager = new RegistrationManager(context, tsaas); // registers tsaas
 
     }
 
     @Test
     public void shouldRegisterOnlyWhenNotRegistered() {
+        manager.register(RegistrationManager.Service.TSAAS);
         verify(context, times(1)).registerService(eq(TimeSeriesStorage.class), eq(tsaas), any());
         reset(context);
-        manager.register(ServiceManager.Service.tsaas);
+        manager.register(RegistrationManager.Service.TSAAS);
         verify(context, never()).registerService(eq(TimeSeriesStorage.class), eq(tsaas), any());
     }
 
     @Test
     public void shouldDeregisterOnlyWhenRegistered() {
-        manager.deregister(ServiceManager.Service.tsaas);
+        manager.register(RegistrationManager.Service.TSAAS);
+        manager.deregister(RegistrationManager.Service.TSAAS);
         verify(registration, times(1)).unregister();
         reset(registration);
-        manager.deregister(ServiceManager.Service.tsaas);
+        manager.deregister(RegistrationManager.Service.TSAAS);
         verify(registration, never()).unregister(); // we already deregisterd => no more deregistering
     }
 
     @Test
     public void destroyShouldDeregisterAllServices() {
+        manager.register(RegistrationManager.Service.TSAAS);
         manager.destroy();
         verify(registration, times(1)).unregister();
     }

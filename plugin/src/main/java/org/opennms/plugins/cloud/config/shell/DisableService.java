@@ -33,22 +33,22 @@ import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
-import org.opennms.plugins.cloud.srv.ServiceManager;
+import org.opennms.plugins.cloud.srv.RegistrationManager;
 
 @Command(scope = "opennms-cloud", name = "disableService", description = "Disables a Cloud Service (e.g. Tsaas)")
 @Service
 public class DisableService implements Action {
 
     @Reference
-    private ServiceManager manager;
+    private RegistrationManager manager;
 
     @Argument()
     String service;
 
     @Override
     public Object execute() throws Exception {
-        if (ServiceManager.Service.contains(this.service)) {
-            manager.deregister(ServiceManager.Service.valueOf(service));
+        if (RegistrationManager.Service.contains(this.service)) {
+            manager.deregister(RegistrationManager.Service.valueOf(service));
         } else {
             System.out.println("Unknown service " + service);
         }

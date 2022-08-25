@@ -28,138 +28,26 @@
 
 package org.opennms.plugins.cloud.srv.tsaas;
 
-import java.util.Objects;
+import lombok.Builder;
+import lombok.Data;
 
+@Builder(toBuilder = true)
+@Data
 public class TsaasConfig {
+    private final int batchSize;
+    private final long maxBatchWaitTimeInMilliSeconds;
 
-  private final String host;
-  private final int port;
-  private final String tokenKey;
-  private final String tokenValue;
-  private final boolean mtlsEnabled;
-  private final int batchSize;
-  private final long maxBatchWaitTimeInMilliSeconds;
-
-  public TsaasConfig(final String host,
-      final int port,
-      final String tokenKey,
-      final String tokenValue,
-      final boolean mtlsEnabled,
-      final int batchSize,
-      final long maxBatchWaitTimeInMilliSeconds) {
-    this.host = Objects.requireNonNull(host);
-    this.port = requirePositiveNumber(port);
-    this.tokenKey = Objects.requireNonNull(tokenKey);
-    this.tokenValue = Objects.requireNonNull(tokenValue);
-    this.mtlsEnabled = mtlsEnabled;
-    this.batchSize = batchSize;
-    this.maxBatchWaitTimeInMilliSeconds = maxBatchWaitTimeInMilliSeconds;
-  }
-
-  private int requirePositiveNumber(int value) {
-    if (value < 0) {
-      throw new IllegalArgumentException(String.format("A positive number is required but was %s", value));
-    }
-    return value;
-  }
-
-  public String getHost() {
-    return host;
-  }
-
-  public int getPort() {
-    return port;
-  }
-
-  public String getTokenKey() {
-    return tokenKey;
-  }
-
-  public String getTokenValue() {
-    return tokenValue;
-  }
-
-  public boolean isMtlsEnabled() {
-    return mtlsEnabled;
-  }
-
-  public int getBatchSize() {
-    return this.batchSize;
-  }
-
-  public long getMaxBatchWaitTimeInMilliSeconds() {
-    return this.maxBatchWaitTimeInMilliSeconds;
-  }
-
-  public Builder cloneIntoBuilder() {
-    return new Builder()
-            .host(host)
-            .port(port)
-            .tokenKey(tokenKey)
-            .tokenValue(tokenValue)
-            .mtlsEnabled(mtlsEnabled)
-            .batchSize(batchSize)
-            .maxBatchWaitTimeInMilliSeconds(maxBatchWaitTimeInMilliSeconds);
-  }
-
-  public static Builder builder() {
-    return new Builder();
-  }
-
-  public static class Builder {
-    private Builder() {}
-    private String host = "localhost";
-    private int port = 5001;
-    private String tokenKey = "token";
-    private String tokenValue = "acme";
-    private boolean mtlsEnabled = false;
-    private int batchSize = 1000;
-    private long maxBatchWaitTimeInMilliSeconds = 5000;
-
-    public TsaasConfig build() {
-      return new TsaasConfig(
-          host,
-          port,
-          tokenKey,
-          tokenValue,
-          mtlsEnabled,
-          batchSize,
-          maxBatchWaitTimeInMilliSeconds);
+    public TsaasConfig(
+            final int batchSize,
+            final long maxBatchWaitTimeInMilliSeconds) {
+        this.batchSize = batchSize;
+        this.maxBatchWaitTimeInMilliSeconds = maxBatchWaitTimeInMilliSeconds;
     }
 
-    public Builder host(final String host) {
-      this.host = host;
-      return this;
+    public static class TsaasConfigBuilder {
+        private int batchSize = 1000; // default value
+        private long maxBatchWaitTimeInMilliSeconds = 5000;  // default value
     }
 
-    public Builder port(final int port) {
-      this.port = port;
-      return this;
-    }
 
-    public Builder tokenKey(final String tokenKey) {
-      this.tokenKey = tokenKey;
-      return this;
-    }
-
-    public Builder tokenValue(final String tokenValue) {
-      this.tokenValue = tokenValue;
-      return this;
-    }
-
-    public Builder mtlsEnabled(final boolean mtlsEnabled) {
-      this.mtlsEnabled = mtlsEnabled;
-      return this;
-    }
-
-    public Builder batchSize(int batchSize) {
-      this.batchSize = batchSize;
-      return this;
-    }
-
-    public Builder maxBatchWaitTimeInMilliSeconds(long maxBatchWaitTimeInMilliSeconds) {
-      this.maxBatchWaitTimeInMilliSeconds = maxBatchWaitTimeInMilliSeconds;
-      return this;
-    }
-  }
 }

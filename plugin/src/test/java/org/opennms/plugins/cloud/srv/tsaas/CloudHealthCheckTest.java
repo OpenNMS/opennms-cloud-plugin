@@ -38,29 +38,33 @@ import org.junit.Test;
 import org.opennms.integration.api.v1.health.Context;
 import org.opennms.integration.api.v1.health.Response;
 import org.opennms.integration.api.v1.health.Status;
-import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
 import org.opennms.integration.api.v1.timeseries.InMemoryStorage;
-import org.opennms.plugins.cloud.srv.tsaas.testserver.TsaasServer;
-import org.opennms.plugins.cloud.srv.tsaas.testserver.TsassServerInterceptor;
+import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
+import org.opennms.plugins.cloud.testserver.GrpcTestServer;
+import org.opennms.plugins.cloud.testserver.GrpcTestServerInterceptor;
 import org.opennms.tsaas.Tsaas;
 
 public class CloudHealthCheckTest {
     private TsaasStorage storage;
-    private TsaasServer server;
+    private GrpcTestServer server;
 
     @Before
     public void setUp() throws Exception {
-        TsaasConfig serverConfig = TsaasConfig.builder()
-                .batchSize(1) // set to 1 so that samples are not held back in the queue
+        GrpcConnectionConfig serverConfig = GrpcConnectionConfig.builder()
                 .port(0)
                 .build();
 
-        server = new TsaasServer(serverConfig, new TsassServerInterceptor(), new InMemoryStorage());
+        server = new GrpcTestServer(serverConfig, new GrpcTestServerInterceptor(), new InMemoryStorage());
         server.startServer();
 
-        TsaasConfig clientConfig = server.getConfig();
+        GrpcConnectionConfig clientConfig = server.getConfig();
 
-        storage = new TsaasStorage(clientConfig, mock(SecureCredentialsVault.class));
+        TsaasConfig tsaasConfig = TsaasConfig.builder()
+                .batchSize(1) // set to 1 so that samples are not held back in the queue
+                .build();
+
+        storage = new TsaasStorage(tsaasConfig);
+        storage.initGrpc(clientConfig);
     }
 
     @After
