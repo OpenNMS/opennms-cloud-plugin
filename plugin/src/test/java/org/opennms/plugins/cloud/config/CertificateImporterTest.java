@@ -46,6 +46,7 @@ import java.util.ArrayList;
 
 import org.junit.After;
 import org.junit.Test;
+import org.opennms.integration.api.v1.runtime.RuntimeInfo;
 import org.opennms.integration.api.v1.scv.Credentials;
 import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
 import org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.Type;
@@ -77,6 +78,7 @@ public class CertificateImporterTest {
             GrpcConnectionConfig.builder().build(),
             GrpcConnectionConfig.builder().build(),
             mock(RegistrationManager.class),
+            mock(RuntimeInfo.class),
             new ArrayList<>());
     CertificateImporter importer = new CertificateImporter(credentialsFile.toString(),
             new SecureCredentialsVaultUtil(scv), GrpcConnectionConfig.builder().build());

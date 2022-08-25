@@ -44,6 +44,7 @@ import java.util.Comparator;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.opennms.integration.api.v1.runtime.RuntimeInfo;
 import org.opennms.integration.api.v1.scv.Credentials;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.RegistrationManager;
@@ -67,7 +68,9 @@ public class ConfigurationManagerCredentialsImportTest {
         ConfigurationManager registrationManager = new ConfigurationManager(scv,
                 GrpcConnectionConfig.builder().build(),
                 GrpcConnectionConfig.builder().build(),
-                mock(RegistrationManager.class), new ArrayList<>());
+                mock(RegistrationManager.class),
+                mock(RuntimeInfo.class),
+                new ArrayList<>());
         openNmsHome = Files.createTempDirectory(this.getClass().getSimpleName());
         System.setProperty(OPENNMS_HOME, openNmsHome.toString());
         Files.createDirectory(Path.of(openNmsHome.toString(), "etc"));

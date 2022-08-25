@@ -33,15 +33,18 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.UUID;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.opennms.integration.api.v1.runtime.RuntimeInfo;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.GrpcService;
@@ -83,7 +86,11 @@ public class ConfigServiceTest {
     InMemoryScv scv = new InMemoryScv();
     SecureCredentialsVaultUtil scvUtil = new SecureCredentialsVaultUtil(scv);
     GrpcService grpc = mock(GrpcService.class);
-    ConfigurationManager cm = new ConfigurationManager(scv, clientConfig, clientConfig, mock(RegistrationManager.class), Collections.singletonList(grpc));
+    RuntimeInfo info = mock(RuntimeInfo.class);
+    when(info.getSystemId()).thenReturn(UUID.randomUUID().toString());
+    ConfigurationManager cm = new ConfigurationManager(scv, clientConfig, clientConfig, mock(RegistrationManager.class),
+            info,
+            Collections.singletonList(grpc));
     cm.initConfiguration("something");
     cm.configure();
     verify(grpc, times(1)).initGrpc(any());

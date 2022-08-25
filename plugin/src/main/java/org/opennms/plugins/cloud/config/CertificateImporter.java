@@ -43,7 +43,7 @@ import org.opennms.tsaas.Tsaas;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Imports certificates to be used with cloud tsaas. */
+/** Imports certificates from a Zip file for testing purposes. */
 public class CertificateImporter {
 
     private final String fileParam;

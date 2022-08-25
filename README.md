@@ -4,6 +4,16 @@ The OpenNMS Cloud Plugin enables OpenNMS to store data in the cloud.
 Initially it will provide storage for time series data (tsaas).
 
 # Installation
+## Prerequisites
+### System Id
+The default system id of older OpenNMS installations is '00000000-0000-0000-0000-000000000000'
+This needs to be changed to a true UUID in order to use the plugin.
+
+Execute this sql against your database:
+```
+Update monitoringsystems set id=gen_random_uuid () where id = '00000000-0000-0000-0000-000000000000' AND type='OpenNMS' AND location='Default';
+```
+
 ## Build and Install
 Build and install the plugin into your local Maven repository using:
 ```
