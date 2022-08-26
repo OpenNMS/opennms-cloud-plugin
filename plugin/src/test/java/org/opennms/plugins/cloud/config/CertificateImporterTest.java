@@ -36,7 +36,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.SCV_ALIAS;
-import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.TOKEN_KEY;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -94,7 +93,7 @@ public class CertificateImporterTest {
     assertTrue(value.startsWith("-----BEGIN PRIVATE KEY-----"));
     value = credentials.getAttribute(Type.tokenvalue.name());
     assertNotNull(value);
-    assertTrue(value.startsWith(TOKEN_KEY));
+    assertTrue(value.startsWith("acme"));
 
     // Check if file has been deleted. we expect that the file is deleted after a successful import:
     assertFalse(Files.exists(credentialsFile));
