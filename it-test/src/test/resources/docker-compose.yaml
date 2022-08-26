@@ -8,7 +8,7 @@ volumes:
 
 services:
   database:
-    image: ${DOCKER_REGISTRY:-docker.io}/postgres:${POSTGRES_VERSION:-11.3}
+    image: ${DOCKER_REGISTRY:-docker.io}/postgres:${POSTGRES_VERSION:-14.5}
     hostname: database
     environment:
       TZ: ${TIMEZONE:-America/New_York}

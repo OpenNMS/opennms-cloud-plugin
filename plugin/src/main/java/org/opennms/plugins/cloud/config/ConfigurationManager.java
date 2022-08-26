@@ -30,7 +30,7 @@ package org.opennms.plugins.cloud.config;
 
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.AUTHENTCATED;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.CONFIGURED;
-import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.TOKEN_KEY_ACME;
+import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.TOKEN_KEY;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -172,7 +172,7 @@ public class ConfigurationManager {
             // step 10: getAccessToken
             final String token = pasWithMtls.getToken(activeServices, systemId);
             cloudGatewayConfig = cloudGatewayConfig.toBuilder()
-                    .tokenKey(TOKEN_KEY_ACME)
+                    .tokenKey(TOKEN_KEY)
                     .tokenValue(token)
                     .security(GrpcConnectionConfig.Security.MTLS)
                     .build();

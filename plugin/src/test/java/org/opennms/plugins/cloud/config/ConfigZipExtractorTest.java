@@ -30,7 +30,7 @@ package org.opennms.plugins.cloud.config;
 
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.TOKEN_KEY_ACME;
+import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.TOKEN_KEY;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -51,7 +51,7 @@ public class ConfigZipExtractorTest {
         ConfigZipExtractor ex = new ConfigZipExtractor(configZipFile);
         assertTrue(ex.getPrivateKey().startsWith("-----BEGIN PRIVATE KEY-----"));
         assertTrue(ex.getPublicKey().startsWith("-----BEGIN CERTIFICATE-----"));
-        assertTrue(ex.getJwtToken().startsWith(TOKEN_KEY_ACME));
+        assertTrue(ex.getJwtToken().startsWith(TOKEN_KEY));
     }
 
 }
