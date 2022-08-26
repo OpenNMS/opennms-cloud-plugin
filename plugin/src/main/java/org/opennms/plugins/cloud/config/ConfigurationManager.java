@@ -124,6 +124,11 @@ public class ConfigurationManager {
      * 5.) authenticate(String opennmsKey, environment-uuid, system-uuid) return cert, grpc endpoint
      */
     public void initConfiguration(final String key) {
+        if(!PrerequisiteChecker.isSystemIdOk(this.runtimeInfo.getSystemId())) {
+            LOG.error("Cannot initConfiguration, please fix systemId first!");
+            this.currentStatus = ConfigStatus.FAILED;
+            return;
+        }
         try {
             Objects.requireNonNull(key);
 
@@ -153,6 +158,11 @@ public class ConfigurationManager {
      * // 10.) getAccessToken (cert, system-uuid, service) return token
      */
     public ConfigStatus configure() {
+        if(!PrerequisiteChecker.isSystemIdOk(this.runtimeInfo.getSystemId())) {
+            LOG.error("Cannot initConfiguration, please fix systemId first!");
+            this.currentStatus = ConfigStatus.FAILED;
+            return this.currentStatus;
+        }
         try {
             String systemId = runtimeInfo.getSystemId();
             GrpcConnectionConfig cloudGatewayConfig = readCloudGatewayConfig();
