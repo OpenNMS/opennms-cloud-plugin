@@ -159,7 +159,7 @@ public class ConfigurationManager {
      */
     public ConfigStatus configure() {
         if(!PrerequisiteChecker.isSystemIdOk(this.runtimeInfo.getSystemId())) {
-            LOG.error("Cannot initConfiguration, please fix systemId first!");
+            LOG.error("Cannot configure cloud connection, please fix systemId first!");
             this.currentStatus = ConfigStatus.FAILED;
             return this.currentStatus;
         }

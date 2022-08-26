@@ -8,6 +8,10 @@ public class PrerequisiteChecker {
 
     private static final Logger LOG = LoggerFactory.getLogger(PrerequisiteChecker.class);
 
+    private PrerequisiteChecker() {
+        // Utility class
+    }
+
     static boolean isSystemIdOk(final String systemId) {
         if(systemId == null ||
                 systemId.length() < 36 ||
