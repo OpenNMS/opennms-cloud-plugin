@@ -55,7 +55,12 @@ public class ConfigureCloud implements Action {
         }
         Objects.requireNonNull(this.apiKey);
         manager.initConfiguration(apiKey);
-        manager.configure();
+        ConfigurationManager.ConfigStatus status = manager.configure();
+        if(ConfigurationManager.ConfigStatus.CONFIGURED == status) {
+            System.out.println("Configuration was successful.");
+        } else {
+            System.out.printf("Configuration failed: %s. Check log (log:display) for details.", status);
+        }
         return null;
     }
 

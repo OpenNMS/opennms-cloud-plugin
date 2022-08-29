@@ -36,7 +36,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.SCV_ALIAS;
-import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.TOKEN_KEY_ACME;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -46,6 +45,7 @@ import java.util.ArrayList;
 
 import org.junit.After;
 import org.junit.Test;
+import org.opennms.integration.api.v1.runtime.RuntimeInfo;
 import org.opennms.integration.api.v1.scv.Credentials;
 import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
 import org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.Type;
@@ -77,6 +77,7 @@ public class CertificateImporterTest {
             GrpcConnectionConfig.builder().build(),
             GrpcConnectionConfig.builder().build(),
             mock(RegistrationManager.class),
+            mock(RuntimeInfo.class),
             new ArrayList<>());
     CertificateImporter importer = new CertificateImporter(credentialsFile.toString(),
             new SecureCredentialsVaultUtil(scv), GrpcConnectionConfig.builder().build());
@@ -92,7 +93,7 @@ public class CertificateImporterTest {
     assertTrue(value.startsWith("-----BEGIN PRIVATE KEY-----"));
     value = credentials.getAttribute(Type.tokenvalue.name());
     assertNotNull(value);
-    assertTrue(value.startsWith(TOKEN_KEY_ACME));
+    assertTrue(value.startsWith("acme"));
 
     // Check if file has been deleted. we expect that the file is deleted after a successful import:
     assertFalse(Files.exists(credentialsFile));

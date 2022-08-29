@@ -7,6 +7,7 @@
 
     <!-- CONFIG -->
     <reference id="secureCredentialsVault" interface="org.opennms.integration.api.v1.scv.SecureCredentialsVault" availability="mandatory"/>
+    <reference id="runtimeInfo" interface="org.opennms.integration.api.v1.runtime.RuntimeInfo" availability="mandatory"/>
     <!-- Configuration stored in $OPENNMS_HOME/etc/org.opennms.plugins.cloud.cfg file -->
     <cm:property-placeholder id="tsaas-pocPluginProperties" persistent-id="org.opennms.plugins.cloud"
                              update-strategy="reload">
@@ -46,6 +47,7 @@
         <argument ref="pasConfigTls"/>
         <argument ref="pasConfigMtls"/>
         <argument ref="registrationManager" />
+        <argument ref="runtimeInfo" />
         <argument>
             <list>
                 <ref component-id="timeSeriesStorage" />
