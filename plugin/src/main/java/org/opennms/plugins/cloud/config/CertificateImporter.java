@@ -36,10 +36,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.Type;
-import org.opennms.plugins.cloud.grpc.GrpcConnection;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
-import org.opennms.tsaas.TimeseriesGrpc;
-import org.opennms.tsaas.Tsaas;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,8 +44,6 @@ import org.slf4j.LoggerFactory;
 public class CertificateImporter {
 
     private final String fileParam;
-
-    private final GrpcConnectionConfig config;
 
     private final SecureCredentialsVaultUtil scv;
 
@@ -59,7 +54,6 @@ public class CertificateImporter {
                                final GrpcConnectionConfig config) {
         this.fileParam = Objects.requireNonNull(fileParam);
         this.scv = Objects.requireNonNull(scv);
-        this.config = Objects.requireNonNull(config);
     }
 
     public void doIt() throws IOException {
@@ -84,26 +78,11 @@ public class CertificateImporter {
             LOG.info("Storing of certificates was NOT successfully!!!");
             LOG.info("Will abort.");
         }
-
-        tryConnection();
     }
 
     public boolean isConfigStored(final Map<Type, String> config) {
         return Objects.equals(config.get(Type.privatekey), scv.getOrNull(Type.privatekey))
                 && Objects.equals(config.get(Type.publickey), scv.getOrNull(Type.publickey))
                 && Objects.equals(config.get(Type.tokenvalue), scv.getOrNull(Type.tokenvalue));
-    }
-
-    void tryConnection() {
-        // Check if the connection can be established
-        LOG.info("Checking if connection to server works");
-        try {
-            GrpcConnection<TimeseriesGrpc.TimeseriesBlockingStub> grpc = new GrpcConnection<>(this.config, TimeseriesGrpc::newBlockingStub);
-            Tsaas.CheckHealthResponse response = grpc.get().checkHealth(Tsaas.CheckHealthRequest.newBuilder().build());
-            LOG.info("Connection to cloud server: OK");
-            LOG.info("Status of cloud server: {}", response.getStatus().name());
-        } catch (Exception e) {
-            LOG.info("Warning: Connection to cloud was not successful: {}", e.getMessage());
-        }
     }
 }
