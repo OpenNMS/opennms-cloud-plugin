@@ -35,6 +35,7 @@ import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.TOKEN_
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -94,16 +95,18 @@ public class ConfigurationManager {
         this.serviceManager = Objects.requireNonNull(serviceManager);
         this.grpcServices = Objects.requireNonNull(grpcServices);
         this.runtimeInfo = Objects.requireNonNull(runtimeInfo);
-        importCloudCredentialsIfPresent();
 
-        // the authentication has been done previously => lets configure and start services
-        if (AUTHENTCATED.name().equals(this.scv.getOrNull(SecureCredentialsVaultUtil.Type.configstatus)) ||
-                ConfigStatus.CONFIGURED.name().equals(this.scv.getOrNull(SecureCredentialsVaultUtil.Type.configstatus))) {
+        boolean importedFromZip = importCloudCredentialsIfPresent();
+        if (!importedFromZip
+                // the authentication has been done previously => lets configure and start services
+                && ( AUTHENTCATED.name().equals(this.scv.getOrNull(SecureCredentialsVaultUtil.Type.configstatus))
+                  || CONFIGURED.name().equals(this.scv.getOrNull(SecureCredentialsVaultUtil.Type.configstatus)))) {
             configure();
         }
     }
 
-    void importCloudCredentialsIfPresent() {
+    boolean importCloudCredentialsIfPresent() {
+        boolean importedFromZipFile = false;
         Path cloudCredentialsFile = Path.of(System.getProperty("opennms.home") + "/etc/cloud-credentials.zip");
         if (Files.exists(cloudCredentialsFile)) {
             try {
@@ -112,10 +115,26 @@ public class ConfigurationManager {
                         scv,
                         pasConfigTls);
                 importer.doIt();
+
+                GrpcConnectionConfig cloudGatewayConfig = readCloudGatewayConfig().toBuilder()
+                        .tokenKey(TOKEN_KEY)
+                        .tokenValue(scv.getOrNull(Type.tokenvalue))
+                        .security(GrpcConnectionConfig.Security.MTLS)
+                        .build();
+
+                initGrpcServices(cloudGatewayConfig); // give all grpc services the new config
+                LOG.info("All services configured with grpc config.");
+
+                activateServices(Collections.singleton(RegistrationManager.Service.TSAAS));
+                LOG.info("Active services registered with OpenNMS.");
+
+                importedFromZipFile = true;
+
             } catch (Exception e) {
                 LOG.warn("Could not import {}. Will continue with old credentials.", cloudCredentialsFile, e);
             }
         }
+        return importedFromZipFile;
     }
 
     /**

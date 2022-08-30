@@ -29,13 +29,16 @@
 package org.opennms.plugins.cloud.config;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
 
 import org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.Type;
 
@@ -45,6 +48,7 @@ import org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.Type;
  *     cert.crt
  *     key.key
  *     token.txt
+ *     config.properties
  */
 
 public class ConfigZipExtractor {
@@ -60,6 +64,13 @@ public class ConfigZipExtractor {
 
     public Map<Type, String> getGrpcConnectionConfig() throws IOException {
         Map<Type, String> properties = new EnumMap<>(Type.class);
+        Map<String, String> configFromZip = getConfig();
+        for(Type type : Type.values()) {
+            String value = configFromZip.get(type.name());
+            if(value != null) {
+                properties.put(type, value);
+            }
+        }
         properties.put(Type.publickey, getPublicKey());
         properties.put(Type.privatekey, getPrivateKey());
         properties.put(Type.tokenvalue, getJwtToken());
@@ -76,6 +87,12 @@ public class ConfigZipExtractor {
 
     public String getJwtToken() throws IOException {
         return extractFile("token.txt");
+    }
+
+    public Map<String, String> getConfig() throws IOException {
+        Properties props = new Properties();
+        props.load(new StringReader(extractFile("config.properties")));
+        return new HashMap<String, String>((Map)props);
     }
 
     public String extractFile(String fileName) throws IOException {
