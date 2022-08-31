@@ -225,7 +225,7 @@ public class ConfigurationManager {
 
             initGrpcServices(cloudGatewayConfig); // give all grpc services the new config
             LOG.info("All services configured with grpc config.");
-            // checkConnection();
+            checkConnection();
 
             registerServices(activeServices);
             LOG.info("Active services registered with OpenNMS.");
