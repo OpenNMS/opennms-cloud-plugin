@@ -35,6 +35,7 @@ import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.TOKEN_
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +52,8 @@ import org.opennms.plugins.cloud.grpc.GrpcConnection;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.GrpcService;
 import org.opennms.plugins.cloud.srv.RegistrationManager;
+import org.opennms.plugins.cloud.srv.tsaas.TsaasStorage;
+import org.opennms.tsaas.Tsaas;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,16 +97,19 @@ public class ConfigurationManager {
         this.serviceManager = Objects.requireNonNull(serviceManager);
         this.grpcServices = Objects.requireNonNull(grpcServices);
         this.runtimeInfo = Objects.requireNonNull(runtimeInfo);
-        importCloudCredentialsIfPresent();
 
-        // the authentication has been done previously => lets configure and start services
-        if (AUTHENTCATED.name().equals(this.scv.getOrNull(SecureCredentialsVaultUtil.Type.configstatus)) ||
-                ConfigStatus.CONFIGURED.name().equals(this.scv.getOrNull(SecureCredentialsVaultUtil.Type.configstatus))) {
+        boolean importedFromZip = importCloudCredentialsIfPresent();
+        if (!importedFromZip
+                // the authentication has been done previously => lets configure and start services
+                && ( AUTHENTCATED.name().equals(this.scv.getOrNull(SecureCredentialsVaultUtil.Type.configstatus))
+                  || CONFIGURED.name().equals(this.scv.getOrNull(SecureCredentialsVaultUtil.Type.configstatus)))) {
             configure();
         }
     }
 
-    void importCloudCredentialsIfPresent() {
+    /** We keep this shortcut currently for testing purposes.  */
+    boolean importCloudCredentialsIfPresent() {
+        boolean importedFromZipFile = false;
         Path cloudCredentialsFile = Path.of(System.getProperty("opennms.home") + "/etc/cloud-credentials.zip");
         if (Files.exists(cloudCredentialsFile)) {
             try {
@@ -112,10 +118,39 @@ public class ConfigurationManager {
                         scv,
                         pasConfigTls);
                 importer.doIt();
+
+                GrpcConnectionConfig cloudGatewayConfig = readCloudGatewayConfig().toBuilder()
+                        .tokenKey(TOKEN_KEY)
+                        .tokenValue(scv.getOrNull(Type.tokenvalue))
+                        .security(GrpcConnectionConfig.Security.MTLS)
+                        .build();
+
+                initGrpcServices(cloudGatewayConfig); // give all grpc services the new config
+                LOG.info("All services configured with grpc config.");
+
+                checkConnection();
+
+                registerServices(Collections.singleton(RegistrationManager.Service.TSAAS)); // for now we enable only TSAAS via zip file.
+                LOG.info("Active services registered with OpenNMS.");
+
+                importedFromZipFile = true;
+
             } catch (Exception e) {
                 LOG.warn("Could not import {}. Will continue with old credentials.", cloudCredentialsFile, e);
             }
         }
+        return importedFromZipFile;
+    }
+
+    private void checkConnection() {
+        Tsaas.CheckHealthResponse.ServingStatus status = grpcServices.stream()
+                .filter(s -> s instanceof TsaasStorage)
+                .map(o -> (TsaasStorage) o)
+                .findFirst()
+                .map(TsaasStorage::checkHealth)
+                .map(Tsaas.CheckHealthResponse::getStatus)
+                .orElseThrow();
+        LOG.info("Status of TSAAS: {}", status); // TODO: Patrick make this more generic once we have multiple services
     }
 
     /**
@@ -190,8 +225,9 @@ public class ConfigurationManager {
 
             initGrpcServices(cloudGatewayConfig); // give all grpc services the new config
             LOG.info("All services configured with grpc config.");
+            checkConnection();
 
-            activateServices(activeServices);
+            registerServices(activeServices);
             LOG.info("Active services registered with OpenNMS.");
 
             this.currentStatus = CONFIGURED; // this is a transient state so we don't save it in scv
@@ -213,7 +249,7 @@ public class ConfigurationManager {
     }
 
     /** Registers the active services with OpenNMS. */
-    private void activateServices(final Set<RegistrationManager.Service> activeServices){
+    private void registerServices(final Set<RegistrationManager.Service> activeServices){
         Set<RegistrationManager.Service> inactiveServices =  new HashSet<>(Arrays.asList(RegistrationManager.Service.values()));
         inactiveServices.removeAll(activeServices);
         for(RegistrationManager.Service service : inactiveServices ) {

@@ -174,6 +174,8 @@ public class TsaasStorage implements TimeSeriesStorage, GrpcService {
     }
 
     public void destroy() throws InterruptedException {
-        grpc.shutDown();
+        if(this.grpc !=null) {
+            grpc.shutDown();
+        }
     }
 }
