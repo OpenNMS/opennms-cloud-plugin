@@ -128,14 +128,7 @@ public class ConfigurationManager {
                 initGrpcServices(cloudGatewayConfig); // give all grpc services the new config
                 LOG.info("All services configured with grpc config.");
 
-                Tsaas.CheckHealthResponse.ServingStatus status = grpcServices.stream()
-                        .filter(s -> s instanceof TsaasStorage)
-                        .map(o -> (TsaasStorage) o)
-                        .findFirst()
-                        .map(TsaasStorage::checkHealth)
-                        .map(Tsaas.CheckHealthResponse::getStatus)
-                        .orElseThrow();
-                LOG.info("Status of TSAAS: {}", status); // TODO: Patrick make this more generic once we have multiple services
+                checkConnection();
 
                 registerServices(Collections.singleton(RegistrationManager.Service.TSAAS)); // for now we enable only TSAAS via zip file.
                 LOG.info("Active services registered with OpenNMS.");
@@ -147,6 +140,17 @@ public class ConfigurationManager {
             }
         }
         return importedFromZipFile;
+    }
+
+    private void checkConnection() {
+        Tsaas.CheckHealthResponse.ServingStatus status = grpcServices.stream()
+                .filter(s -> s instanceof TsaasStorage)
+                .map(o -> (TsaasStorage) o)
+                .findFirst()
+                .map(TsaasStorage::checkHealth)
+                .map(Tsaas.CheckHealthResponse::getStatus)
+                .orElseThrow();
+        LOG.info("Status of TSAAS: {}", status); // TODO: Patrick make this more generic once we have multiple services
     }
 
     /**
@@ -221,6 +225,7 @@ public class ConfigurationManager {
 
             initGrpcServices(cloudGatewayConfig); // give all grpc services the new config
             LOG.info("All services configured with grpc config.");
+            // checkConnection();
 
             registerServices(activeServices);
             LOG.info("Active services registered with OpenNMS.");
