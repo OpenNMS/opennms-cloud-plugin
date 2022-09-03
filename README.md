@@ -11,7 +11,8 @@ This needs to be changed to a true UUID in order to use the plugin.
 
 Execute this sql against your database:
 ```
-Update monitoringsystems set id=gen_random_uuid () where id = '00000000-0000-0000-0000-000000000000' AND type='OpenNMS' AND location='Default';
+CREATE EXTENSION pgcrypto;
+UPDATE monitoringsystems SET id=gen_random_uuid () WHERE id = '00000000-0000-0000-0000-000000000000' AND type='OpenNMS' AND location='Default';
 ```
 
 ## Build and Install

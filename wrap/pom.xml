@@ -12,6 +12,7 @@
 
     <modules>
         <module>grpc</module>
+        <module>jwt</module><!-- needed because original manifest file is not valid -->
     </modules>
 </project>
 

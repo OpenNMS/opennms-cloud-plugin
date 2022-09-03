@@ -34,6 +34,7 @@ import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.TOKEN_
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -41,7 +42,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.jline.utils.Log;
 import org.opennms.dataplatform.access.AuthenticateGrpc;
@@ -83,6 +83,8 @@ public class ConfigurationManager {
     private final GrpcConnectionConfig pasConfigTls;
     private final GrpcConnectionConfig pasConfigMtls;
     private final RuntimeInfo runtimeInfo;
+
+    private Instant tokenExpirationDate;
 
     public ConfigurationManager(final SecureCredentialsVault scv,
                                 final GrpcConnectionConfig pasConfigTls,
@@ -188,7 +190,6 @@ public class ConfigurationManager {
     /**
      * See also: <a href="https://confluence.internal.opennms.com/pages/viewpage.action?spaceKey=PRODDEV&title=High+Level+Message+Sequencing+-+System+Authorization">...</a>
      * These are the steps
-     * // 7.) identity:
      * // 9.) getServices
      * // 10.) getAccessToken (cert, system-uuid, service) return token
      */
@@ -209,13 +210,11 @@ public class ConfigurationManager {
 
             // step 8: getServices
             Set<RegistrationManager.Service> activeServices = pasWithMtls.getActiveServices(systemId);
-            String activeServicesAsString = activeServices.stream()
-                    .map(Enum::name)
-                    .collect(Collectors.joining(","));
-            LOG.info("Active services received: {}.", activeServicesAsString);
+            LOG.info("Active services received: {}.", activeServices);
 
             // step 10: getAccessToken
             final String token = pasWithMtls.getToken(activeServices, systemId);
+            this.tokenExpirationDate = TokenUtil.getExpiryDate(token);
             cloudGatewayConfig = cloudGatewayConfig.toBuilder()
                     .tokenKey(TOKEN_KEY)
                     .tokenValue(token)
@@ -283,5 +282,9 @@ public class ConfigurationManager {
 
     public ConfigStatus getStatus() {
         return currentStatus;
+    }
+
+    public Instant getTokenExpiration() {
+        return this.tokenExpirationDate == null ? Instant.now() : this.tokenExpirationDate;
     }
 }
