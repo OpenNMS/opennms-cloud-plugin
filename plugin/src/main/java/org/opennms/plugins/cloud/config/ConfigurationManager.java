@@ -43,7 +43,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import org.jline.utils.Log;
 import org.opennms.dataplatform.access.AuthenticateGrpc;
 import org.opennms.integration.api.v1.runtime.RuntimeInfo;
 import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
@@ -141,6 +140,7 @@ public class ConfigurationManager {
                 LOG.warn("Could not import {}. Will continue with old credentials.", cloudCredentialsFile, e);
             }
         }
+        this.currentStatus = CONFIGURED;
         return importedFromZipFile;
     }
 
@@ -276,7 +276,7 @@ public class ConfigurationManager {
             try {
                 service.initGrpc(config);
             } catch (Exception e) {
-                Log.error("could not initGrpc", e);
+                LOG.error("could not initGrpc", e);
             }
         }
     }
