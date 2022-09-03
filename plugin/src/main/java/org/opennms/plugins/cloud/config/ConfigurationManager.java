@@ -30,6 +30,7 @@ package org.opennms.plugins.cloud.config;
 
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.AUTHENTCATED;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.CONFIGURED;
+import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.FAILED;
 import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.TOKEN_KEY;
 
 import java.nio.file.Files;
@@ -137,7 +138,8 @@ public class ConfigurationManager {
                 importedFromZipFile = true;
                 this.currentStatus = CONFIGURED;
             } catch (Exception e) {
-                LOG.warn("Could not import {}. Will continue with old credentials.", cloudCredentialsFile, e);
+                this.currentStatus = FAILED;
+                LOG.warn("Could not import {}.", cloudCredentialsFile, e);
             }
         }
         return importedFromZipFile;

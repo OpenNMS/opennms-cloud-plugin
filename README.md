@@ -28,14 +28,14 @@ feature:install opennms-cloud-plugin
 ```
 ## Configuration
 ### Initializing
-#### Via Web Interface
-
 Before the Cloud Plugin can be used with the OpenNMS Cloud it needs to be configured.
 In order to configure it you need to obtain an access key for your organisation.
+
+#### Via Web Interface
 Once you have the access key you can enter it into the cloud plugin configuration page within OpenNMS.
 
 #### Via Karaf Shell
-
+An alternative is to use the command line in the Karaf shell:
 ```
 opennms-cloud:configure <access token>
 ```
