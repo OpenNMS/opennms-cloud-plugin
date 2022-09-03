@@ -29,6 +29,7 @@
 package org.opennms.plugins.cloud.config;
 
 import static org.awaitility.Awaitility.await;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockingDetails;
@@ -51,10 +52,12 @@ public class HousekeeperTest {
                 .doReturn(Instant.now()) // token expired
                 .when(cm).getTokenExpiration();
         hk.init();
+        assertEquals(0, mockingDetails(cm).getInvocations().size());
         await()
                 .during(Duration.ofMillis(800)) // no config should be called during ramp up time (1sec)
                 .atMost(Duration.ofMillis(2200)) // config should have been called within 2 sec
                 .until (() -> !mockingDetails(cm).getInvocations().isEmpty());
+        assertEquals(1, mockingDetails(cm).getInvocations().size());
     }
 
     @After
