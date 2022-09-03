@@ -144,7 +144,7 @@ public class ConfigurationManager {
         return importedFromZipFile;
     }
 
-    private void checkConnection() {
+    void checkConnection() {
         Tsaas.CheckHealthResponse.ServingStatus status = grpcServices.stream()
                 .filter(s -> s instanceof TsaasStorage)
                 .map(o -> (TsaasStorage) o)
@@ -180,6 +180,7 @@ public class ConfigurationManager {
             cloudCredentials.put(Type.configstatus, AUTHENTCATED.name());
             scv.putProperties(cloudCredentials);
             LOG.info("Cloud configuration stored in OpenNMS.");
+            this.currentStatus = AUTHENTCATED;
         } catch (Exception e) {
             this.currentStatus = ConfigStatus.FAILED;
             LOG.error("configure failed.", e);
@@ -194,13 +195,13 @@ public class ConfigurationManager {
      * // 10.) getAccessToken (cert, system-uuid, service) return token
      */
     public ConfigStatus configure() {
-        if(!PrerequisiteChecker.isSystemIdOk(this.runtimeInfo.getSystemId())) {
+        String systemId = runtimeInfo.getSystemId();
+        if(!PrerequisiteChecker.isSystemIdOk(systemId)) {
             LOG.error("Cannot configure cloud connection, please fix systemId first!");
             this.currentStatus = ConfigStatus.FAILED;
             return this.currentStatus;
         }
         try {
-            String systemId = runtimeInfo.getSystemId();
             GrpcConnectionConfig cloudGatewayConfig = readCloudGatewayConfig();
             GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> pasWithMtlsConfig = createPasGrpc(cloudGatewayConfig);
             final PasAccess pasWithMtls = new PasAccess(pasWithMtlsConfig);

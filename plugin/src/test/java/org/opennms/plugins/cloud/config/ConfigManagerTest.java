@@ -35,6 +35,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.AUTHENTCATED;
+import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.CONFIGURED;
+import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.FAILED;
+import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.NOT_ATTEMPTED;
+import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.Type.grpchost;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -50,8 +55,10 @@ import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.GrpcService;
 import org.opennms.plugins.cloud.srv.RegistrationManager;
+import org.opennms.plugins.cloud.srv.tsaas.TsaasStorage;
 import org.opennms.plugins.cloud.testserver.GrpcTestServer;
 import org.opennms.plugins.cloud.testserver.GrpcTestServerInterceptor;
+import org.opennms.tsaas.Tsaas;
 
 public class ConfigManagerTest {
 
@@ -103,6 +110,26 @@ public class ConfigManagerTest {
   public void shouldGetCloudConfig() {
     InMemoryScv scv = new InMemoryScv();
     SecureCredentialsVaultUtil scvUtil = new SecureCredentialsVaultUtil(scv);
+    TsaasStorage grpc = mock(TsaasStorage.class);
+    when(grpc.checkHealth()).thenReturn(Tsaas.CheckHealthResponse.newBuilder().setStatus(Tsaas.CheckHealthResponse.ServingStatus.SERVING).build());
+    RuntimeInfo info = mock(RuntimeInfo.class);
+    when(info.getSystemId()).thenReturn(UUID.randomUUID().toString());
+    ConfigurationManager cm = new ConfigurationManager(scv, clientConfig, clientConfig, mock(RegistrationManager.class),
+            info,
+            Collections.singletonList(grpc));
+    assertEquals(NOT_ATTEMPTED, cm.getStatus());
+    cm.initConfiguration("something");
+    assertEquals(AUTHENTCATED, cm.getStatus());
+    cm.configure();
+    assertEquals(CONFIGURED, cm.getStatus());
+    verify(grpc, times(1)).initGrpc(any());
+    assertTrue(scvUtil.getOrNull(SecureCredentialsVaultUtil.Type.privatekey).startsWith("-----BEGIN PRIVATE KEY-----"));
+    assertTrue(scvUtil.getOrNull(SecureCredentialsVaultUtil.Type.publickey).startsWith("-----BEGIN CERTIFICATE-----"));
+  }
+  @Test
+  public void shouldSetStatusForFailedConfig() {
+    InMemoryScv scv = new InMemoryScv();
+    SecureCredentialsVaultUtil scvUtil = new SecureCredentialsVaultUtil(scv);
     GrpcService grpc = mock(GrpcService.class);
     RuntimeInfo info = mock(RuntimeInfo.class);
     when(info.getSystemId()).thenReturn(UUID.randomUUID().toString());
@@ -110,10 +137,8 @@ public class ConfigManagerTest {
             info,
             Collections.singletonList(grpc));
     cm.initConfiguration("something");
-    cm.configure();
-    verify(grpc, times(1)).initGrpc(any());
-    assertTrue(scvUtil.getOrNull(SecureCredentialsVaultUtil.Type.privatekey).startsWith("-----BEGIN PRIVATE KEY-----"));
-    assertTrue(scvUtil.getOrNull(SecureCredentialsVaultUtil.Type.publickey).startsWith("-----BEGIN CERTIFICATE-----"));
+    scvUtil.putProperty(grpchost, "I don't exist");
+    assertEquals(FAILED, cm.configure());
   }
 
 }
