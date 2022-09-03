@@ -33,13 +33,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 /** Schedules and executes needed tasks. */
+@Slf4j
 public class Housekeeper {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ConfigurationManager.class);
     private final ScheduledExecutorService executor;
     private final int intervalInSeconds;
     private final ConfigurationManager configurationManager;
@@ -65,8 +64,8 @@ public class Housekeeper {
     public void renewToken() {
         final Instant expirationDate = configurationManager.getTokenExpiration();
         // renew 20 min before expiry
-        if(expirationDate.minusSeconds(60 * 20).isBefore(Instant.now())) {
-            LOG.info("Triggering renewal of configuration, token will expire soon.");
+        if(expirationDate.minusSeconds(60L * 20L).isBefore(Instant.now())) {
+            log.info("Triggering renewal of configuration, token will expire soon.");
             this.configurationManager.configure();
         }
     }

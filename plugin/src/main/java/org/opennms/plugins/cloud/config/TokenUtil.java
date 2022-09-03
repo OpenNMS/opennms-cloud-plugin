@@ -33,6 +33,9 @@ import java.time.Instant;
 import com.auth0.jwt.JWT;
 
 public class TokenUtil {
+
+    private TokenUtil(){}
+
     public static Instant getExpiryDate(final String jwt) {
         return JWT.decode(jwt)
                 .getExpiresAtAsInstant();
