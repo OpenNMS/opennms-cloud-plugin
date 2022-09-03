@@ -135,12 +135,11 @@ public class ConfigurationManager {
                 LOG.info("Active services registered with OpenNMS.");
 
                 importedFromZipFile = true;
-
+                this.currentStatus = CONFIGURED;
             } catch (Exception e) {
                 LOG.warn("Could not import {}. Will continue with old credentials.", cloudCredentialsFile, e);
             }
         }
-        this.currentStatus = CONFIGURED;
         return importedFromZipFile;
     }
 
