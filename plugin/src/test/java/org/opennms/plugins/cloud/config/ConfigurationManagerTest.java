@@ -31,6 +31,7 @@ package org.opennms.plugins.cloud.config;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -60,11 +61,16 @@ import org.opennms.plugins.cloud.testserver.GrpcTestServer;
 import org.opennms.plugins.cloud.testserver.GrpcTestServerInterceptor;
 import org.opennms.tsaas.Tsaas;
 
-public class ConfigManagerTest {
+public class ConfigurationManagerTest {
 
   private GrpcTestServer server;
   private TimeSeriesStorage serverStorage;
   private GrpcConnectionConfig clientConfig;
+
+  private InMemoryScv scv;
+  SecureCredentialsVaultUtil scvUtil;
+  GrpcService grpc;
+  RuntimeInfo info;
 
   @Before
   public void setUp() throws IOException {
@@ -80,6 +86,12 @@ public class ConfigManagerTest {
             .toBuilder()
             .clientTrustStore(Files.readString(Path.of("src/test/resources/cert/clienttruststore.pem")))
             .build();
+
+    scv = new InMemoryScv();
+    scvUtil = new SecureCredentialsVaultUtil(scv);
+    grpc = mock(GrpcService.class);
+    info = mock(RuntimeInfo.class);
+    when(info.getSystemId()).thenReturn(UUID.randomUUID().toString());
   }
 
   @After
@@ -91,10 +103,6 @@ public class ConfigManagerTest {
 
   @Test
   public void shouldFailIfSystemIdIsNotUnique() {
-    InMemoryScv scv = new InMemoryScv();
-    SecureCredentialsVaultUtil scvUtil = new SecureCredentialsVaultUtil(scv);
-    GrpcService grpc = mock(GrpcService.class);
-    RuntimeInfo info = mock(RuntimeInfo.class);
     when(info.getSystemId()).thenReturn("00000000-0000-0000-0000-000000000000");
     ConfigurationManager cm = new ConfigurationManager(scv, clientConfig, clientConfig, mock(RegistrationManager.class),
             info,
@@ -108,12 +116,8 @@ public class ConfigManagerTest {
 
   @Test
   public void shouldGetCloudConfig() {
-    InMemoryScv scv = new InMemoryScv();
-    SecureCredentialsVaultUtil scvUtil = new SecureCredentialsVaultUtil(scv);
     TsaasStorage grpc = mock(TsaasStorage.class);
     when(grpc.checkHealth()).thenReturn(Tsaas.CheckHealthResponse.newBuilder().setStatus(Tsaas.CheckHealthResponse.ServingStatus.SERVING).build());
-    RuntimeInfo info = mock(RuntimeInfo.class);
-    when(info.getSystemId()).thenReturn(UUID.randomUUID().toString());
     ConfigurationManager cm = new ConfigurationManager(scv, clientConfig, clientConfig, mock(RegistrationManager.class),
             info,
             Collections.singletonList(grpc));
@@ -128,17 +132,21 @@ public class ConfigManagerTest {
   }
   @Test
   public void shouldSetStatusForFailedConfig() {
-    InMemoryScv scv = new InMemoryScv();
-    SecureCredentialsVaultUtil scvUtil = new SecureCredentialsVaultUtil(scv);
-    GrpcService grpc = mock(GrpcService.class);
-    RuntimeInfo info = mock(RuntimeInfo.class);
-    when(info.getSystemId()).thenReturn(UUID.randomUUID().toString());
     ConfigurationManager cm = new ConfigurationManager(scv, clientConfig, clientConfig, mock(RegistrationManager.class),
             info,
             Collections.singletonList(grpc));
     cm.initConfiguration("something");
     scvUtil.putProperty(grpchost, "I don't exist");
     assertEquals(FAILED, cm.configure());
+  }
+
+  @Test
+  public void shouldCatchAllErrorsFromGrpcInit() {
+    doThrow(new RuntimeException("failed")).when(grpc).initGrpc(any(GrpcConnectionConfig.class));
+    ConfigurationManager cm = new ConfigurationManager(scv, clientConfig, clientConfig, mock(RegistrationManager.class),
+            info,
+            Collections.singletonList(grpc));
+    cm.initGrpcServices(GrpcConnectionConfig.builder().build()); // should swallow exception
   }
 
 }
