@@ -29,6 +29,7 @@
 package org.opennms.plugins.cloud.config;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -132,6 +133,16 @@ public class ConfigurationManagerTest {
   }
   @Test
   public void shouldSetStatusForFailedConfig() {
+    ConfigurationManager cm = new ConfigurationManager(scv, clientConfig, clientConfig, mock(RegistrationManager.class),
+            info,
+            Collections.singletonList(grpc));
+    final String key = null; // will fail
+    assertThrows(NullPointerException.class, () -> cm.initConfiguration(key));
+    assertEquals(FAILED, cm.getStatus());
+  }
+
+  @Test
+  public void shouldSetStatusForFailedInit() {
     ConfigurationManager cm = new ConfigurationManager(scv, clientConfig, clientConfig, mock(RegistrationManager.class),
             info,
             Collections.singletonList(grpc));

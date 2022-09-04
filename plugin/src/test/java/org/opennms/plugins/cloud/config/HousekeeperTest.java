@@ -29,10 +29,11 @@
 package org.opennms.plugins.cloud.config;
 
 import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockingDetails;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -48,16 +49,17 @@ public class HousekeeperTest {
     public void shouldRenewConfigForExpiredToken() throws InterruptedException {
         ConfigurationManager cm = mock(ConfigurationManager.class);
         hk = new Housekeeper(cm, 1);
-        doReturn(Instant.now().plusSeconds(60*60)) // token valid
-                .doReturn(Instant.now()) // token expired
+        doReturn(Instant.now()
+                .plusSeconds(60*60)) // first time: token valid
+                .doReturn(Instant.now()) // second time: token expired
                 .when(cm).getTokenExpiration();
         hk.init();
-        assertEquals(0, mockingDetails(cm).getInvocations().size());
+        verify(cm, times(0)).configure();
         await()
                 .during(Duration.ofMillis(800)) // no config should be called during ramp up time (1sec)
-                .atMost(Duration.ofMillis(2200)) // config should have been called within 2 sec
-                .until (() -> !mockingDetails(cm).getInvocations().isEmpty());
-        assertEquals(1, mockingDetails(cm).getInvocations().size());
+                .atMost(Duration.ofMillis(5000)) // config should have been called by now
+                .until (() -> mockingDetails(cm).getInvocations().stream().anyMatch(i -> "configure".equals(i.getMethod().getName())));
+        verify(cm, times(1)).configure();
     }
 
     @After
