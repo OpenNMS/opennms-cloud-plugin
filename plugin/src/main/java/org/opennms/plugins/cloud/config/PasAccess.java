@@ -29,6 +29,7 @@
 package org.opennms.plugins.cloud.config;
 
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -92,5 +93,10 @@ class PasAccess {
                 .build();
         AuthenticateOuterClass.GetAccessTokenResponse response = this.grpc.get().getAccessToken(request);
         return response.getToken();
+    }
+
+    public Map<Type, String> fetchCerts(String systemId) {
+        // TODO: Patrick
+        return new HashMap<>();
     }
 }

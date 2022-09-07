@@ -28,6 +28,7 @@
 
 package org.opennms.plugins.cloud.config;
 
+import java.security.cert.CertificateException;
 import java.time.Instant;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -55,7 +56,8 @@ public class Housekeeper {
 
 
     public void init() {
-        executor.scheduleAtFixedRate(this::renewToken, intervalInSeconds, intervalInSeconds, TimeUnit.SECONDS);
+        executor.scheduleAtFixedRate(() -> wrap(this::renewToken), intervalInSeconds, intervalInSeconds, TimeUnit.SECONDS);
+        executor.scheduleAtFixedRate(() -> wrap(this::renewCerts), intervalInSeconds, intervalInSeconds, TimeUnit.SECONDS);
     }
     public void destroy() {
         executor.shutdown();
@@ -64,10 +66,32 @@ public class Housekeeper {
     public void renewToken() {
         final Instant expirationDate = configurationManager.getTokenExpiration();
         // renew 20 min before expiry
-        if(expirationDate.minusSeconds(60L * 20L).isBefore(Instant.now())) {
+        if (expirationDate.minusSeconds(60L * 20L).isBefore(Instant.now())) {
             log.info("Triggering renewal of configuration, token will expire soon.");
             this.configurationManager.configure();
         }
+    }
+
+    public void renewCerts() throws CertificateException {
+        final Instant expirationDate = configurationManager.getCertExpiration();
+        // renew 20 min before expiry
+        if(expirationDate.minusSeconds(60L * 20L).isBefore(Instant.now())) {
+            log.info("Triggering renewal of certificates, will expire soon.");
+            this.configurationManager.renewCerts();
+            this.configurationManager.configure();
+        }
+    }
+
+    private void wrap(RunnableWithException r) {
+        try {
+            r.run();
+        } catch (Exception e) {
+            log.error("Job failed.", e);
+        }
+    }
+
+    private interface RunnableWithException {
+        void run() throws Exception;
     }
 
 }

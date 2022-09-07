@@ -35,6 +35,7 @@ import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.TOKEN_
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.cert.CertificateException;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
@@ -85,6 +86,7 @@ public class ConfigurationManager {
     private final RuntimeInfo runtimeInfo;
 
     private Instant tokenExpirationDate;
+    private Instant certExpirationDate;
 
     public ConfigurationManager(final SecureCredentialsVault scv,
                                 final GrpcConnectionConfig pasConfigTls,
@@ -189,6 +191,25 @@ public class ConfigurationManager {
         }
     }
 
+    public void renewCerts() throws CertificateException {
+        try {
+            LOG.info("Starting renewing of certificates.");
+            GrpcConnectionConfig cloudGatewayConfig = readCloudGatewayConfig();
+            this.certExpirationDate = CertUtil.getExpiryDate(cloudGatewayConfig.getPublicKey());
+            GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> pasWithMtlsConfig = createPasGrpc(cloudGatewayConfig);
+            final PasAccess pasWithMtls = new PasAccess(pasWithMtlsConfig);
+            Map<SecureCredentialsVaultUtil.Type, String> cloudCredentials = pasWithMtls.fetchCerts(runtimeInfo.getSystemId());
+            LOG.info("New certificates received from PAS (Platform Access Service).");
+            cloudCredentials.put(Type.configstatus, AUTHENTCATED.name());
+            scv.putProperties(cloudCredentials);
+            LOG.info("Cloud configuration stored in OpenNMS.");
+        } catch (Exception e) {
+            this.currentStatus = ConfigStatus.FAILED;
+            LOG.error("fetching new certs failed.", e);
+            throw e;
+        }
+    }
+
     /**
      * See also: <a href="https://confluence.internal.opennms.com/pages/viewpage.action?spaceKey=PRODDEV&title=High+Level+Message+Sequencing+-+System+Authorization">...</a>
      * These are the steps
@@ -204,6 +225,7 @@ public class ConfigurationManager {
         }
         try {
             GrpcConnectionConfig cloudGatewayConfig = readCloudGatewayConfig();
+            this.certExpirationDate = CertUtil.getExpiryDate(cloudGatewayConfig.getPublicKey());
             GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> pasWithMtlsConfig = createPasGrpc(cloudGatewayConfig);
             final PasAccess pasWithMtls = new PasAccess(pasWithMtlsConfig);
 
@@ -288,5 +310,9 @@ public class ConfigurationManager {
 
     public Instant getTokenExpiration() {
         return this.tokenExpirationDate == null ? Instant.now() : this.tokenExpirationDate;
+    }
+
+    public Instant getCertExpiration() {
+        return this.certExpirationDate == null ? Instant.now() : this.certExpirationDate;
     }
 }
