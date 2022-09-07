@@ -97,6 +97,15 @@ public class PasAccessTest {
                                         .build());
                         responseObserver.onCompleted();
                     }
+
+                    @Override
+                    public void renewCertificate(AuthenticateOuterClass.RenewCertificateRequest request, StreamObserver<AuthenticateOuterClass.RenewCertificateResponse> responseObserver) {
+                        responseObserver.onNext(AuthenticateOuterClass.RenewCertificateResponse.newBuilder()
+                                .setPrivateKey(privateKey)
+                                .setCertificate(certificate)
+                                .build());
+                        responseObserver.onCompleted();
+                    }
                 };
 
         Server server = grpcCleanup.register(
@@ -114,7 +123,7 @@ public class PasAccessTest {
         GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> grpc = new GrpcConnection<>(stub, channel);
         PasAccess pas = new PasAccess(grpc);
 
-        Map<Type, String> config = pas.fetchCredentialsFromAccessService("key", "systemId");
+        Map<Type, String> config = pas.getCredentialsFromAccessService("key", "systemId");
         assertEquals(serverHost, config.get(Type.grpchost));
         assertEquals(Integer.toString(serverPort), config.get(Type.grpcport));
         assertEquals(privateKey, config.get(Type.privatekey));
@@ -122,6 +131,12 @@ public class PasAccessTest {
         // FAAS shouldn't show up since it is not enabled:
         assertEquals(Set.of(RegistrationManager.Service.TSAAS), pas.getActiveServices("systemId"));
         assertEquals("myToken", pas.getToken(new HashSet<>(), "systemId"));
+
+        // renew certs
+        Map<Type, String> newCerts = pas.renewCertificate("systemId");
+        assertEquals(privateKey, newCerts.get(Type.privatekey));
+        assertEquals(certificate, newCerts.get(Type.publickey));
+
         server.shutdown();
     }
 

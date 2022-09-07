@@ -165,9 +165,7 @@ public class ConfigurationManager {
      */
     public void initConfiguration(final String key) {
         if(!PrerequisiteChecker.isSystemIdOk(this.runtimeInfo.getSystemId())) {
-            LOG.error("Cannot initConfiguration, please fix systemId first!");
-            this.currentStatus = ConfigStatus.FAILED;
-            return;
+            LOG.warn("System id is not set up. It is advisable to set it up, see here: https://github.com/OpenNMS/opennms-cloud-plugin#system-id");
         }
         try {
             Objects.requireNonNull(key);
@@ -178,7 +176,7 @@ public class ConfigurationManager {
             GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> grpcWithTls = new GrpcConnection<>(pasConfigTls,
                     AuthenticateGrpc::newBlockingStub);
             final PasAccess pasWithTls = new PasAccess(grpcWithTls);
-            Map<SecureCredentialsVaultUtil.Type, String> cloudCredentials = pasWithTls.fetchCredentialsFromAccessService(key, runtimeInfo.getSystemId());
+            Map<SecureCredentialsVaultUtil.Type, String> cloudCredentials = pasWithTls.getCredentialsFromAccessService(key, runtimeInfo.getSystemId());
             LOG.info("Cloud configuration received from PAS (Platform Access Service).");
             cloudCredentials.put(Type.configstatus, AUTHENTCATED.name());
             scv.putProperties(cloudCredentials);
@@ -198,7 +196,7 @@ public class ConfigurationManager {
             this.certExpirationDate = CertUtil.getExpiryDate(cloudGatewayConfig.getPublicKey());
             GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> pasWithMtlsConfig = createPasGrpc(cloudGatewayConfig);
             final PasAccess pasWithMtls = new PasAccess(pasWithMtlsConfig);
-            Map<SecureCredentialsVaultUtil.Type, String> cloudCredentials = pasWithMtls.fetchCerts(runtimeInfo.getSystemId());
+            Map<SecureCredentialsVaultUtil.Type, String> cloudCredentials = pasWithMtls.renewCertificate(runtimeInfo.getSystemId());
             LOG.info("New certificates received from PAS (Platform Access Service).");
             cloudCredentials.put(Type.configstatus, AUTHENTCATED.name());
             scv.putProperties(cloudCredentials);

@@ -6,8 +6,9 @@ Initially it will provide storage for time series data (tsaas).
 # Installation
 ## Prerequisites
 ### System Id
-The default system id of older OpenNMS installations is '00000000-0000-0000-0000-000000000000'
-This needs to be changed to a true UUID in order to use the plugin.
+The default system id of older OpenNMS installations is '00000000-0000-0000-0000-000000000000'.
+It is advisable to change it to a true UUID.
+This will help to distinguish different systems.
 
 Execute this sql against your database:
 ```

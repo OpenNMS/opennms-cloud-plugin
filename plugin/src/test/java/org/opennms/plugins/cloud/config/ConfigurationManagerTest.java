@@ -103,19 +103,6 @@ public class ConfigurationManagerTest {
   }
 
   @Test
-  public void shouldFailIfSystemIdIsNotUnique() {
-    when(info.getSystemId()).thenReturn("00000000-0000-0000-0000-000000000000");
-    ConfigurationManager cm = new ConfigurationManager(scv, clientConfig, clientConfig, mock(RegistrationManager.class),
-            info,
-            Collections.singletonList(grpc));
-    assertEquals(ConfigurationManager.ConfigStatus.NOT_ATTEMPTED, cm.getStatus());
-    cm.initConfiguration("something");
-    assertEquals(ConfigurationManager.ConfigStatus.FAILED, cm.getStatus());
-    assertEquals(ConfigurationManager.ConfigStatus.FAILED, cm.configure());
-    verify(grpc, times(0)).initGrpc(any());
-  }
-
-  @Test
   public void shouldGetCloudConfig() {
     TsaasStorage grpc = mock(TsaasStorage.class);
     when(grpc.checkHealth()).thenReturn(Tsaas.CheckHealthResponse.newBuilder().setStatus(Tsaas.CheckHealthResponse.ServingStatus.SERVING).build());
