@@ -11,7 +11,8 @@ This needs to be changed to a true UUID in order to use the plugin.
 
 Execute this sql against your database:
 ```
-Update monitoringsystems set id=gen_random_uuid () where id = '00000000-0000-0000-0000-000000000000' AND type='OpenNMS' AND location='Default';
+CREATE EXTENSION pgcrypto;
+UPDATE monitoringsystems SET id=gen_random_uuid () WHERE id = '00000000-0000-0000-0000-000000000000' AND type='OpenNMS' AND location='Default';
 ```
 
 ## Build and Install
@@ -27,14 +28,14 @@ feature:install opennms-cloud-plugin
 ```
 ## Configuration
 ### Initializing
-#### Via Web Interface
-
 Before the Cloud Plugin can be used with the OpenNMS Cloud it needs to be configured.
 In order to configure it you need to obtain an access key for your organisation.
+
+#### Via Web Interface
 Once you have the access key you can enter it into the cloud plugin configuration page within OpenNMS.
 
 #### Via Karaf Shell
-
+An alternative is to use the command line in the Karaf shell:
 ```
 opennms-cloud:configure <access token>
 ```

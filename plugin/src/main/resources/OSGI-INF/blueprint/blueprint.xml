@@ -57,6 +57,11 @@
     </bean>
     <service ref="cloudConfigManager" interface="org.opennms.plugins.cloud.config.ConfigurationManager" />
 
+    <bean id="houseKeeper" class="org.opennms.plugins.cloud.config.Housekeeper"
+          destroy-method="destroy" init-method="init">
+        <argument ref="cloudConfigManager"/>
+    </bean>
+
     <!-- HEALTH -->
     <bean id="cloudHealthCheck" class="org.opennms.plugins.cloud.srv.tsaas.CloudHealthCheck">
         <argument ref="timeSeriesStorage"/>

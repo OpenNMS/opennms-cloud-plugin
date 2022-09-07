@@ -30,10 +30,12 @@ package org.opennms.plugins.cloud.config;
 
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.AUTHENTCATED;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.CONFIGURED;
+import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.FAILED;
 import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.TOKEN_KEY;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -41,9 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import org.jline.utils.Log;
 import org.opennms.dataplatform.access.AuthenticateGrpc;
 import org.opennms.integration.api.v1.runtime.RuntimeInfo;
 import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
@@ -83,6 +83,8 @@ public class ConfigurationManager {
     private final GrpcConnectionConfig pasConfigTls;
     private final GrpcConnectionConfig pasConfigMtls;
     private final RuntimeInfo runtimeInfo;
+
+    private Instant tokenExpirationDate;
 
     public ConfigurationManager(final SecureCredentialsVault scv,
                                 final GrpcConnectionConfig pasConfigTls,
@@ -134,15 +136,16 @@ public class ConfigurationManager {
                 LOG.info("Active services registered with OpenNMS.");
 
                 importedFromZipFile = true;
-
+                this.currentStatus = CONFIGURED;
             } catch (Exception e) {
-                LOG.warn("Could not import {}. Will continue with old credentials.", cloudCredentialsFile, e);
+                this.currentStatus = FAILED;
+                LOG.warn("Could not import {}.", cloudCredentialsFile, e);
             }
         }
         return importedFromZipFile;
     }
 
-    private void checkConnection() {
+    void checkConnection() {
         Tsaas.CheckHealthResponse.ServingStatus status = grpcServices.stream()
                 .filter(s -> s instanceof TsaasStorage)
                 .map(o -> (TsaasStorage) o)
@@ -178,6 +181,7 @@ public class ConfigurationManager {
             cloudCredentials.put(Type.configstatus, AUTHENTCATED.name());
             scv.putProperties(cloudCredentials);
             LOG.info("Cloud configuration stored in OpenNMS.");
+            this.currentStatus = AUTHENTCATED;
         } catch (Exception e) {
             this.currentStatus = ConfigStatus.FAILED;
             LOG.error("configure failed.", e);
@@ -188,18 +192,17 @@ public class ConfigurationManager {
     /**
      * See also: <a href="https://confluence.internal.opennms.com/pages/viewpage.action?spaceKey=PRODDEV&title=High+Level+Message+Sequencing+-+System+Authorization">...</a>
      * These are the steps
-     * // 7.) identity:
      * // 9.) getServices
      * // 10.) getAccessToken (cert, system-uuid, service) return token
      */
     public ConfigStatus configure() {
-        if(!PrerequisiteChecker.isSystemIdOk(this.runtimeInfo.getSystemId())) {
+        String systemId = runtimeInfo.getSystemId();
+        if(!PrerequisiteChecker.isSystemIdOk(systemId)) {
             LOG.error("Cannot configure cloud connection, please fix systemId first!");
             this.currentStatus = ConfigStatus.FAILED;
             return this.currentStatus;
         }
         try {
-            String systemId = runtimeInfo.getSystemId();
             GrpcConnectionConfig cloudGatewayConfig = readCloudGatewayConfig();
             GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> pasWithMtlsConfig = createPasGrpc(cloudGatewayConfig);
             final PasAccess pasWithMtls = new PasAccess(pasWithMtlsConfig);
@@ -209,13 +212,11 @@ public class ConfigurationManager {
 
             // step 8: getServices
             Set<RegistrationManager.Service> activeServices = pasWithMtls.getActiveServices(systemId);
-            String activeServicesAsString = activeServices.stream()
-                    .map(Enum::name)
-                    .collect(Collectors.joining(","));
-            LOG.info("Active services received: {}.", activeServicesAsString);
+            LOG.info("Active services received: {}.", activeServices);
 
             // step 10: getAccessToken
             final String token = pasWithMtls.getToken(activeServices, systemId);
+            this.tokenExpirationDate = TokenUtil.getExpiryDate(token);
             cloudGatewayConfig = cloudGatewayConfig.toBuilder()
                     .tokenKey(TOKEN_KEY)
                     .tokenValue(token)
@@ -276,12 +277,16 @@ public class ConfigurationManager {
             try {
                 service.initGrpc(config);
             } catch (Exception e) {
-                Log.error("could not initGrpc", e);
+                LOG.error("could not initGrpc", e);
             }
         }
     }
 
     public ConfigStatus getStatus() {
         return currentStatus;
+    }
+
+    public Instant getTokenExpiration() {
+        return this.tokenExpirationDate == null ? Instant.now() : this.tokenExpirationDate;
     }
 }

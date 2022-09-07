@@ -28,8 +28,11 @@
 
 package org.opennms.plugins.cloud.testserver;
 
+import static java.time.temporal.ChronoUnit.HOURS;
+
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Objects;
 
 import org.opennms.dataplatform.access.AuthenticateGrpc;
@@ -39,6 +42,9 @@ import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.RegistrationManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
 
 import io.grpc.BindableService;
 import io.grpc.stub.StreamObserver;
@@ -88,8 +94,12 @@ public class ConfigGrpcImpl extends AuthenticateGrpc.AuthenticateImplBase implem
 
     @Override
     public void getAccessToken(AuthenticateOuterClass.GetAccessTokenRequest request, StreamObserver<AuthenticateOuterClass.GetAccessTokenResponse> responseObserver) {
+        Algorithm algorithm = Algorithm.HMAC256("secret");
+        String token = JWT.create()
+                .withExpiresAt(Instant.now().plus(1, HOURS))
+                .sign(algorithm);
         responseObserver.onNext(AuthenticateOuterClass.GetAccessTokenResponse.newBuilder()
-                .setToken("myToken")
+                .setToken(token)
                 .build());
         responseObserver.onCompleted();
     }

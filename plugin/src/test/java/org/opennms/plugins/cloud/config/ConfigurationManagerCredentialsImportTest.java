@@ -28,10 +28,13 @@
 
 package org.opennms.plugins.cloud.config;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.FAILED;
 import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.SCV_ALIAS;
 
 import java.io.File;
@@ -39,6 +42,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 
 import org.junit.After;
@@ -48,6 +52,8 @@ import org.opennms.integration.api.v1.runtime.RuntimeInfo;
 import org.opennms.integration.api.v1.scv.Credentials;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.RegistrationManager;
+import org.opennms.plugins.cloud.srv.tsaas.TsaasStorage;
+import org.opennms.tsaas.Tsaas;
 
 public class ConfigurationManagerCredentialsImportTest {
 
@@ -63,14 +69,17 @@ public class ConfigurationManagerCredentialsImportTest {
 
     @Test
     public void shouldImportCloudCredentialsIfPresent() throws Exception {
-
+        TsaasStorage tsaas = mock(TsaasStorage.class);
+        when(tsaas.checkHealth())
+                .thenReturn(Tsaas.CheckHealthResponse.newBuilder()
+                .setStatus(Tsaas.CheckHealthResponse.ServingStatus.SERVING).build());
         InMemoryScv scv = new InMemoryScv();
         ConfigurationManager registrationManager = new ConfigurationManager(scv,
                 GrpcConnectionConfig.builder().build(),
                 GrpcConnectionConfig.builder().build(),
                 mock(RegistrationManager.class),
                 mock(RuntimeInfo.class),
-                new ArrayList<>());
+                Collections.singletonList(tsaas));
         openNmsHome = Files.createTempDirectory(this.getClass().getSimpleName());
         System.setProperty(OPENNMS_HOME, openNmsHome.toString());
         Files.createDirectory(Path.of(openNmsHome.toString(), "etc"));
@@ -86,6 +95,29 @@ public class ConfigurationManagerCredentialsImportTest {
 
         // Check if file has been deleted. we expect that the file is deleted after a successful import:
         assertFalse(Files.exists(credentialsFile));
+    }
+
+    @Test
+    public void shouldSetStatusToFailedIfConfigGoesWrong() throws Exception {
+        TsaasStorage tsaas = mock(TsaasStorage.class);
+        when(tsaas.checkHealth())
+                .thenReturn(Tsaas.CheckHealthResponse.newBuilder()
+                        .setStatus(Tsaas.CheckHealthResponse.ServingStatus.SERVING).build());
+        InMemoryScv scv = new InMemoryScv();
+        ConfigurationManager configurationManager = new ConfigurationManager(scv,
+                GrpcConnectionConfig.builder().build(),
+                GrpcConnectionConfig.builder().build(),
+                mock(RegistrationManager.class),
+                mock(RuntimeInfo.class),
+                new ArrayList<>()); // will make import fail
+        openNmsHome = Files.createTempDirectory(this.getClass().getSimpleName());
+        System.setProperty(OPENNMS_HOME, openNmsHome.toString());
+        Files.createDirectory(Path.of(openNmsHome.toString(), "etc"));
+        Path credentialsFile = Path.of(openNmsHome.toString(), "etc", "cloud-credentials.zip");
+        Files.copy(Path.of("src/test/resources/cert/cloud-credentials.zip"), credentialsFile);
+        assertTrue(Files.exists(credentialsFile));
+        assertFalse(configurationManager.importCloudCredentialsIfPresent());
+        assertEquals(FAILED, configurationManager.getStatus());
     }
 
     @After

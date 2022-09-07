@@ -11,6 +11,7 @@
         <bundle>mvn:com.google.protobuf/protobuf-java/${protobufVersion}</bundle>
         <bundle>mvn:org.opennms.plugins.cloud/cloud-plugin/${project.version}</bundle>
         <bundle>mvn:org.opennms.plugins.cloud.wrap/grpc/${project.version}</bundle>
+        <bundle>mvn:org.opennms.plugins.cloud.wrap/jwt/${project.version}</bundle>
     </feature>
     <feature name="cloud-guava" description="guava" version="${project.version}">
         <bundle dependency="true">mvn:com.google.guava/failureaccess/${failureAccessVersion}</bundle>

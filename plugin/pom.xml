@@ -132,6 +132,11 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.opennms.plugins.cloud.wrap</groupId>
+            <artifactId>jwt</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.opennms.tsaas</groupId>
             <artifactId>tsaas-grpc</artifactId>
             <version>${tsaasClientVersion}</version>
@@ -159,7 +164,7 @@
         <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>osgi.core</artifactId>
-            <version>7.0.0</version>
+            <version>${osgi.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency><!-- grpc compression -->
