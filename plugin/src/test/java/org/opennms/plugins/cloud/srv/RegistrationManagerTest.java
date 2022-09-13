@@ -40,6 +40,7 @@ import static org.mockito.Mockito.when;
 import org.junit.Before;
 import org.junit.Test;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
+import org.opennms.plugins.cloud.srv.appliance.ApplianceManager;
 import org.opennms.plugins.cloud.srv.tsaas.TsaasStorage;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
@@ -49,6 +50,7 @@ public class RegistrationManagerTest {
     private BundleContext context;
     private TsaasStorage tsaas;
     private RegistrationManager manager;
+    private ApplianceManager applmgr;
     ServiceRegistration<TimeSeriesStorage> registration;
 
     @Before
@@ -56,8 +58,9 @@ public class RegistrationManagerTest {
         context = mock(BundleContext.class);
         registration = mock(ServiceRegistration.class);
         tsaas = mock(TsaasStorage.class);
+        applmgr = mock(ApplianceManager.class);
         when(context.registerService(eq(TimeSeriesStorage.class), eq(tsaas), any())).thenReturn(registration);
-        manager = new RegistrationManager(context, tsaas); // registers tsaas
+        manager = new RegistrationManager(context, tsaas, applmgr); // registers tsaas
 
     }
 

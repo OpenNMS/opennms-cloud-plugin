@@ -52,6 +52,7 @@
             <list>
                 <ref component-id="timeSeriesStorage" />
                 <ref component-id="faas" />
+                <ref component-id="applianceManager"/>
             </list>
         </argument>
     </bean>
@@ -96,6 +97,7 @@
     <bean id="registrationManager" class="org.opennms.plugins.cloud.srv.RegistrationManager" destroy-method="destroy">
         <argument ref="blueprintBundleContext"/>
         <argument ref="timeSeriesStorage"/>
+        <argument ref="applianceManager"/>
     </bean>
     <service ref="registrationManager" interface="org.opennms.plugins.cloud.srv.RegistrationManager" />
 
@@ -108,4 +110,7 @@
         <argument ref="tsaasConfig"/>
     </bean>
     <service ref="timeSeriesStorage" interface="org.opennms.plugins.cloud.srv.tsaas.TsaasStorage" />
+
+    <!-- SERVICE: APPL -->
+    <bean id="applianceManager" class="org.opennms.plugins.cloud.srv.appliance.ApplianceManager"/>
 </blueprint>

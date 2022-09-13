@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
+import org.opennms.plugins.cloud.srv.appliance.ApplianceManager;
 import org.opennms.plugins.cloud.srv.tsaas.TsaasStorage;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
@@ -45,14 +46,14 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Responsible for registering cloud services at OpenNMS.
- * Currently we support tsaas.
+ * Currently we support tsaas and appliances.
  */
 public class RegistrationManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(RegistrationManager.class);
 
     public enum Service {
-        TSAAS, FAAS;
+        TSAAS, FAAS, APPL;
 
         public static boolean contains(final String value) {
             return Arrays.stream(values())
@@ -64,18 +65,23 @@ public class RegistrationManager {
     private final BundleContext context;
 
     final TsaasStorage tsaas;
+    final ApplianceManager applianceManager;
 
     private final Map<Service, ServiceRegistration<?>> registrations = new EnumMap<>(Service.class);
 
     public RegistrationManager(final BundleContext context,
-                               final TsaasStorage tsaas) {
+                               final TsaasStorage tsaas,
+                               final ApplianceManager applmgr) {
         this.context = Objects.requireNonNull(context);
         this.tsaas = Objects.requireNonNull(tsaas);
+        this.applianceManager = Objects.requireNonNull(applmgr);
     }
 
     public void register(final Service service) {
         if(Service.TSAAS == service) {
             register(Service.TSAAS, TimeSeriesStorage.class, tsaas);
+        } else if(service.APPL == service) {
+            register(Service.APPL, ApplianceManager.class, applianceManager);
         } else if(Service.FAAS == service) {
             throw new UnsupportedOperationException("please implement me");
         } else {
