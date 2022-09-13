@@ -1,6 +1,6 @@
 <template>
     <br/>
-    <FeatherButton>
+    <FeatherButton v-on:click="getConfigurationStatus()">
         Check for New Appliances
     </FeatherButton>
     <div>
@@ -36,6 +36,7 @@
 import { FeatherButton } from '@featherds/button';
 import { FeatherPagination } from "@featherds/pagination";
 import { ref } from 'vue';
+
 const appliances = ref([{
   applianceLabel: 'virtual-appliance-1',
   nodeId: 4,
@@ -43,6 +44,22 @@ const appliances = ref([{
   nodeLocation: 'KanataOffice',
   nodeStatus: 'UP',
 }])
+/**
+ * Attempt to retrieve application list.
+ * Portions of this code borrowed from `CloudPlugin.vue`
+ */
+const getConfigurationStatus = async () => {
+  const val = await fetch('/opennms/rest/plugin/cloud/appliance', { method: 'GET' })
+  try {
+    
+    const jsonResponse = await val.json();
+    console.log('val', val);
+    console.log('jsonResponse', jsonResponse);
+    appliances.value = jsonResponse;
+  } catch (e) {
+    console.error('Error connecting to API', e);
+  }
+}
 </script>
 
 <style lang="scss" scoped>
