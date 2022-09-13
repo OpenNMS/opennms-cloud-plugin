@@ -28,38 +28,75 @@
 
 package org.opennms.plugins.cloud.srv.appliance;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import org.opennms.plugins.cloud.srv.GrpcService;
+import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.ListAppliances;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class ApplianceManager implements GrpcService {
     private static final Logger LOG = LoggerFactory.getLogger(ApplianceManager.class);
-    private Map<String, ApplianceConfig> configMap = new HashMap<>();
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private final Map<String, ApplianceConfig> configMap = new HashMap<>();
 
+    private static OkHttpClient httpClient = null;
+
+    private static final String API_KEY_HEADER = "X-API-Key";
+
+    // TECH-DEBT: The cloud API key should ultimately be retrieved in the initial handshaking process between
+    //  this plugin and the Platform Access Service (PAS). Using a hard-coded, manually created one for now.
+    private static final String CLOUD_API_KEY = "088a644f-d12c-4b71-8c6a-849986c6208a|PIkOk371KjwpV0GS";
+
+    // TECH-DEBT: make this configurable within the cloud plugin.
+    private static final String CLOUD_BASE_URL = "https://dev.cloud.opennms.com/api/v1/external";
 
     public ApplianceManager() {
+        // TECH-DEBT: revise initialization (and shutdown) of this shared HTTP client.
+        httpClient = new OkHttpClient();
     }
 
     @Override
     public void initGrpc(GrpcConnectionConfig grpcConfig) {
-//        GrpcConnection<TimeseriesGrpc.TimeseriesBlockingStub> oldGrpc = this.grpc;
-        LOG.debug("Initializing Grpc Connection with host {} and port {}", grpcConfig.getHost(), grpcConfig.getPort());
-//        this.grpc = new GrpcConnection<>(grpcConfig, TimeseriesGrpc::newBlockingStub);
-//        if(oldGrpc != null) {
-//            try {
-//                oldGrpc.shutDown();
-//            } catch (InterruptedException e) {
-//                Thread.currentThread().interrupt();
-//            }
-//        }
     }
 
     public void updateApplianceList() {
         // trigger query of portal appliance list API. parse results and add any new
         // UUIDs to our node table with appropriate metadata via requisition provider
+    }
+
+    public ListAppliances listAppliances() {
+        var request = new Request.Builder()
+                .get()
+                .header(API_KEY_HEADER, CLOUD_API_KEY)
+                .url(CLOUD_BASE_URL + "/appliance")
+                .build();
+
+        var call = httpClient.newCall(request);
+
+        try (var response = call.execute()) {
+            if (response.isSuccessful()) {
+                if (response.body() == null) {
+                    throw new IllegalStateException("Unable to list appliances from appliance service: Body is null");
+                }
+
+                var appliances =  MAPPER.readValue(response.body().bytes(), ListAppliances.class);
+                LOG.info("Retrieved " + appliances.getTotalRecords() + " appliances.");
+                return appliances;
+
+            } else {
+                throw new IllegalStateException("Unable to list appliances from appliance service:" +
+                        " HTTP " + response.code() + " Message: " + response.message());
+            }
+        } catch (Exception e) {
+            LOG.error("Unable to list appliances from the appliance service", e);
+        }
+
+        return null;
     }
 }
