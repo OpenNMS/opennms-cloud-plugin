@@ -28,44 +28,34 @@
 
 package org.opennms.plugins.cloud.srv.appliance;
 
-public class ApplianceConfig {
-    private String name = new String(); // label of this appliance
-    private String uuid = new String(); // cloud service ID of this appliance
-    private int nodeId = 0; // Horizon node ID of this appliance
-    private int minionId = 0; // Horizon node ID of the minion for this appliance
+import org.opennms.plugins.cloud.grpc.GrpcConnection;
+import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
+import org.opennms.plugins.cloud.srv.GrpcService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-    public ApplianceConfig() {
+import java.util.HashMap;
+import java.util.Map;
+
+public class ApplianceManager implements GrpcService {
+    private static final Logger LOG = LoggerFactory.getLogger(ApplianceManager.class);
+    private Map<String, ApplianceConfig> configMap = new HashMap<>();
+
+
+    public ApplianceManager() {
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getUuid() {
-        return uuid;
-    }
-
-    public void setUuid(String uuid) {
-        this.uuid = uuid;
-    }
-
-    public int getNodeId() {
-        return nodeId;
-    }
-
-    public void setNodeId(int nodeId) {
-        this.nodeId = nodeId;
-    }
-
-    public int getMinionId() {
-        return minionId;
-    }
-
-    public void setMinionId(int minionId) {
-        this.minionId = minionId;
+    @Override
+    public void initGrpc(GrpcConnectionConfig grpcConfig) {
+//        GrpcConnection<TimeseriesGrpc.TimeseriesBlockingStub> oldGrpc = this.grpc;
+        LOG.debug("Initializing Grpc Connection with host {} and port {}", grpcConfig.getHost(), grpcConfig.getPort());
+//        this.grpc = new GrpcConnection<>(grpcConfig, TimeseriesGrpc::newBlockingStub);
+//        if(oldGrpc != null) {
+//            try {
+//                oldGrpc.shutDown();
+//            } catch (InterruptedException e) {
+//                Thread.currentThread().interrupt();
+//            }
+//        }
     }
 }

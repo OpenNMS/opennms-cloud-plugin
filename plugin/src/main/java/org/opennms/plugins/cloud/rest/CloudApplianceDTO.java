@@ -26,46 +26,17 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.srv.appliance;
+package org.opennms.plugins.cloud.rest;
 
-public class ApplianceConfig {
-    private String name = new String(); // label of this appliance
-    private String uuid = new String(); // cloud service ID of this appliance
-    private int nodeId = 0; // Horizon node ID of this appliance
-    private int minionId = 0; // Horizon node ID of the minion for this appliance
-
-    public ApplianceConfig() {
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getUuid() {
-        return uuid;
-    }
-
-    public void setUuid(String uuid) {
-        this.uuid = uuid;
-    }
-
-    public int getNodeId() {
-        return nodeId;
-    }
-
-    public void setNodeId(int nodeId) {
-        this.nodeId = nodeId;
-    }
-
-    public int getMinionId() {
-        return minionId;
-    }
-
-    public void setMinionId(int minionId) {
-        this.minionId = minionId;
-    }
+public class CloudApplianceDTO {
+    public String applianceId;
+    public String applianceLabel;
+    public String applianceType;
+    public String applianceProfileId;
+    public String minionLocationId;
+    public Integer nodeId;
+    public String nodeLabel;
+    public String nodeLocation;
+    public String nodeIpAddress;
+    public String nodeStatus;
 }

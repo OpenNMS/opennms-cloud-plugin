@@ -26,46 +26,36 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.srv.appliance;
+package org.opennms.plugins.cloud.rest;
 
-public class ApplianceConfig {
-    private String name = new String(); // label of this appliance
-    private String uuid = new String(); // cloud service ID of this appliance
-    private int nodeId = 0; // Horizon node ID of this appliance
-    private int minionId = 0; // Horizon node ID of the minion for this appliance
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
-    public ApplianceConfig() {
-    }
+@Path("/cloud/appliance")
+public interface CloudApplianceRestService {
+    /**
+     * Get current list of all appliances that have been configured.
+     */
+    @GET
+    @Path("/")
+    @Produces(value={MediaType.APPLICATION_JSON})
+    Response getApplianceList(
+        @QueryParam("limit") @DefaultValue("20") Integer limit,
+        @QueryParam("offset") @DefaultValue("0") Integer offset
+    );
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getUuid() {
-        return uuid;
-    }
-
-    public void setUuid(String uuid) {
-        this.uuid = uuid;
-    }
-
-    public int getNodeId() {
-        return nodeId;
-    }
-
-    public void setNodeId(int nodeId) {
-        this.nodeId = nodeId;
-    }
-
-    public int getMinionId() {
-        return minionId;
-    }
-
-    public void setMinionId(int minionId) {
-        this.minionId = minionId;
-    }
+    /**
+     * Launch the appliance configuration process.
+     */
+    @POST
+    @Path("/configure")
+    @Consumes({MediaType.APPLICATION_JSON})
+    Response configureAppliances();
 }
