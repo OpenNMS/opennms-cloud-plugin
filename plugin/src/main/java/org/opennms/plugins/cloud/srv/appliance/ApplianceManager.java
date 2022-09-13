@@ -28,14 +28,13 @@
 
 package org.opennms.plugins.cloud.srv.appliance;
 
-import org.opennms.plugins.cloud.grpc.GrpcConnection;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.GrpcService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class ApplianceManager implements GrpcService {
     private static final Logger LOG = LoggerFactory.getLogger(ApplianceManager.class);
@@ -57,5 +56,10 @@ public class ApplianceManager implements GrpcService {
 //                Thread.currentThread().interrupt();
 //            }
 //        }
+    }
+
+    public void updateApplianceList() {
+        // trigger query of portal appliance list API. parse results and add any new
+        // UUIDs to our node table with appropriate metadata via requisition provider
     }
 }

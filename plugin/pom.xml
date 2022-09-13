@@ -148,6 +148,21 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>org.opennms</groupId>
+            <artifactId>opennms-model</artifactId>
+            <version>${opennmsDaoVersion}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.opennms</groupId>
+            <artifactId>opennms-dao</artifactId>
+            <version>${opennmsDaoVersion}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.opennms</groupId>
+            <artifactId>opennms-dao-api</artifactId>
+            <version>${opennmsDaoVersion}</version>
+        </dependency>
+        <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
             <version>${protobufVersion}</version>
