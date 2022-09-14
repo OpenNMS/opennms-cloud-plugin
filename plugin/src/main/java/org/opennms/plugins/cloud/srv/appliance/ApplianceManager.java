@@ -30,8 +30,9 @@ package org.opennms.plugins.cloud.srv.appliance;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.opennms.integration.api.v1.dao.NodeDao;
@@ -43,6 +44,7 @@ import org.opennms.integration.api.v1.model.immutables.ImmutableInMemoryEvent;
 import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.ApplianceRecord;
 import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.GetApplianceInfoResponse;
 import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.GetApplianceStatesResponse;
+import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.GetLocationResponse;
 import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.ListAppliancesResponse;
 import org.opennms.plugins.cloud.srv.appliance.portal.api.entities.BrokerType;
 import org.opennms.plugins.cloud.srv.appliance.portal.api.entities.ConnectivityProfile;
@@ -50,11 +52,13 @@ import org.opennms.plugins.cloud.srv.appliance.portal.api.entities.IdentityReque
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ApplianceManager {
     private static final Logger LOG = LoggerFactory.getLogger(ApplianceManager.class);
@@ -80,7 +84,10 @@ public class ApplianceManager {
     // TECH-DEBT: make this configurable within the cloud plugin.
     private static final String CLOUD_BASE_URL = "https://dev.cloud.opennms.com/api/v1/external";
 
-    private static final String PORTAL_BASE_URL = "";
+    // TODO: fill this in...
+    private static final String PAS_TOKEN = "";
+
+    private static final String PORTAL_BASE_URL = "https://dev.cloud.opennms.com/api/portal";
 
     public ApplianceManager(NodeDao dao, EventForwarder ef) {
         this.eventForwarder = ef;
@@ -199,55 +206,60 @@ public class ApplianceManager {
         return null;
     }
 
-    public String createConnectivityProfile(String instanceId, OnmsHttpInfo httpInfo, OnmsBrokerActiveMq broker) {
+    public void createConnectivityProfile(String instanceId, OnmsHttpInfo httpInfo, OnmsBrokerActiveMq broker) {
         var connectivity = new ConnectivityProfile();
+        connectivity.setName("cp-" + instanceId);
+        connectivity.setOnmsInstanceId(instanceId);
         connectivity.setBrokerType(BrokerType.JMS);
         connectivity.setHttpUrl(httpInfo.getHttpUrl());
         connectivity.setHttpUser(httpInfo.getHttpUser());
         connectivity.setHttpPassword(httpInfo.getHttpPassword());
         connectivity.setBrokerConfig(MAPPER.convertValue(broker, JsonNode.class));
-        return createConnectivityProfile(instanceId, connectivity);
+        createConnectivityProfile(instanceId, connectivity);
     }
 
-    public String createConnectivityProfile(String instanceId, OnmsHttpInfo httpInfo, OnmsBrokerKafka broker) {
+    public void createConnectivityProfile(String instanceId, OnmsHttpInfo httpInfo, OnmsBrokerKafka broker) {
         var connectivity = new ConnectivityProfile();
+        connectivity.setName("cp-" + instanceId);
+        connectivity.setOnmsInstanceId(instanceId);
         connectivity.setBrokerType(BrokerType.KAFKA);
         connectivity.setHttpUrl(httpInfo.getHttpUrl());
         connectivity.setHttpUser(httpInfo.getHttpUser());
         connectivity.setHttpPassword(httpInfo.getHttpPassword());
         connectivity.setBrokerConfig(MAPPER.convertValue(broker, JsonNode.class));
-        return createConnectivityProfile(instanceId, connectivity);
+        createConnectivityProfile(instanceId, connectivity);
     }
 
-    private String createConnectivityProfile(String instanceId, ConnectivityProfile profile) {
+    private void createConnectivityProfile(String instanceId, ConnectivityProfile profile) {
         var identify = new IdentityRequestEntity();
         identify.setInstanceId(instanceId);
         identify.setConnectivity(profile);
-// TODO
-//        var request = new Request.Builder()
-//                .post(new RequestBody(MediaType.))
-//                .header(API_KEY_HEADER, CLOUD_API_KEY)
-//                .url(CLOUD_BASE_URL + "/appliance/" + applianceId + "/status")
-//                .build();
-//
-//        var call = httpClient.newCall(request);
-//
-//        try (var response = call.execute()) {
-//            if (response.isSuccessful()) {
-//                if (response.body() == null) {
-//                    throw new IllegalStateException("Unable to get appliance states from appliance service: " +
-//                            "Response body is null");
-//                }
-//                return MAPPER.readValue(response.body().bytes(), GetApplianceStatesResponse.class);
-//            } else {
-//                throw new IllegalStateException("Unable to get appliance states from appliance service:" +
-//                        " HTTP " + response.code() + " Message: " + response.message());
-//            }
-//        } catch (Exception e) {
-//            LOG.error("Unable to get appliance states from the appliance service", e);
-//        }
 
-        return null;
+        StringEntity entity;
+        try {
+            entity = new StringEntity(MAPPER.writeValueAsString(identify));
+        } catch (Exception e) {
+            LOG.error("Unable to create connectivity profile: Unable to serialize request payload.", e);
+            return;
+        }
+
+        var request = new HttpPost(PORTAL_BASE_URL + "/identify");
+        request.addHeader("Authorization", "Bearer " + PAS_TOKEN);
+        request.addHeader("Content-Type", "application/json");
+        request.setEntity(entity);
+
+        try (var response = httpclient.execute(request)) {
+            var statusCode = response.getStatusLine().getStatusCode();
+            if (!(statusCode >= 200 && statusCode < 300)) {
+                 var responseBody = new BufferedReader(new InputStreamReader(response.getEntity().getContent()))
+                                        .lines()
+                                        .collect(Collectors.joining("\n"));
+                throw new IllegalStateException("Unable to create connectivity profile:" +
+                        " HTTP " + statusCode + ": Body: " + responseBody);
+            }
+        } catch (Exception e) {
+            LOG.error("Unable to create connectivity profile.", e);
+        }
     }
 
     public void setApplianceLocation(String applianceId, String locationName, String instanceId, String connectivityProfileId) {
@@ -262,7 +274,22 @@ public class ApplianceManager {
         return null;
     }
 
-    private String getLocation(String locationId) {
+    public GetLocationResponse getLocationById(String locationId) {
+        var request = new HttpGet(CLOUD_BASE_URL + "/location/" + locationId);
+        request.addHeader(API_KEY_HEADER, CLOUD_API_KEY);
+
+        try (var response = httpclient.execute(request)) {
+            var statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode >= 200 && statusCode < 300) {
+                return MAPPER.readValue(response.getEntity().getContent(), GetLocationResponse.class);
+            } else {
+                throw new IllegalStateException("Unable to get location " + locationId + " from appliance service:" +
+                        " HTTP " + statusCode + ".");
+            }
+        } catch (Exception e) {
+            LOG.error("Unable to get location " + locationId + " from appliance service.", e);
+        }
+
         return null;
     }
 
