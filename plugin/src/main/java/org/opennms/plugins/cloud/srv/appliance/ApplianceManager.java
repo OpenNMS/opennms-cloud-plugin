@@ -58,6 +58,11 @@ public class ApplianceManager {
     private final NodeDao nodeDao;
     private final EventForwarder eventForwarder;
     private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    public Map<String, ApplianceConfig> getConfigMap() {
+        return configMap;
+    }
+
     private final Map<String, ApplianceConfig> configMap = new HashMap<>();
 
 //    private OkHttpClient httpClient;
@@ -82,10 +87,15 @@ public class ApplianceManager {
 
 //        httpClient = new OkHttpClient();
          httpclient = HttpClients.createDefault();
+    }
+
+    public void updateApplianceList() {
+        // trigger query of portal appliance list API. parse results and add any new
+        // UUIDs to our node table with appropriate metadata via requisition provider
 
         RequisitionTestContextManager requisitionManager = new RequisitionTestContextManager();
         try (RequisitionTestContextManager.RequisitionTestSession testSession = requisitionManager.newSession()) {
-            final String foreignSource = "oia-test-requisition-" + testSession.getSessionId();
+            final String foreignSource = "Appliances-" + testSession.getSessionId();
 
             // Verify that no nodes are currently present for the foreign source
             List<Node> nodes = nodeDao.getNodesInForeignSource(foreignSource);
@@ -106,11 +116,6 @@ public class ApplianceManager {
 
             }
         }
-    }
-
-    public void updateApplianceList() {
-        // trigger query of portal appliance list API. parse results and add any new
-        // UUIDs to our node table with appropriate metadata via requisition provider
     }
 
 

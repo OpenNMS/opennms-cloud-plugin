@@ -45,9 +45,11 @@ public class ApplianceRequisitionProvider implements RequisitionProvider {
     public static final String TYPE = "ApplianceRequisitionProvider";
 
     private final RequisitionTestContextManager requisitionManager;
+    private final ApplianceManager applianceManager;
 
-    public ApplianceRequisitionProvider(RequisitionTestContextManager requisitionManager) {
+    public ApplianceRequisitionProvider(RequisitionTestContextManager requisitionManager, ApplianceManager applmgr) {
         this.requisitionManager = Objects.requireNonNull(requisitionManager);
+        this.applianceManager = Objects.requireNonNull(applmgr);
     }
 
     @Override
@@ -65,28 +67,28 @@ public class ApplianceRequisitionProvider implements RequisitionProvider {
         final ApplianceRequisitionRequest request = (ApplianceRequisitionRequest)genericRequest;
         requisitionManager.trackGetRequisitionForSession(request.getSessionId());
         final InetAddress loopback = InetAddress.getLoopbackAddress();
-        return ImmutableRequisition.newBuilder()
-                .setForeignSource(request.getForeignSource())
-                .addNode(ImmutableRequisitionNode.newBuilder()
-                        .setForeignId("n1")
-                        .setNodeLabel("n1")
-                        .addAsset("serialnumber", "42")
-                        .addMetaData(ImmutableRequisitionMetaData.newBuilder()
-                                .setContext("oai")
-                                .setKey("sn")
-                                .setValue("42")
-                                .build())
-                        .addInterface(ImmutableRequisitionInterface.newBuilder()
-                                .setIpAddress(loopback)
-                                .setSnmpPrimary(SnmpPrimaryType.NOT_ELIGIBLE)
-                                .addMetaData(ImmutableRequisitionMetaData.newBuilder()
-                                        .setContext("oai")
-                                        .setKey("mac")
-                                        .setValue("00aabbccddee")
-                                        .build())
-                                .build())
-                        .build())
-                .build();
+        ImmutableRequisition.Builder builder = ImmutableRequisition.newBuilder();
+        builder.setForeignSource(request.getForeignSource());
+
+        // loop over appliance records
+        Map<String,ApplianceConfig> appliances = applianceManager.getConfigMap();
+        for(String key: appliances.keySet()) {
+            ApplianceConfig cfg = appliances.get(key);
+            builder.addNode(ImmutableRequisitionNode.newBuilder()
+                    .setForeignId(cfg.getName())
+                    .setNodeLabel(cfg.getName())
+                    .addMetaData(ImmutableRequisitionMetaData.newBuilder()
+                            .setContext("appliance")
+                            .setKey("cloudUUID")
+                            .setValue(cfg.getUuid())
+                            .build())
+                    .addInterface(ImmutableRequisitionInterface.newBuilder()
+                            .setIpAddress(loopback)
+                            .setSnmpPrimary(SnmpPrimaryType.PRIMARY)
+                            .build())
+                    .build());
+        }
+        return builder.build();
     }
 
     @Override
@@ -107,7 +109,7 @@ public class ApplianceRequisitionProvider implements RequisitionProvider {
         }
 
         public String getForeignSource() {
-            return parameters.getOrDefault("foreignSource", "fs");
+            return parameters.getOrDefault("foreignSource", "Appliances");
         }
 
         public String getSessionId() {

@@ -5,7 +5,6 @@
                 http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0
                 http://aries.apache.org/schemas/blueprint-cm/blueprint-cm-1.1.0.xsd">
 
-    <reference id="nodeDao" interface="org.opennms.integration.api.v1.dao.NodeDao" />
     <reference id="eventForwarder" interface="org.opennms.integration.api.v1.events.EventForwarder" />
 
     <!-- CONFIG -->
@@ -112,6 +111,7 @@
     <service interface="org.opennms.integration.api.v1.requisition.RequisitionProvider">
         <bean class="org.opennms.plugins.cloud.srv.appliance.ApplianceRequisitionProvider">
             <argument ref="requisitionManager"/>
+            <argument ref="applianceManager"/>
         </bean>
     </service>
 
