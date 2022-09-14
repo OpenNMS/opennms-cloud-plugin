@@ -1,18 +1,31 @@
 <template>
     <br/>
-    
-    <FeatherSnackbar v-model="notified">
-      {{ notification }}
-      <template v-slot:button>
-        <FeatherButton @click="notified = false" text>dismiss</FeatherButton>
-      </template>
-    </FeatherSnackbar>
-    <FeatherButton v-on:click="configureAppliances()">
-        Sync Appliance Inventory
-    </FeatherButton>
-    <FeatherSpinner v-if="loading"/> 
-    <!-- Maybe turn this into a pill with the word "Synced" or "Complete" -->
-    <FeatherIcon :icon="checkCircle" class="my-primary-icon" v-if="appSync" />
+    <div class="container">
+      <FeatherSnackbar v-model="notified" :center="true" :success="true">
+        {{ notification }}
+        <template v-slot:button>
+          <FeatherButton @click="notified = false" text>dismiss</FeatherButton>
+        </template>
+      </FeatherSnackbar>
+      <FeatherButton v-on:click="configureAppliances()">
+          Sync Appliance Inventory
+      </FeatherButton>
+      <FeatherChip v-if="loading" class="chip-checking">
+        <FeatherSpinner v-if="loading"/>
+      </FeatherChip>
+      <FeatherTooltip
+        title="Success"
+      >      
+        <FeatherChip v-if="appSync" class="chip-success">
+            <template v-slot:icon class="label">
+              <FeatherIcon :icon="checkCircle" class="my-primary-icon label" v-if="appSync" />
+            </template>
+            <div class="label">
+              Complete      
+            </div>
+        </FeatherChip>
+      </FeatherTooltip>
+    </div>
     <div>
       <table
         :class="{ 'tc1 tr2 tc4 tr6': true, hover: true }"
@@ -48,6 +61,11 @@ import { FeatherPagination } from "@featherds/pagination";
 import { FeatherSnackbar } from '@featherds/snackbar'
 import { FeatherSpinner } from "@featherds/progress";
 import { FeatherIcon } from "@featherds/icon";
+import { FeatherChip } from '@featherds/chips';
+import {
+  FeatherTooltip,
+} from "@featherds/tooltip";
+
 import CheckCircle from "@featherds/icon/action/CheckCircle";
 import { computed, markRaw, onMounted, ref } from 'vue';
 
@@ -73,12 +91,11 @@ onMounted(async () => {
   getConfigurationStatus();
 });
 
-const checkForAppliances = async() => {
+const configureAppliancesDummy = async() => {
   let response = { code : 0, message: '' }
-  console.log('checking for appliances');
+  appSync.value = false;
   loading.value = true;
   //Call Appliance manager
-  console.log('spinner');
   await setTimeout(async() => {
     console.log('faking a request');
     response = { code: 200, message: 'Appliances Synced' };
@@ -92,19 +109,19 @@ const checkForAppliances = async() => {
       notified.value = true;
       notification.value = response.message
     }
-  }, 5000);
+  }, 1000);
 
 }
 
 const configureAppliances = async () => {
+  appSync.value = false;
   const val = await fetch('/opennms/rest/plugin/cloud/appliance/configure', { method: 'POST' });
   try {
     const response = await val.json();
     if (response.code >= 200 && response.code <= 300) {
       console.log('maybe also replace spinner with checkmark');
       appSync.value = true;
-      //TODO: move to store or use emits or something
-      //along those lines
+      //TODO: move to store or use emits or something along those lines
       notified.value = true;
       notification.value = response.message || 'Sync completed'
       // fire off a refresh of the table
@@ -149,12 +166,35 @@ table {
 
 @import "@featherds/styles/themes/variables";
 .my-icon,
-.my-primary-icon {
-  font-size: 1.5rem;
-  color: var($secondary-text-on-surface);
-}
+// .my-primary-icon {
+//   font-size: 1.5rem;
+//   color: var($secondary-text-on-surface);
+// }
 
 .my-primary-icon {
   color: var($primary);
+}
+
+.chip-1-example div.chip-list:first-of-type {
+  max-width: 18.75rem;
+  color: red; 
+}
+.chip-checking {
+  background-color: var(--feather-warning);
+  .label {
+    color: var(--feather-surface);
+  }
+}
+.chip-success {
+  background-color: var(--feather-success);
+  // margin-top: 50px;
+  margin-left: 25px;;
+  .label {
+    color: var(--feather-surface);
+  }
+}
+.container {
+  display: flex;
+  justify-content: flex-end;
 }
 </style>
