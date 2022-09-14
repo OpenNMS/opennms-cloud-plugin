@@ -29,18 +29,17 @@
 package org.opennms.plugins.cloud.srv.appliance;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import okhttp3.MediaType;
-import okhttp3.RequestBody;
-import okio.BufferedSink;
+import com.fasterxml.jackson.databind.ObjectMapper;
+//import okhttp3.OkHttpClient;
+//import okhttp3.Request;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.opennms.integration.api.v1.dao.NodeDao;
 import org.opennms.integration.api.v1.events.EventForwarder;
 import org.opennms.integration.api.v1.model.InMemoryEvent;
 import org.opennms.integration.api.v1.model.Node;
 import org.opennms.integration.api.v1.model.immutables.ImmutableEventParameter;
 import org.opennms.integration.api.v1.model.immutables.ImmutableInMemoryEvent;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
 import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.GetApplianceInfoResponse;
 import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.GetApplianceStatesResponse;
 import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.ListAppliancesResponse;
@@ -50,8 +49,6 @@ import org.opennms.plugins.cloud.srv.appliance.portal.api.entities.IdentityReque
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,7 +60,10 @@ public class ApplianceManager {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private final Map<String, ApplianceConfig> configMap = new HashMap<>();
 
-    private OkHttpClient httpClient;
+//    private OkHttpClient httpClient;
+
+    // This needs to be closed on shutdown
+    private CloseableHttpClient httpclient;
 
     private static final String API_KEY_HEADER = "X-API-Key";
 
@@ -80,7 +80,9 @@ public class ApplianceManager {
         this.eventForwarder = ef;
         this.nodeDao = dao;
 
-        httpClient = new OkHttpClient();
+//        httpClient = new OkHttpClient();
+         httpclient = HttpClients.createDefault();
+
         RequisitionTestContextManager requisitionManager = new RequisitionTestContextManager();
         try (RequisitionTestContextManager.RequisitionTestSession testSession = requisitionManager.newSession()) {
             final String foreignSource = "oia-test-requisition-" + testSession.getSessionId();
@@ -111,8 +113,9 @@ public class ApplianceManager {
         // UUIDs to our node table with appropriate metadata via requisition provider
     }
 
+
     // TECH-DEBT: only the first page will be read - pagination is not fully supported.
-    public ListAppliancesResponse listAppliances() {
+    /*public ListAppliancesResponse listAppliances() {
         var request = new Request.Builder()
                 .get()
                 .header(API_KEY_HEADER, CLOUD_API_KEY)
@@ -274,4 +277,5 @@ public class ApplianceManager {
 
     private void getAppliance(String applianceId) {
     }
+    */
 }
