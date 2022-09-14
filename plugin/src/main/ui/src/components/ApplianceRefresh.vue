@@ -7,12 +7,12 @@
         <FeatherButton @click="notified = false" text>dismiss</FeatherButton>
       </template>
     </FeatherSnackbar>
-    <FeatherButton v-on:click="checkForAppliances()">
+    <FeatherButton v-on:click="configureAppliances()">
         Sync Appliance Inventory
     </FeatherButton>
     <FeatherSpinner v-if="loading"/> 
     <!-- Maybe turn this into a pill with the word "Synced" or "Complete" -->
-    <FeatherIcon :icon="CheckCircle" v-if="appSync" />
+    <FeatherIcon :icon="checkCircle" class="my-primary-icon" v-if="appSync" />
     <div>
       <table
         :class="{ 'tc1 tr2 tc4 tr6': true, hover: true }"
@@ -47,8 +47,9 @@ import { FeatherButton } from '@featherds/button';
 import { FeatherPagination } from "@featherds/pagination";
 import { FeatherSnackbar } from '@featherds/snackbar'
 import { FeatherSpinner } from "@featherds/progress";
+import { FeatherIcon } from "@featherds/icon";
 import CheckCircle from "@featherds/icon/action/CheckCircle";
-import { onMounted, ref } from 'vue';
+import { computed, markRaw, onMounted, ref } from 'vue';
 
 //TODO: default date with empty data
 const appliances = ref([{
@@ -59,13 +60,17 @@ const appliances = ref([{
   nodeStatus: 'UP',
 }]);
 
+const checkCircle = computed(() => {
+  return markRaw(CheckCircle);
+})
+
 const loading = ref(false);
 const appSync = ref(false);
 const notified = ref(false);
 const notification = ref('');
 
 onMounted(async () => {
-  //getConfigurationStatus();
+  getConfigurationStatus();
 });
 
 const checkForAppliances = async() => {
@@ -74,24 +79,42 @@ const checkForAppliances = async() => {
   loading.value = true;
   //Call Appliance manager
   console.log('spinner');
-  await setTimeout(() => {
+  await setTimeout(async() => {
     console.log('faking a request');
     response = { code: 200, message: 'Appliances Synced' };
-  }, 5000);
-    
-  console.log('we have data, needto display prompt for success');
-  loading.value = false;
+    loading.value = false;
 
-  if (response.code >= 200 && response.code <= 300) {
-    console.log('maybe also replace spinner with checkmark');
-    appSync.value = true;
-    //TODO: move to store or use emits or something
-    //along those lines
-    notified.value = true;
-    notification.value = response.message
-  }
+    if (response.code >= 200 && response.code <= 300) {
+      console.log('maybe also replace spinner with checkmark');
+      appSync.value = true;
+      //TODO: move to store or use emits or something
+      //along those lines
+      notified.value = true;
+      notification.value = response.message
+    }
+  }, 5000);
 
 }
+
+const configureAppliances = async () => {
+  const val = await fetch('/opennms/rest/plugin/cloud/appliance/configure', { method: 'POST' });
+  try {
+    const response = await val.json();
+    if (response.code >= 200 && response.code <= 300) {
+      console.log('maybe also replace spinner with checkmark');
+      appSync.value = true;
+      //TODO: move to store or use emits or something
+      //along those lines
+      notified.value = true;
+      notification.value = response.message || 'Sync completed'
+      // fire off a refresh of the table
+      getConfigurationStatus();
+    }
+  } catch (e) {
+    console.error('Error executing configureAppliance: ', e);
+  }
+};
+
 /**
  * Attempt to retrieve application list.
  * Portions of this code borrowed from `CloudPlugin.vue`
@@ -122,5 +145,16 @@ table {
   &.striped {
     @include row-striped();
   }
+}
+
+@import "@featherds/styles/themes/variables";
+.my-icon,
+.my-primary-icon {
+  font-size: 1.5rem;
+  color: var($secondary-text-on-surface);
+}
+
+.my-primary-icon {
+  color: var($primary);
 }
 </style>
