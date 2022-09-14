@@ -61,7 +61,7 @@ public class CloudApplianceRestServiceImpl implements CloudApplianceRestService 
         this.applianceManager = Objects.requireNonNull(am);
         this.nodeDao = Objects.requireNonNull(nodeDao);
 
-        this.applianceDao = new ApplianceDaoImpl(this.nodeDao);
+        this.applianceDao = new ApplianceDaoImpl(this.applianceManager, this.nodeDao);
     }
 
     @Override
@@ -97,7 +97,16 @@ public class CloudApplianceRestServiceImpl implements CloudApplianceRestService 
         LOG.info("In CloudApplianceRestServiceImpl.configureAppliances");
 
         // TODO: Error handling
-        applianceManager.updateApplianceList();
+        try {
+            applianceManager.updateApplianceList();
+        } catch (Exception e) {
+            LOG.error("configureAppliances, ApplianceManager call failed: {}", e.getMessage());
+
+            return Response
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("{\"status\": \"failed\"}")
+                    .build();
+        }
 
         LOG.info("configureAppliances, returning OK response");
 
