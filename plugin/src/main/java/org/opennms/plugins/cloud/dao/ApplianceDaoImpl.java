@@ -74,6 +74,7 @@ public class ApplianceDaoImpl implements ApplianceDao {
 
         dto.nodeId = node.getId();
         dto.nodeLabel = node.getLabel();
+        dto.applianceLabel = node.getLabel();
         dto.nodeLocation = node.getLocation();
         List<IpInterface> ipInterfaces = node.getIpInterfaces();
 
