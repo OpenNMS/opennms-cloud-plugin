@@ -208,7 +208,7 @@ public class ApplianceManager {
 
     public void createConnectivityProfile(String instanceId, OnmsHttpInfo httpInfo, OnmsBrokerActiveMq broker) {
         var connectivity = new ConnectivityProfile();
-        connectivity.setName("cp-" + instanceId);
+        connectivity.setName("main");
         connectivity.setOnmsInstanceId(instanceId);
         connectivity.setBrokerType(BrokerType.JMS);
         connectivity.setHttpUrl(httpInfo.getHttpUrl());
@@ -220,7 +220,7 @@ public class ApplianceManager {
 
     public void createConnectivityProfile(String instanceId, OnmsHttpInfo httpInfo, OnmsBrokerKafka broker) {
         var connectivity = new ConnectivityProfile();
-        connectivity.setName("cp-" + instanceId);
+        connectivity.setName("main");
         connectivity.setOnmsInstanceId(instanceId);
         connectivity.setBrokerType(BrokerType.KAFKA);
         connectivity.setHttpUrl(httpInfo.getHttpUrl());

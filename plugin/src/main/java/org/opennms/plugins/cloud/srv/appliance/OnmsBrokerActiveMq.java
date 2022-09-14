@@ -1,8 +1,15 @@
 package org.opennms.plugins.cloud.srv.appliance;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class OnmsBrokerActiveMq {
+    @JsonProperty("broker-url")
     private String url;
+
+    @JsonProperty("broker-user")
     private String user;
+
+    @JsonProperty("broker-password")
     private String password;
 
     public OnmsBrokerActiveMq() {

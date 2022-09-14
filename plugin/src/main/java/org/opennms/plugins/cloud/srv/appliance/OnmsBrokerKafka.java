@@ -1,6 +1,10 @@
 package org.opennms.plugins.cloud.srv.appliance;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class OnmsBrokerKafka {
+
+    @JsonProperty("bootstrap.servers")
     private String bootstrapServers;
 
     public OnmsBrokerKafka() {
