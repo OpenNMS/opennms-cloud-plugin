@@ -31,24 +31,16 @@ package org.opennms.plugins.cloud.dao;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.ws.rs.core.Response;
-
+import org.opennms.integration.api.v1.dao.NodeDao;
 import org.opennms.integration.api.v1.model.IpInterface;
-import org.opennms.netmgt.dao.api.IpInterfaceDao;
-import org.opennms.netmgt.dao.api.NodeDao;
-import org.opennms.netmgt.model.OnmsIpInterface;
-import org.opennms.netmgt.model.monitoringLocations.OnmsMonitoringLocation;
-import org.opennms.netmgt.model.OnmsNode;
+import org.opennms.integration.api.v1.model.Node;
 
 public class ApplianceDaoImpl implements ApplianceDao {
 
     private final NodeDao nodeDao;
 
-    private final IpInterfaceDao ipInterfaceDao;
-
-    public ApplianceDaoImpl(final NodeDao nodeDao, final IpInterfaceDao ipInterfaceDao) {
+    public ApplianceDaoImpl(final NodeDao nodeDao) {
         this.nodeDao = nodeDao;
-        this.ipInterfaceDao = ipInterfaceDao;
     }
 
     public List<CloudApplianceDTO> findAll() {
@@ -95,7 +87,7 @@ public class ApplianceDaoImpl implements ApplianceDao {
         dtos.add(dto2);
 
         // TODO: Only fetch nodes with appliance metadata
-        List<OnmsNode> nodes = nodeDao.findAll();
+        List<Node> nodes = nodeDao.getNodes();
 
         if (!nodes.isEmpty()) {
             nodes.forEach(n -> {
@@ -107,17 +99,16 @@ public class ApplianceDaoImpl implements ApplianceDao {
         return dtos;
     }
 
-    private CloudApplianceDTO dtoFromNode(OnmsNode node) {
+    private CloudApplianceDTO dtoFromNode(Node node) {
         CloudApplianceDTO dto = new CloudApplianceDTO();
 
         dto.nodeId = node.getId();
         dto.nodeLabel = node.getLabel();
-        dto.nodeLocation = node.getLocation().getLocationName();
+        dto.nodeLocation = node.getLocation();
+        List<IpInterface> ipInterfaces = node.getIpInterfaces();
 
-        OnmsIpInterface primaryInterface = node.getPrimaryInterface();
-
-        if (primaryInterface != null) {
-            dto.nodeIpAddress = primaryInterface.getIpAddressAsString();
+        if (!ipInterfaces.isEmpty()) {
+            dto.nodeIpAddress = ipInterfaces.get(0).getIpAddress().getHostAddress();
         }
 
         // TODO: Enrich with appliance metadata

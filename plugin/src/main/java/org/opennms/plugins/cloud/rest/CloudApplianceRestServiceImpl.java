@@ -34,6 +34,7 @@ import java.util.Objects;
 
 import javax.ws.rs.core.Response;
 
+import org.opennms.integration.api.v1.dao.NodeDao;
 import org.opennms.plugins.cloud.config.ConfigurationManager;
 import org.opennms.plugins.cloud.dao.ApplianceDao;
 import org.opennms.plugins.cloud.dao.ApplianceDaoImpl;
@@ -41,8 +42,6 @@ import org.opennms.plugins.cloud.dao.CloudApplianceDTO;
 import org.opennms.plugins.cloud.srv.appliance.ApplianceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.opennms.netmgt.dao.api.IpInterfaceDao;
-import org.opennms.netmgt.dao.api.NodeDao;
 
 public class CloudApplianceRestServiceImpl implements CloudApplianceRestService {
     private static final Logger LOG = LoggerFactory.getLogger(CloudApplianceRestServiceImpl.class);
@@ -56,16 +55,13 @@ public class CloudApplianceRestServiceImpl implements CloudApplianceRestService 
 
     private final NodeDao nodeDao;
 
-    private final IpInterfaceDao ipInterfaceDao;
-
     public CloudApplianceRestServiceImpl(final ConfigurationManager cm, final ApplianceManager am,
-                                         final NodeDao nodeDao, final IpInterfaceDao ipDao) {
+                                         final NodeDao nodeDao) {
         this.cm = Objects.requireNonNull(cm);
         this.applianceManager = Objects.requireNonNull(am);
         this.nodeDao = Objects.requireNonNull(nodeDao);
-        this.ipInterfaceDao = Objects.requireNonNull(ipDao);
 
-        this.applianceDao = new ApplianceDaoImpl(this.nodeDao, this.ipInterfaceDao);
+        this.applianceDao = new ApplianceDaoImpl(this.nodeDao);
     }
 
     @Override

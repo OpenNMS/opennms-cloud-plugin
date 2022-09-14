@@ -9,6 +9,7 @@ target
 build.properties
 *.iml
 *.ipr
+*.iws
 .launch
 .*launch
 .idea
