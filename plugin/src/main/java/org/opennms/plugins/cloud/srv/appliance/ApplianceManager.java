@@ -28,34 +28,246 @@
 
 package org.opennms.plugins.cloud.srv.appliance;
 
-import org.opennms.plugins.cloud.grpc.GrpcConnection;
-import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
-import org.opennms.plugins.cloud.srv.GrpcService;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.opennms.integration.api.v1.dao.NodeDao;
+import org.opennms.integration.api.v1.events.EventForwarder;
+import org.opennms.integration.api.v1.model.InMemoryEvent;
+import org.opennms.integration.api.v1.model.Node;
+import org.opennms.integration.api.v1.model.immutables.ImmutableEventParameter;
+import org.opennms.integration.api.v1.model.immutables.ImmutableInMemoryEvent;
+import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.ApplianceRecord;
+import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.GetApplianceInfoResponse;
+import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.GetApplianceStatesResponse;
+import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.ListAppliancesResponse;
+import org.opennms.plugins.cloud.srv.appliance.portal.api.entities.BrokerType;
+import org.opennms.plugins.cloud.srv.appliance.portal.api.entities.ConnectivityProfile;
+import org.opennms.plugins.cloud.srv.appliance.portal.api.entities.IdentityRequestEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-public class ApplianceManager implements GrpcService {
+public class ApplianceManager {
     private static final Logger LOG = LoggerFactory.getLogger(ApplianceManager.class);
-    private Map<String, ApplianceConfig> configMap = new HashMap<>();
+    private final NodeDao nodeDao;
+    private final EventForwarder eventForwarder;
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
-
-    public ApplianceManager() {
+    public Map<String, ApplianceConfig> getConfigMap() {
+        return configMap;
     }
 
-    @Override
-    public void initGrpc(GrpcConnectionConfig grpcConfig) {
-//        GrpcConnection<TimeseriesGrpc.TimeseriesBlockingStub> oldGrpc = this.grpc;
-        LOG.debug("Initializing Grpc Connection with host {} and port {}", grpcConfig.getHost(), grpcConfig.getPort());
-//        this.grpc = new GrpcConnection<>(grpcConfig, TimeseriesGrpc::newBlockingStub);
-//        if(oldGrpc != null) {
-//            try {
-//                oldGrpc.shutDown();
-//            } catch (InterruptedException e) {
-//                Thread.currentThread().interrupt();
+    private final Map<String, ApplianceConfig> configMap = new HashMap<>();
+
+    // This needs to be closed on shutdown
+    private CloseableHttpClient httpclient;
+
+    private static final String API_KEY_HEADER = "X-API-Key";
+
+    // TECH-DEBT: The cloud API key should ultimately be retrieved in the initial handshaking process between
+    //  this plugin and the Platform Access Service (PAS). Using a hard-coded, manually created one for now.
+    private static final String CLOUD_API_KEY = "088a644f-d12c-4b71-8c6a-849986c6208a|PIkOk371KjwpV0GS";
+
+    // TECH-DEBT: make this configurable within the cloud plugin.
+    private static final String CLOUD_BASE_URL = "https://dev.cloud.opennms.com/api/v1/external";
+
+    private static final String PORTAL_BASE_URL = "";
+
+    public ApplianceManager(NodeDao dao, EventForwarder ef) {
+        this.eventForwarder = ef;
+        this.nodeDao = dao;
+        httpclient = HttpClients.createDefault();
+    }
+
+    public void updateApplianceList() {
+        // trigger query of portal appliance list API. parse results and add any new
+        // UUIDs to our node table with appropriate metadata via requisition provider
+
+        var appliances = listAppliances();
+        if (appliances.isEmpty()) {
+            LOG.warn("Appliances list from cloud portal is empty");
+            return;
+        }
+
+        appliances.forEach(appliance -> {
+            var applianceConfig = new ApplianceConfig();
+            applianceConfig.setUuid(appliance.getId());
+            applianceConfig.setName(appliance.getLabel());
+                configMap.put(appliance.getId(), applianceConfig);
+            }
+        );
+
+        LOG.info("Loaded config map with " + appliances.size() + " entries.");
+
+        RequisitionTestContextManager requisitionManager = new RequisitionTestContextManager();
+        try (RequisitionTestContextManager.RequisitionTestSession testSession = requisitionManager.newSession()) {
+            final String foreignSource = "Appliances-" + testSession.getSessionId();
+
+            // Verify that no nodes are currently present for the foreign source
+            List<Node> nodes = nodeDao.getNodesInForeignSource(foreignSource);
+            if (!nodes.isEmpty()) {
+                return;
+            }
+
+            final String url = String.format("requisition://%s?foreignSource=%s&sessionId=%s", ApplianceRequisitionProvider.TYPE, foreignSource, testSession.getSessionId());
+            try {
+                // Import the requisition
+                final InMemoryEvent reloadImport = ImmutableInMemoryEvent.newBuilder()
+                        .setUei("uei.opennms.org/internal/importer/reloadImport")
+                        .setSource(ApplianceRequisitionProvider.class.getCanonicalName())
+                        .addParameter(ImmutableEventParameter.newInstance("url", url))
+                        .build();
+                eventForwarder.sendSync(reloadImport);
+            } catch(Exception e) {
+
+            }
+        }
+    }
+
+    // TECH-DEBT: only the first page will be read - pagination is not fully supported.
+    public List<ApplianceRecord> listAppliances() {
+        var request = new HttpGet(CLOUD_BASE_URL + "/appliance");
+        request.addHeader(API_KEY_HEADER, CLOUD_API_KEY);
+
+        try (var response = httpclient.execute(request)) {
+            var statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode >= 200 && statusCode < 300) {
+                var appliances = MAPPER.readValue(response.getEntity().getContent(), ListAppliancesResponse.class);
+                LOG.info("Retrieved " + appliances.getTotalRecords() + " appliances.");
+                return appliances.getPagedRecords();
+            } else {
+                throw new IllegalStateException("Unable to list appliances from appliance service:" +
+                        " HTTP " + statusCode + ".");
+            }
+        } catch (Exception e) {
+            LOG.error("Unable to list appliances from the appliance service", e);
+        }
+
+        return Collections.emptyList();
+    }
+
+    // NOTE: if the appliance is offline, the cloud API responds with HTTP 400 - and this method will return null.
+    public GetApplianceInfoResponse getApplianceInfo(String applianceId) {
+        var request = new HttpGet(CLOUD_BASE_URL + "/appliance/" + applianceId + "/info");
+        request.addHeader(API_KEY_HEADER, CLOUD_API_KEY);
+
+        try (var response = httpclient.execute(request)) {
+            var statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode >= 200 && statusCode < 300) {
+                return MAPPER.readValue(response.getEntity().getContent(), GetApplianceInfoResponse.class);
+            } else {
+                throw new IllegalStateException("Unable to get appliance info from appliance service:" + " HTTP " + statusCode + ".");
+            }
+        } catch (Exception e) {
+            LOG.error("Unable to get appliance info from the appliance service", e);
+        }
+
+        return null;
+    }
+
+    public GetApplianceStatesResponse getApplianceStates(String applianceId) {
+        var request = new HttpGet(CLOUD_BASE_URL + "/appliance/" + applianceId + "/status");
+        request.addHeader(API_KEY_HEADER, CLOUD_API_KEY);
+
+        try (var response = httpclient.execute(request)) {
+            var statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode >= 200 && statusCode < 300) {
+                return MAPPER.readValue(response.getEntity().getContent(), GetApplianceStatesResponse.class);
+            } else {
+                throw new IllegalStateException("Unable to get appliance states from appliance service:" + " HTTP " + statusCode + ".");
+            }
+        } catch (Exception e) {
+            LOG.error("Unable to get appliance states from the appliance service", e);
+        }
+
+        return null;
+    }
+
+    public String createConnectivityProfile(String instanceId, OnmsHttpInfo httpInfo, OnmsBrokerActiveMq broker) {
+        var connectivity = new ConnectivityProfile();
+        connectivity.setBrokerType(BrokerType.JMS);
+        connectivity.setHttpUrl(httpInfo.getHttpUrl());
+        connectivity.setHttpUser(httpInfo.getHttpUser());
+        connectivity.setHttpPassword(httpInfo.getHttpPassword());
+        connectivity.setBrokerConfig(MAPPER.convertValue(broker, JsonNode.class));
+        return createConnectivityProfile(instanceId, connectivity);
+    }
+
+    public String createConnectivityProfile(String instanceId, OnmsHttpInfo httpInfo, OnmsBrokerKafka broker) {
+        var connectivity = new ConnectivityProfile();
+        connectivity.setBrokerType(BrokerType.KAFKA);
+        connectivity.setHttpUrl(httpInfo.getHttpUrl());
+        connectivity.setHttpUser(httpInfo.getHttpUser());
+        connectivity.setHttpPassword(httpInfo.getHttpPassword());
+        connectivity.setBrokerConfig(MAPPER.convertValue(broker, JsonNode.class));
+        return createConnectivityProfile(instanceId, connectivity);
+    }
+
+    private String createConnectivityProfile(String instanceId, ConnectivityProfile profile) {
+        var identify = new IdentityRequestEntity();
+        identify.setInstanceId(instanceId);
+        identify.setConnectivity(profile);
+// TODO
+//        var request = new Request.Builder()
+//                .post(new RequestBody(MediaType.))
+//                .header(API_KEY_HEADER, CLOUD_API_KEY)
+//                .url(CLOUD_BASE_URL + "/appliance/" + applianceId + "/status")
+//                .build();
+//
+//        var call = httpClient.newCall(request);
+//
+//        try (var response = call.execute()) {
+//            if (response.isSuccessful()) {
+//                if (response.body() == null) {
+//                    throw new IllegalStateException("Unable to get appliance states from appliance service: " +
+//                            "Response body is null");
+//                }
+//                return MAPPER.readValue(response.body().bytes(), GetApplianceStatesResponse.class);
+//            } else {
+//                throw new IllegalStateException("Unable to get appliance states from appliance service:" +
+//                        " HTTP " + response.code() + " Message: " + response.message());
 //            }
+//        } catch (Exception e) {
+//            LOG.error("Unable to get appliance states from the appliance service", e);
 //        }
+
+        return null;
     }
+
+    public void setApplianceLocation(String applianceId, String locationName, String instanceId, String connectivityProfileId) {
+        // Call getOrCreateLocation() - Get or create the location: must provide instanceId and connectivityProfileId.
+        //  TBD about the Feature Profile, likely won't bother with that for now.
+
+        // Call updateAppliance() - intent is to stand up the minion - need the ID from the call to 'getOrCreateLocation()'
+    }
+
+    // This returns the ID of the location
+    private String getOrCreateLocation(String instanceId, String connectivityProfileId, String locationName) {
+        return null;
+    }
+
+    private String getLocation(String locationId) {
+        return null;
+    }
+
+    private void createLocation() {
+    }
+
+    private void updateAppliance(String applianceId, String locationId) {
+        // Call getAppliance()
+        // Given the result, feed in provided locationId under 'minion'.
+    }
+
+    private void getAppliance(String applianceId) {
+    }
+
 }

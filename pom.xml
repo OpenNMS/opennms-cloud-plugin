@@ -32,9 +32,9 @@
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <jacocoVersion>0.8.7</jacocoVersion>
         <osgiJaxRsVersion>1.1.0.ONMS</osgiJaxRsVersion>
+        <httpclientVersion>4.5.13</httpclientVersion>
+        <jackson.version>2.11.1</jackson.version>
     </properties>
-
-
 
     <dependencyManagement>
         <dependencies>
@@ -59,7 +59,6 @@
                 <version>${awaitilityVersion}</version>
                 <scope>test</scope>
             </dependency>
-
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>

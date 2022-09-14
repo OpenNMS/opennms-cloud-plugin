@@ -5,9 +5,13 @@
                 http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0
                 http://aries.apache.org/schemas/blueprint-cm/blueprint-cm-1.1.0.xsd">
 
+    <reference id="eventForwarder" interface="org.opennms.integration.api.v1.events.EventForwarder" />
+    <reference id="nodeDao" interface="org.opennms.integration.api.v1.dao.NodeDao"/>
+
     <!-- CONFIG -->
     <reference id="secureCredentialsVault" interface="org.opennms.integration.api.v1.scv.SecureCredentialsVault" availability="mandatory"/>
     <reference id="runtimeInfo" interface="org.opennms.integration.api.v1.runtime.RuntimeInfo" availability="mandatory"/>
+
     <!-- Configuration stored in $OPENNMS_HOME/etc/org.opennms.plugins.cloud.cfg file -->
     <cm:property-placeholder id="tsaas-pocPluginProperties" persistent-id="org.opennms.plugins.cloud"
                              update-strategy="reload">
@@ -52,7 +56,6 @@
             <list>
                 <ref component-id="timeSeriesStorage" />
                 <ref component-id="faas" />
-                <ref component-id="applianceManager"/>
             </list>
         </argument>
     </bean>
@@ -86,6 +89,8 @@
     <!-- REST -->
     <bean id="cloudApplianceRestService" class="org.opennms.plugins.cloud.rest.CloudApplianceRestServiceImpl">
         <argument ref="cloudConfigManager"/>
+        <argument ref="applianceManager"/>
+        <argument ref="nodeDao"/>
     </bean>
     <service interface="org.opennms.plugins.cloud.rest.CloudApplianceRestService" ref="cloudApplianceRestService">
         <service-properties>
@@ -100,6 +105,14 @@
         <service-properties>
             <entry key="application-path" value="/rest/plugin" /><!-- TODO: Patrick not sure which base path we should use -->
         </service-properties>
+    </service>
+
+    <bean id="requisitionManager" class="org.opennms.plugins.cloud.srv.appliance.RequisitionTestContextManager"/>
+    <service interface="org.opennms.integration.api.v1.requisition.RequisitionProvider">
+        <bean class="org.opennms.plugins.cloud.srv.appliance.ApplianceRequisitionProvider">
+            <argument ref="requisitionManager"/>
+            <argument ref="applianceManager"/>
+        </bean>
     </service>
 
     <!-- SERVICES -->
@@ -121,5 +134,8 @@
     <service ref="timeSeriesStorage" interface="org.opennms.plugins.cloud.srv.tsaas.TsaasStorage" />
 
     <!-- SERVICE: APPL -->
-    <bean id="applianceManager" class="org.opennms.plugins.cloud.srv.appliance.ApplianceManager"/>
+    <bean id="applianceManager" class="org.opennms.plugins.cloud.srv.appliance.ApplianceManager">
+        <argument ref="nodeDao"/>
+        <argument ref="eventForwarder"/>
+    </bean>
 </blueprint>
