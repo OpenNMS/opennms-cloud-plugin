@@ -22,6 +22,7 @@
         <log4j.version>2.13.3</log4j.version>
         <mockito.version>2.18.0</mockito.version>
         <opennms.api.version>1.0.1</opennms.api.version>
+        <opennmsDaoVersion>31.0.0-SNAPSHOT</opennmsDaoVersion>
         <osgi.version>6.0.0</osgi.version>
         <slf4j-api.version>1.7.32</slf4j-api.version>
         <protobufVersion>3.19.4</protobufVersion>
@@ -32,9 +33,10 @@
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <jacocoVersion>0.8.7</jacocoVersion>
         <osgiJaxRsVersion>1.1.0.ONMS</osgiJaxRsVersion>
+        <okhttp.version>3.10.0</okhttp.version>
+        <okhttp.bundle.version>3.10.0_2</okhttp.bundle.version>
+        <jackson.version>2.11.1</jackson.version>
     </properties>
-
-
 
     <dependencyManagement>
         <dependencies>
@@ -59,7 +61,6 @@
                 <version>${awaitilityVersion}</version>
                 <scope>test</scope>
             </dependency>
-
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
@@ -259,6 +260,17 @@
             <id>sonatype.org-snapshot</id>
             <name>Sonatype OSS Snapshots Repository</name>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>opennms-snapshots</id>
+            <name>OpenNMS Snapshot Maven Repository</name>
+            <url>https://maven.opennms.org/content/groups/opennms.org-snapshot/</url>
             <releases>
                 <enabled>false</enabled>
             </releases>

@@ -26,17 +26,10 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.rest;
+package org.opennms.plugins.cloud.dao;
 
-public class CloudApplianceDTO {
-    public String applianceId;
-    public String applianceLabel;
-    public String applianceType;
-    public String applianceProfileId;
-    public String minionLocationId;
-    public Integer nodeId;
-    public String nodeLabel;
-    public String nodeLocation;
-    public String nodeIpAddress;
-    public String nodeStatus;
+import java.util.List;
+
+public interface ApplianceDao {
+    List<CloudApplianceDTO> findAll();
 }

@@ -11,6 +11,9 @@
     <!-- CONFIG -->
     <reference id="secureCredentialsVault" interface="org.opennms.integration.api.v1.scv.SecureCredentialsVault" availability="mandatory"/>
     <reference id="runtimeInfo" interface="org.opennms.integration.api.v1.runtime.RuntimeInfo" availability="mandatory"/>
+    <reference id="nodeDao" interface="org.opennms.netmgt.dao.api.NodeDao" availability="mandatory"/>
+    <reference id="ipInterfaceDao" interface="org.opennms.netmgt.dao.api.IpInterfaceDao" availability="mandatory"/>
+
     <!-- Configuration stored in $OPENNMS_HOME/etc/org.opennms.plugins.cloud.cfg file -->
     <cm:property-placeholder id="tsaas-pocPluginProperties" persistent-id="org.opennms.plugins.cloud"
                              update-strategy="reload">
@@ -88,6 +91,9 @@
     <!-- REST -->
     <bean id="cloudApplianceRestService" class="org.opennms.plugins.cloud.rest.CloudApplianceRestServiceImpl">
         <argument ref="cloudConfigManager"/>
+        <argument ref="applianceManager"/>
+        <argument ref="nodeDao"/>
+        <argument ref="ipInterfaceDao"/>
     </bean>
     <service interface="org.opennms.plugins.cloud.rest.CloudApplianceRestService" ref="cloudApplianceRestService">
         <service-properties>
