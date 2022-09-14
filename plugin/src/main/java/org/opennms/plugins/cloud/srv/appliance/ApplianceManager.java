@@ -102,9 +102,16 @@ public class ApplianceManager {
             var applianceConfig = new ApplianceConfig();
             applianceConfig.setUuid(appliance.getId());
             applianceConfig.setName(appliance.getLabel());
-                configMap.put(appliance.getId(), applianceConfig);
-            }
-        );
+            GetApplianceInfoResponse resp = getApplianceInfo(appliance.getId());
+            resp.getIpInfo().values().forEach(element -> {
+                element.forEach(cidr -> {
+                    int slashpos = cidr.indexOf('/');
+                    String address = cidr.substring(0, slashpos);
+                    applianceConfig.addAddress(address);
+                });
+            });
+            configMap.put(appliance.getId(), applianceConfig);
+        });
 
         LOG.info("Loaded config map with " + appliances.size() + " entries.");
 

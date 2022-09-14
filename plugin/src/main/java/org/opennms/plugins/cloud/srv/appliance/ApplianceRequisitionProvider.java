@@ -29,6 +29,7 @@
 package org.opennms.plugins.cloud.srv.appliance;
 
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.Objects;
 
@@ -74,19 +75,30 @@ public class ApplianceRequisitionProvider implements RequisitionProvider {
         Map<String,ApplianceConfig> appliances = applianceManager.getConfigMap();
         for(String key: appliances.keySet()) {
             ApplianceConfig cfg = appliances.get(key);
-            builder.addNode(ImmutableRequisitionNode.newBuilder()
+            ImmutableRequisitionNode.Builder nodeBuilder = ImmutableRequisitionNode.newBuilder();
+            nodeBuilder
                     .setForeignId(cfg.getName())
                     .setNodeLabel(cfg.getName())
                     .addMetaData(ImmutableRequisitionMetaData.newBuilder()
                             .setContext("appliance")
                             .setKey("cloudUUID")
                             .setValue(cfg.getUuid())
-                            .build())
-                    .addInterface(ImmutableRequisitionInterface.newBuilder()
-                            .setIpAddress(loopback)
+                            .build());
+            for(String address: cfg.getAddresses()) {
+                if(address.indexOf(':') >= 0)
+                    continue;
+                
+                try {
+                    nodeBuilder.addInterface(ImmutableRequisitionInterface.newBuilder()
+                            .setIpAddress(InetAddress.getByName(address))
                             .setSnmpPrimary(SnmpPrimaryType.PRIMARY)
-                            .build())
-                    .build());
+                            .build());
+                } catch(UnknownHostException e) {
+                }
+            }
+
+            builder.addNode(nodeBuilder.build())
+                    .build();
         }
         return builder.build();
     }

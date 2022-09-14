@@ -28,13 +28,33 @@
 
 package org.opennms.plugins.cloud.srv.appliance;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ApplianceConfig {
     private String name = new String(); // label of this appliance
     private String uuid = new String(); // cloud service ID of this appliance
     private int nodeId = 0; // Horizon node ID of this appliance
     private int minionId = 0; // Horizon node ID of the minion for this appliance
+    private List<String> addresses = new ArrayList<>();
 
     public ApplianceConfig() {
+    }
+
+    public void addAddress(String address) {
+        addresses.add(address);
+    }
+
+    public List<String> getAddresses() {
+        return addresses;
+    }
+
+    public boolean removeAddress(String address) {
+        return addresses.remove(address);
+    }
+
+    public void clearAddresses() {
+        addresses.clear();
     }
 
     public String getName() {
