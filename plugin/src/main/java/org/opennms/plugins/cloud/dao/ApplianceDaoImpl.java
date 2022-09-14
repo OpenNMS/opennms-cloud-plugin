@@ -85,6 +85,8 @@ public class ApplianceDaoImpl implements ApplianceDao {
         // TODO: metadata context?
         dto.applianceCloudId = getCloudUuid(node);
 
+        dto.nodeStatus = "UNKNOWN";
+
         return dto;
     }
 
@@ -97,6 +99,9 @@ public class ApplianceDaoImpl implements ApplianceDao {
                 dto.isConnected = response.getConnected();
                 dto.minionStatus = response.getMinionStatus();
                 dto.onmsStatus = response.getOnmsStatus();
+
+                // TODO: Unsure which status to use, for now just using "connected"
+                dto.nodeStatus = dto.isConnected ? "UP" : "DOWN";
             }
         } catch (Exception e) {
             // do nothing
