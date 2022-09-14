@@ -5,6 +5,9 @@
                 http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0
                 http://aries.apache.org/schemas/blueprint-cm/blueprint-cm-1.1.0.xsd">
 
+    <reference id="nodeDao" interface="org.opennms.integration.api.v1.dao.NodeDao" />
+    <reference id="eventForwarder" interface="org.opennms.integration.api.v1.events.EventForwarder" />
+
     <!-- CONFIG -->
     <reference id="secureCredentialsVault" interface="org.opennms.integration.api.v1.scv.SecureCredentialsVault" availability="mandatory"/>
     <reference id="runtimeInfo" interface="org.opennms.integration.api.v1.runtime.RuntimeInfo" availability="mandatory"/>
@@ -52,7 +55,6 @@
             <list>
                 <ref component-id="timeSeriesStorage" />
                 <ref component-id="faas" />
-                <ref component-id="applianceManager"/>
             </list>
         </argument>
     </bean>
@@ -102,6 +104,13 @@
         </service-properties>
     </service>
 
+    <bean id="requisitionManager" class="org.opennms.plugins.cloud.srv.appliance.RequisitionTestContextManager"/>
+    <service interface="org.opennms.integration.api.v1.requisition.RequisitionProvider">
+        <bean class="org.opennms.plugins.cloud.srv.appliance.ApplianceRequisitionProvider">
+            <argument ref="requisitionManager"/>
+        </bean>
+    </service>
+
     <!-- SERVICES -->
     <bean id="registrationManager" class="org.opennms.plugins.cloud.srv.RegistrationManager" destroy-method="destroy">
         <argument ref="blueprintBundleContext"/>
@@ -121,5 +130,8 @@
     <service ref="timeSeriesStorage" interface="org.opennms.plugins.cloud.srv.tsaas.TsaasStorage" />
 
     <!-- SERVICE: APPL -->
-    <bean id="applianceManager" class="org.opennms.plugins.cloud.srv.appliance.ApplianceManager"/>
+    <bean id="applianceManager" class="org.opennms.plugins.cloud.srv.appliance.ApplianceManager">
+        <argument ref="nodeDao"/>
+        <argument ref="eventForwarder"/>
+    </bean>
 </blueprint>

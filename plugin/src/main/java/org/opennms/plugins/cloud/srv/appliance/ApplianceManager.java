@@ -28,34 +28,56 @@
 
 package org.opennms.plugins.cloud.srv.appliance;
 
-import org.opennms.plugins.cloud.grpc.GrpcConnection;
-import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
-import org.opennms.plugins.cloud.srv.GrpcService;
+import org.opennms.integration.api.v1.dao.NodeDao;
+import org.opennms.integration.api.v1.events.EventForwarder;
+import org.opennms.integration.api.v1.model.InMemoryEvent;
+import org.opennms.integration.api.v1.model.Node;
+import org.opennms.integration.api.v1.model.immutables.ImmutableEventParameter;
+import org.opennms.integration.api.v1.model.immutables.ImmutableInMemoryEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-public class ApplianceManager implements GrpcService {
+public class ApplianceManager {
     private static final Logger LOG = LoggerFactory.getLogger(ApplianceManager.class);
     private Map<String, ApplianceConfig> configMap = new HashMap<>();
+    private final NodeDao nodeDao;
+    private final EventForwarder eventForwarder;
 
+    public ApplianceManager(NodeDao dao, EventForwarder ef) {
+        this.eventForwarder = ef;
+        this.nodeDao = dao;
 
-    public ApplianceManager() {
+        RequisitionTestContextManager requisitionManager = new RequisitionTestContextManager();
+        try (RequisitionTestContextManager.RequisitionTestSession testSession = requisitionManager.newSession()) {
+            final String foreignSource = "oia-test-requisition-" + testSession.getSessionId();
+
+            // Verify that no nodes are currently present for the foreign source
+            List<Node> nodes = nodeDao.getNodesInForeignSource(foreignSource);
+            if (!nodes.isEmpty()) {
+                return;
+            }
+
+            final String url = String.format("requisition://%s?foreignSource=%s&sessionId=%s", ApplianceRequisitionProvider.TYPE, foreignSource, testSession.getSessionId());
+            try {
+                // Import the requisition
+                final InMemoryEvent reloadImport = ImmutableInMemoryEvent.newBuilder()
+                        .setUei("uei.opennms.org/internal/importer/reloadImport")
+                        .setSource(ApplianceRequisitionProvider.class.getCanonicalName())
+                        .addParameter(ImmutableEventParameter.newInstance("url", url))
+                        .build();
+                eventForwarder.sendSync(reloadImport);
+            } catch(Exception e) {
+
+            }
+        }
     }
 
-    @Override
-    public void initGrpc(GrpcConnectionConfig grpcConfig) {
-//        GrpcConnection<TimeseriesGrpc.TimeseriesBlockingStub> oldGrpc = this.grpc;
-        LOG.debug("Initializing Grpc Connection with host {} and port {}", grpcConfig.getHost(), grpcConfig.getPort());
-//        this.grpc = new GrpcConnection<>(grpcConfig, TimeseriesGrpc::newBlockingStub);
-//        if(oldGrpc != null) {
-//            try {
-//                oldGrpc.shutDown();
-//            } catch (InterruptedException e) {
-//                Thread.currentThread().interrupt();
-//            }
-//        }
+    public void updateApplianceList() {
+        // trigger query of portal appliance list API. parse results and add any new
+        // UUIDs to our node table with appropriate metadata via requisition provider
     }
 }
