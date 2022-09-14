@@ -68,8 +68,6 @@ public class ApplianceManager {
 
     private final Map<String, ApplianceConfig> configMap = new HashMap<>();
 
-//    private OkHttpClient httpClient;
-
     // This needs to be closed on shutdown
     private CloseableHttpClient httpclient;
 
@@ -140,11 +138,10 @@ public class ApplianceManager {
         var request = new HttpGet(CLOUD_BASE_URL + "/appliance");
         request.addHeader(API_KEY_HEADER, CLOUD_API_KEY);
 
-        try {
-            var response = httpclient.execute(request);
+        try (var response = httpclient.execute(request)) {
             var statusCode = response.getStatusLine().getStatusCode();
             if (statusCode >= 200 && statusCode < 300) {
-                var appliances =  MAPPER.readValue(response.getEntity().getContent(), ListAppliancesResponse.class);
+                var appliances = MAPPER.readValue(response.getEntity().getContent(), ListAppliancesResponse.class);
                 LOG.info("Retrieved " + appliances.getTotalRecords() + " appliances.");
                 return appliances.getPagedRecords();
             } else {
@@ -159,25 +156,16 @@ public class ApplianceManager {
     }
 
     // NOTE: if the appliance is offline, the cloud API responds with HTTP 400 - and this method will return null.
-    /*public GetApplianceInfoResponse getApplianceInfo(String applianceId) {
-        var request = new Request.Builder()
-                .get()
-                .header(API_KEY_HEADER, CLOUD_API_KEY)
-                .url(CLOUD_BASE_URL + "/appliance/" + applianceId + "/info")
-                .build();
+    public GetApplianceInfoResponse getApplianceInfo(String applianceId) {
+        var request = new HttpGet(CLOUD_BASE_URL + "/appliance/" + applianceId + "/info");
+        request.addHeader(API_KEY_HEADER, CLOUD_API_KEY);
 
-        var call = httpClient.newCall(request);
-
-        try (var response = call.execute()) {
-            if (response.isSuccessful()) {
-                if (response.body() == null) {
-                    throw new IllegalStateException("Unable to get appliance info from appliance service: " +
-                            "Response body is null");
-                }
-                return  MAPPER.readValue(response.body().bytes(), GetApplianceInfoResponse.class);
+        try (var response = httpclient.execute(request)) {
+            var statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode >= 200 && statusCode < 300) {
+                return MAPPER.readValue(response.getEntity().getContent(), GetApplianceInfoResponse.class);
             } else {
-                throw new IllegalStateException("Unable to get appliance info from appliance service:" +
-                        " HTTP " + response.code() + " Message: " + response.message());
+                throw new IllegalStateException("Unable to get appliance info from appliance service:" + " HTTP " + statusCode + ".");
             }
         } catch (Exception e) {
             LOG.error("Unable to get appliance info from the appliance service", e);
@@ -187,24 +175,15 @@ public class ApplianceManager {
     }
 
     public GetApplianceStatesResponse getApplianceStates(String applianceId) {
-        var request = new Request.Builder()
-                .get()
-                .header(API_KEY_HEADER, CLOUD_API_KEY)
-                .url(CLOUD_BASE_URL + "/appliance/" + applianceId + "/status")
-                .build();
+        var request = new HttpGet(CLOUD_BASE_URL + "/appliance/" + applianceId + "/status");
+        request.addHeader(API_KEY_HEADER, CLOUD_API_KEY);
 
-        var call = httpClient.newCall(request);
-
-        try (var response = call.execute()) {
-            if (response.isSuccessful()) {
-                if (response.body() == null) {
-                    throw new IllegalStateException("Unable to get appliance states from appliance service: " +
-                            "Response body is null");
-                }
-                return  MAPPER.readValue(response.body().bytes(), GetApplianceStatesResponse.class);
+        try (var response = httpclient.execute(request)) {
+            var statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode >= 200 && statusCode < 300) {
+                return MAPPER.readValue(response.getEntity().getContent(), GetApplianceStatesResponse.class);
             } else {
-                throw new IllegalStateException("Unable to get appliance states from appliance service:" +
-                        " HTTP " + response.code() + " Message: " + response.message());
+                throw new IllegalStateException("Unable to get appliance states from appliance service:" + " HTTP " + statusCode + ".");
             }
         } catch (Exception e) {
             LOG.error("Unable to get appliance states from the appliance service", e);
@@ -276,7 +255,7 @@ public class ApplianceManager {
         return null;
     }
 
-    private String getLocation() {
+    private String getLocation(String locationId) {
         return null;
     }
 
@@ -290,5 +269,5 @@ public class ApplianceManager {
 
     private void getAppliance(String applianceId) {
     }
-    */
+
 }
