@@ -4,6 +4,7 @@ import { FeatherTextarea } from '@featherds/textarea'
 import { FeatherSnackbar } from '@featherds/snackbar'
 import { onMounted, ref } from "vue";
 import Toggle from './Toggle.vue'
+import ApplianceRefresh from "./ApplianceRefresh.vue";
 
 const active = ref(false);
 const toggle = () => active.value = !active.value
@@ -87,6 +88,9 @@ onMounted(async () => {
       <FeatherTextarea :disabled="keyDisabled" label="Enter API Key" rows="5" :modelValue="key"
         @update:modelValue="(val: string) => key = val" />
       <FeatherButton primary @click="tryToSubmit">Activate Cloud Services for OpenNMS</FeatherButton>
+    </div>
+    <div id="appliance-refresh-area">
+      <ApplianceRefresh/>
     </div>
   </div>
 </template>
