@@ -61,7 +61,7 @@ public class CloudApplianceRestServiceImpl implements CloudApplianceRestService 
         this.applianceManager = Objects.requireNonNull(am);
         this.nodeDao = Objects.requireNonNull(nodeDao);
 
-        this.applianceDao = new ApplianceDaoImpl(this.nodeDao);
+        this.applianceDao = new ApplianceDaoImpl(this.applianceManager, this.nodeDao);
     }
 
     @Override

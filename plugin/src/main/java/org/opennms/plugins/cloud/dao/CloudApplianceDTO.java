@@ -39,4 +39,8 @@ public class CloudApplianceDTO {
     public String nodeLocation;
     public String nodeIpAddress;
     public String nodeStatus;
+    public boolean hasStatus;
+    public boolean isConnected;
+    public String minionStatus;
+    public String onmsStatus;
 }
