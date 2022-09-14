@@ -30,12 +30,15 @@ package org.opennms.plugins.cloud.dao;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.opennms.integration.api.v1.dao.NodeDao;
 import org.opennms.integration.api.v1.model.IpInterface;
+import org.opennms.integration.api.v1.model.MetaData;
 import org.opennms.integration.api.v1.model.Node;
 
 public class ApplianceDaoImpl implements ApplianceDao {
+    private static final String CLOUD_UUID_METADATA_KEY = "cloudUUID";
 
     private final NodeDao nodeDao;
 
@@ -46,7 +49,7 @@ public class ApplianceDaoImpl implements ApplianceDao {
     public List<CloudApplianceDTO> findAll() {
         // For now, adding some dummy data
         CloudApplianceDTO dto0 = new CloudApplianceDTO();
-        dto0.applianceId = "ae4968c1-d03e-4c68-89ea-875afaf7409f";
+        dto0.applianceCloudId = "ae4968c1-d03e-4c68-89ea-875afaf7409f";
         dto0.applianceLabel = "virtual-appliance-1";
         dto0.applianceType = "VIRTUAL";
         dto0.applianceProfileId = null;
@@ -58,7 +61,7 @@ public class ApplianceDaoImpl implements ApplianceDao {
         dto0.nodeStatus = "UP";
 
         CloudApplianceDTO dto1 = new CloudApplianceDTO();
-        dto1.applianceId = "61143ceb-113d-4665-a79f-efb64f6f5599";
+        dto1.applianceCloudId = "61143ceb-113d-4665-a79f-efb64f6f5599";
         dto1.applianceLabel = "hw-appliance-2";
         dto1.applianceType = "HARDWARE"; dto1.applianceProfileId = null;
         dto1.minionLocationId = "cba8be81-7ec6-446c-aab4-9dfd3889dbbf";
@@ -70,7 +73,7 @@ public class ApplianceDaoImpl implements ApplianceDao {
 
         // this one has not been configured
         CloudApplianceDTO dto2 = new CloudApplianceDTO();
-        dto2.applianceId = "59434aac-2cc4-48df-b2ca-bc7d29640852";
+        dto2.applianceCloudId = "59434aac-2cc4-48df-b2ca-bc7d29640852";
         dto2.applianceLabel = "hw-appliance-3";
         dto2.applianceType = "HARDWARE";
         dto2.applianceProfileId = null;
@@ -86,11 +89,12 @@ public class ApplianceDaoImpl implements ApplianceDao {
         dtos.add(dto1);
         dtos.add(dto2);
 
-        // TODO: Only fetch nodes with appliance metadata
         List<Node> nodes = nodeDao.getNodes();
 
-        if (!nodes.isEmpty()) {
-            nodes.forEach(n -> {
+        List<Node> applianceNodes = nodes.stream().filter(ApplianceDaoImpl::isApplianceNode).collect(Collectors.toList());
+
+        if (!applianceNodes.isEmpty()) {
+            applianceNodes.forEach(n -> {
                 CloudApplianceDTO dto = dtoFromNode(n);
                 dtos.add(dto);
             });
@@ -111,8 +115,23 @@ public class ApplianceDaoImpl implements ApplianceDao {
             dto.nodeIpAddress = ipInterfaces.get(0).getIpAddress().getHostAddress();
         }
 
-        // TODO: Enrich with appliance metadata
+        // Enrich with appliance metadata
+        // TODO: metadata context?
+        dto.applianceCloudId = getCloudUuid(node);
 
         return dto;
+    }
+
+    private static boolean isApplianceNode(Node node) {
+        return node.getMetaData().stream()
+            .anyMatch(m -> m.getKey().equals(CLOUD_UUID_METADATA_KEY));
+    }
+
+    private static String getCloudUuid(Node node) {
+        return node.getMetaData().stream()
+            .filter(m -> m.getKey() != null && m.getKey().equals(CLOUD_UUID_METADATA_KEY))
+            .map(MetaData::getValue)
+            .findFirst()
+            .orElse("");
     }
 }

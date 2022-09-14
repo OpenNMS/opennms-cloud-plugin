@@ -6,11 +6,11 @@
                 http://aries.apache.org/schemas/blueprint-cm/blueprint-cm-1.1.0.xsd">
 
     <reference id="eventForwarder" interface="org.opennms.integration.api.v1.events.EventForwarder" />
+    <reference id="nodeDao" interface="org.opennms.integration.api.v1.dao.NodeDao"/>
 
     <!-- CONFIG -->
     <reference id="secureCredentialsVault" interface="org.opennms.integration.api.v1.scv.SecureCredentialsVault" availability="mandatory"/>
     <reference id="runtimeInfo" interface="org.opennms.integration.api.v1.runtime.RuntimeInfo" availability="mandatory"/>
-    <reference id="nodeDao" interface="org.opennms.integration.api.v1.dao.NodeDao" availability="mandatory"/>
 
     <!-- Configuration stored in $OPENNMS_HOME/etc/org.opennms.plugins.cloud.cfg file -->
     <cm:property-placeholder id="tsaas-pocPluginProperties" persistent-id="org.opennms.plugins.cloud"

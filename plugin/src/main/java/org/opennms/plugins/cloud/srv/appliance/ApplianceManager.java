@@ -30,8 +30,8 @@ package org.opennms.plugins.cloud.srv.appliance;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-//import okhttp3.OkHttpClient;
-//import okhttp3.Request;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.opennms.integration.api.v1.dao.NodeDao;
@@ -40,6 +40,7 @@ import org.opennms.integration.api.v1.model.InMemoryEvent;
 import org.opennms.integration.api.v1.model.Node;
 import org.opennms.integration.api.v1.model.immutables.ImmutableEventParameter;
 import org.opennms.integration.api.v1.model.immutables.ImmutableInMemoryEvent;
+import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.ApplianceRecord;
 import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.GetApplianceInfoResponse;
 import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.GetApplianceStatesResponse;
 import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.ListAppliancesResponse;
@@ -49,6 +50,8 @@ import org.opennms.plugins.cloud.srv.appliance.portal.api.entities.IdentityReque
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -84,14 +87,28 @@ public class ApplianceManager {
     public ApplianceManager(NodeDao dao, EventForwarder ef) {
         this.eventForwarder = ef;
         this.nodeDao = dao;
-
-//        httpClient = new OkHttpClient();
-         httpclient = HttpClients.createDefault();
+        httpclient = HttpClients.createDefault();
     }
 
     public void updateApplianceList() {
         // trigger query of portal appliance list API. parse results and add any new
         // UUIDs to our node table with appropriate metadata via requisition provider
+
+        var appliances = listAppliances();
+        if (appliances.isEmpty()) {
+            LOG.warn("Appliances list from cloud portal is empty");
+            return;
+        }
+
+        appliances.forEach(appliance -> {
+            var applianceConfig = new ApplianceConfig();
+            applianceConfig.setUuid(appliance.getId());
+            applianceConfig.setName(appliance.getLabel());
+                configMap.put(appliance.getId(), applianceConfig);
+            }
+        );
+
+        LOG.info("Loaded config map with " + appliances.size() + " entries.");
 
         RequisitionTestContextManager requisitionManager = new RequisitionTestContextManager();
         try (RequisitionTestContextManager.RequisitionTestSession testSession = requisitionManager.newSession()) {
@@ -118,40 +135,31 @@ public class ApplianceManager {
         }
     }
 
-
     // TECH-DEBT: only the first page will be read - pagination is not fully supported.
-    /*public ListAppliancesResponse listAppliances() {
-        var request = new Request.Builder()
-                .get()
-                .header(API_KEY_HEADER, CLOUD_API_KEY)
-                .url(CLOUD_BASE_URL + "/appliance")
-                .build();
+    public List<ApplianceRecord> listAppliances() {
+        var request = new HttpGet(CLOUD_BASE_URL + "/appliance");
+        request.addHeader(API_KEY_HEADER, CLOUD_API_KEY);
 
-        var call = httpClient.newCall(request);
-
-        try (var response = call.execute()) {
-            if (response.isSuccessful()) {
-                if (response.body() == null) {
-                    throw new IllegalStateException("Unable to list appliances from appliance service: " +
-                            "Response body is null");
-                }
-
-                var appliances =  MAPPER.readValue(response.body().bytes(), ListAppliancesResponse.class);
+        try {
+            var response = httpclient.execute(request);
+            var statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode >= 200 && statusCode < 300) {
+                var appliances =  MAPPER.readValue(response.getEntity().getContent(), ListAppliancesResponse.class);
                 LOG.info("Retrieved " + appliances.getTotalRecords() + " appliances.");
-                return appliances;
+                return appliances.getPagedRecords();
             } else {
                 throw new IllegalStateException("Unable to list appliances from appliance service:" +
-                        " HTTP " + response.code() + " Message: " + response.message());
+                        " HTTP " + statusCode + ".");
             }
         } catch (Exception e) {
             LOG.error("Unable to list appliances from the appliance service", e);
         }
 
-        return null;
+        return Collections.emptyList();
     }
 
     // NOTE: if the appliance is offline, the cloud API responds with HTTP 400 - and this method will return null.
-    public GetApplianceInfoResponse getApplianceInfo(String applianceId) {
+    /*public GetApplianceInfoResponse getApplianceInfo(String applianceId) {
         var request = new Request.Builder()
                 .get()
                 .header(API_KEY_HEADER, CLOUD_API_KEY)
