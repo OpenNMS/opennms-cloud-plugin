@@ -28,6 +28,10 @@
 
 package org.opennms.plugins.cloud.srv.appliance;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
+import okio.BufferedSink;
 import org.opennms.integration.api.v1.dao.NodeDao;
 import org.opennms.integration.api.v1.events.EventForwarder;
 import org.opennms.integration.api.v1.model.InMemoryEvent;
@@ -40,9 +44,14 @@ import okhttp3.Request;
 import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.GetApplianceInfoResponse;
 import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.GetApplianceStatesResponse;
 import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.ListAppliancesResponse;
+import org.opennms.plugins.cloud.srv.appliance.portal.api.entities.BrokerType;
+import org.opennms.plugins.cloud.srv.appliance.portal.api.entities.ConnectivityProfile;
+import org.opennms.plugins.cloud.srv.appliance.portal.api.entities.IdentityRequestEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,6 +73,8 @@ public class ApplianceManager {
 
     // TECH-DEBT: make this configurable within the cloud plugin.
     private static final String CLOUD_BASE_URL = "https://dev.cloud.opennms.com/api/v1/external";
+
+    private static final String PORTAL_BASE_URL = "";
 
     public ApplianceManager(NodeDao dao, EventForwarder ef) {
         this.eventForwarder = ef;
@@ -186,11 +197,54 @@ public class ApplianceManager {
         return null;
     }
 
+    public String createConnectivityProfile(String instanceId, OnmsHttpInfo httpInfo, OnmsBrokerActiveMq broker) {
+        var connectivity = new ConnectivityProfile();
+        connectivity.setBrokerType(BrokerType.JMS);
+        connectivity.setHttpUrl(httpInfo.getHttpUrl());
+        connectivity.setHttpUser(httpInfo.getHttpUser());
+        connectivity.setHttpPassword(httpInfo.getHttpPassword());
+        connectivity.setBrokerConfig(MAPPER.convertValue(broker, JsonNode.class));
+        return createConnectivityProfile(instanceId, connectivity);
+    }
 
-    // This will reach out the 'portal' BE to create the instance.
-    // Parameter 'instanceId' is the ID of the OpenNMs instance the user created by visiting the cloud portal and has
-    //  imparted to the plugin.
-    public String createConnectivityProfile(String instanceId) {
+    public String createConnectivityProfile(String instanceId, OnmsHttpInfo httpInfo, OnmsBrokerKafka broker) {
+        var connectivity = new ConnectivityProfile();
+        connectivity.setBrokerType(BrokerType.KAFKA);
+        connectivity.setHttpUrl(httpInfo.getHttpUrl());
+        connectivity.setHttpUser(httpInfo.getHttpUser());
+        connectivity.setHttpPassword(httpInfo.getHttpPassword());
+        connectivity.setBrokerConfig(MAPPER.convertValue(broker, JsonNode.class));
+        return createConnectivityProfile(instanceId, connectivity);
+    }
+
+    private String createConnectivityProfile(String instanceId, ConnectivityProfile profile) {
+        var identify = new IdentityRequestEntity();
+        identify.setInstanceId(instanceId);
+        identify.setConnectivity(profile);
+// TODO
+//        var request = new Request.Builder()
+//                .post(new RequestBody(MediaType.))
+//                .header(API_KEY_HEADER, CLOUD_API_KEY)
+//                .url(CLOUD_BASE_URL + "/appliance/" + applianceId + "/status")
+//                .build();
+//
+//        var call = httpClient.newCall(request);
+//
+//        try (var response = call.execute()) {
+//            if (response.isSuccessful()) {
+//                if (response.body() == null) {
+//                    throw new IllegalStateException("Unable to get appliance states from appliance service: " +
+//                            "Response body is null");
+//                }
+//                return MAPPER.readValue(response.body().bytes(), GetApplianceStatesResponse.class);
+//            } else {
+//                throw new IllegalStateException("Unable to get appliance states from appliance service:" +
+//                        " HTTP " + response.code() + " Message: " + response.message());
+//            }
+//        } catch (Exception e) {
+//            LOG.error("Unable to get appliance states from the appliance service", e);
+//        }
+
         return null;
     }
 
@@ -204,6 +258,13 @@ public class ApplianceManager {
     // This returns the ID of the location
     private String getOrCreateLocation(String instanceId, String connectivityProfileId, String locationName) {
         return null;
+    }
+
+    private String getLocation() {
+        return null;
+    }
+
+    private void createLocation() {
     }
 
     private void updateAppliance(String applianceId, String locationId) {
