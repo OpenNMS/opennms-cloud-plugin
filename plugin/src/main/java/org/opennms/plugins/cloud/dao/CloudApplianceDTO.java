@@ -29,7 +29,7 @@
 package org.opennms.plugins.cloud.dao;
 
 public class CloudApplianceDTO {
-    public String applianceId;
+    public String applianceCloudId;
     public String applianceLabel;
     public String applianceType;
     public String applianceProfileId;
