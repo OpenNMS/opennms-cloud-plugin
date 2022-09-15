@@ -55,6 +55,9 @@ import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.ListOnmsInstan
 import org.opennms.plugins.cloud.srv.appliance.portal.api.entities.BrokerType;
 import org.opennms.plugins.cloud.srv.appliance.portal.api.entities.ConnectivityProfile;
 import org.opennms.plugins.cloud.srv.appliance.portal.api.entities.IdentifyRequest;
+import org.opennms.plugins.cloud.srv.appliance.portal.api.entities.OnmsBrokerActiveMq;
+import org.opennms.plugins.cloud.srv.appliance.portal.api.entities.OnmsBrokerKafka;
+import org.opennms.plugins.cloud.srv.appliance.portal.api.entities.OnmsHttpInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

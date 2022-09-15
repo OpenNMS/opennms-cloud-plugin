@@ -1,4 +1,4 @@
-package org.opennms.plugins.cloud.srv.appliance;
+package org.opennms.plugins.cloud.srv.appliance.portal.api.entities;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

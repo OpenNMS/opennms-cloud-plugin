@@ -1,4 +1,4 @@
-package org.opennms.plugins.cloud.srv.appliance;
+package org.opennms.plugins.cloud.srv.appliance.portal.api.entities;
 
 public class OnmsHttpInfo {
     private String httpUrl;
