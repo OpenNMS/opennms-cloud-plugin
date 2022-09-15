@@ -1,21 +1,12 @@
 package org.opennms.plugins.cloud.srv.appliance.cloud.api.entities;
 
-public class GetLocationResponse {
-    private String id;
+public class LocationRequest {
     private String name;
     private String onmsInstanceId;
-    private String minionFeatureProfileId;
     private String connectivityProfileId;
+    private String minionFeatureProfileId;
 
-    public GetLocationResponse() {
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
+    public LocationRequest() {
     }
 
     public String getName() {
@@ -34,14 +25,6 @@ public class GetLocationResponse {
         this.onmsInstanceId = onmsInstanceId;
     }
 
-    public String getMinionFeatureProfileId() {
-        return minionFeatureProfileId;
-    }
-
-    public void setMinionFeatureProfileId(String minionFeatureProfileId) {
-        this.minionFeatureProfileId = minionFeatureProfileId;
-    }
-
     public String getConnectivityProfileId() {
         return connectivityProfileId;
     }
@@ -50,14 +33,21 @@ public class GetLocationResponse {
         this.connectivityProfileId = connectivityProfileId;
     }
 
+    public String getMinionFeatureProfileId() {
+        return minionFeatureProfileId;
+    }
+
+    public void setMinionFeatureProfileId(String minionFeatureProfileId) {
+        this.minionFeatureProfileId = minionFeatureProfileId;
+    }
+
     @Override
     public String toString() {
-        return "GetLocationResponse{" +
-                "id='" + id + '\'' +
-                ", name='" + name + '\'' +
+        return "LocationRequest{" +
+                "name='" + name + '\'' +
                 ", onmsInstanceId='" + onmsInstanceId + '\'' +
-                ", minionFeatureProfileId='" + minionFeatureProfileId + '\'' +
                 ", connectivityProfileId='" + connectivityProfileId + '\'' +
+                ", minionFeatureProfileId='" + minionFeatureProfileId + '\'' +
                 '}';
     }
 }

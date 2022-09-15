@@ -1,12 +1,12 @@
 package org.opennms.plugins.cloud.srv.appliance.portal.api.entities;
 
-public class IdentityRequestEntity {
+public class IdentifyRequest {
     private String instanceId;
     private String type = "CORE";
     private String version;
     private ConnectivityProfile connectivity;
 
-    public IdentityRequestEntity() {
+    public IdentifyRequest() {
     }
 
     public String getInstanceId() {
@@ -43,7 +43,7 @@ public class IdentityRequestEntity {
 
     @Override
     public String toString() {
-        return "IdentityRequestEntity{" +
+        return "IdentifyRequestEntity{" +
                 "instanceId='" + instanceId + '\'' +
                 ", type='" + type + '\'' +
                 ", version='" + version + '\'' +

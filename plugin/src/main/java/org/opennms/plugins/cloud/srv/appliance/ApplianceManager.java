@@ -32,6 +32,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -41,14 +42,19 @@ import org.opennms.integration.api.v1.model.InMemoryEvent;
 import org.opennms.integration.api.v1.model.Node;
 import org.opennms.integration.api.v1.model.immutables.ImmutableEventParameter;
 import org.opennms.integration.api.v1.model.immutables.ImmutableInMemoryEvent;
-import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.ApplianceRecord;
+import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.Appliance;
+import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.ApplianceMinion;
+import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.CloudConnectivityProfile;
 import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.GetApplianceInfoResponse;
 import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.GetApplianceStatesResponse;
-import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.GetLocationResponse;
 import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.ListAppliancesResponse;
+import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.ListConnectivityProfilesResponse;
+import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.LocationRequest;
+import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.OnmsInstance;
+import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.ListOnmsInstancesResponse;
 import org.opennms.plugins.cloud.srv.appliance.portal.api.entities.BrokerType;
 import org.opennms.plugins.cloud.srv.appliance.portal.api.entities.ConnectivityProfile;
-import org.opennms.plugins.cloud.srv.appliance.portal.api.entities.IdentityRequestEntity;
+import org.opennms.plugins.cloud.srv.appliance.portal.api.entities.IdentifyRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,6 +64,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class ApplianceManager {
@@ -148,7 +155,7 @@ public class ApplianceManager {
     }
 
     // TECH-DEBT: only the first page will be read - pagination is not fully supported.
-    public List<ApplianceRecord> listAppliances() {
+    public List<Appliance> listAppliances() {
         var request = new HttpGet(CLOUD_BASE_URL + "/appliance");
         request.addHeader(API_KEY_HEADER, CLOUD_API_KEY);
 
@@ -230,8 +237,9 @@ public class ApplianceManager {
         createConnectivityProfile(instanceId, connectivity);
     }
 
+    // The UUID of the newly created connectivity profile is not returned. :(
     private void createConnectivityProfile(String instanceId, ConnectivityProfile profile) {
-        var identify = new IdentityRequestEntity();
+        var identify = new IdentifyRequest();
         identify.setInstanceId(instanceId);
         identify.setConnectivity(profile);
 
@@ -262,46 +270,147 @@ public class ApplianceManager {
         }
     }
 
-    public void setApplianceLocation(String applianceId, String locationName, String instanceId, String connectivityProfileId) {
-        // Call getOrCreateLocation() - Get or create the location: must provide instanceId and connectivityProfileId.
-        //  TBD about the Feature Profile, likely won't bother with that for now.
-
-        // Call updateAppliance() - intent is to stand up the minion - need the ID from the call to 'getOrCreateLocation()'
-    }
-
-    // This returns the ID of the location
-    private String getOrCreateLocation(String instanceId, String connectivityProfileId, String locationName) {
-        return null;
-    }
-
-    public GetLocationResponse getLocationById(String locationId) {
-        var request = new HttpGet(CLOUD_BASE_URL + "/location/" + locationId);
+    public String getInstanceIdByName(String instanceName) {
+        var request = new HttpGet(CLOUD_BASE_URL + "/instance");
         request.addHeader(API_KEY_HEADER, CLOUD_API_KEY);
 
         try (var response = httpclient.execute(request)) {
             var statusCode = response.getStatusLine().getStatusCode();
             if (statusCode >= 200 && statusCode < 300) {
-                return MAPPER.readValue(response.getEntity().getContent(), GetLocationResponse.class);
+                var instances = MAPPER.readValue(response.getEntity().getContent(), ListOnmsInstancesResponse.class);
+                return instances.getPagedRecords()
+                        .stream()
+                        .filter(instance -> instance.getName().contains(instanceName))
+                        .findFirst()
+                        .map(OnmsInstance::getId).orElse(null);
             } else {
-                throw new IllegalStateException("Unable to get location " + locationId + " from appliance service:" +
+                throw new IllegalStateException("Unable to get instance from appliance service:" +
                         " HTTP " + statusCode + ".");
             }
         } catch (Exception e) {
-            LOG.error("Unable to get location " + locationId + " from appliance service.", e);
+            LOG.error("Unable to get instance from the appliance service", e);
         }
 
         return null;
     }
 
-    private void createLocation() {
+    // TECH-DEBT: only the first page will be read - pagination is not fully supported.
+    // TECH-DEBT: Assuming only one connectivity profile under an instance
+    public String getConnectivityProfileIdByInstanceId(String instanceId) {
+        var request = new HttpGet(CLOUD_BASE_URL + "/connectivity-profile");
+        request.addHeader(API_KEY_HEADER, CLOUD_API_KEY);
+
+        try (var response = httpclient.execute(request)) {
+            var statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode >= 200 && statusCode < 300) {
+                var connProfiles = MAPPER.readValue(response.getEntity().getContent(), ListConnectivityProfilesResponse.class);
+                return connProfiles.getPagedRecords()
+                        .stream()
+                        .filter(connProf -> Objects.equals(connProf.getOnmsInstance().getId(), instanceId))
+                        .findFirst()
+                        .map(CloudConnectivityProfile::getId).orElse(null);
+            } else {
+                throw new IllegalStateException("Unable to list connectivity profiles from appliance service:" +
+                        " HTTP " + statusCode + ".");
+            }
+        } catch (Exception e) {
+            LOG.error("Unable to list connectivity profiles from the appliance service", e);
+        }
+
+        return null;
     }
 
-    private void updateAppliance(String applianceId, String locationId) {
-        // Call getAppliance()
-        // Given the result, feed in provided locationId under 'minion'.
+    public String createLocation(String locationName, String instanceId, String connectivityProfileId) {
+        var location = new LocationRequest();
+        location.setName(locationName);
+        location.setOnmsInstanceId(instanceId);
+        location.setConnectivityProfileId(connectivityProfileId);
+
+        StringEntity entity;
+        try {
+            entity = new StringEntity(MAPPER.writeValueAsString(location));
+        } catch (Exception e) {
+            LOG.error("Unable to create location: Unable to serialize request payload.", e);
+            return null;
+        }
+
+        var request = new HttpPost(CLOUD_BASE_URL + "/location");
+        request.addHeader(API_KEY_HEADER, CLOUD_API_KEY);
+        request.addHeader("Content-Type", "application/json");
+        request.setEntity(entity);
+
+        try (var response = httpclient.execute(request)) {
+            var statusCode = response.getStatusLine().getStatusCode();
+            var responseBody = new BufferedReader(new InputStreamReader(response.getEntity().getContent()))
+                    .lines()
+                    .collect(Collectors.joining("\n"));
+            if (statusCode >= 200 && statusCode < 300) {
+                return responseBody;
+            } else {
+                throw new IllegalStateException("Unable to create location:" +
+                        " HTTP " + statusCode + ": Body: " + responseBody);
+            }
+        } catch (Exception e) {
+            LOG.error("Unable to create location.", e);
+        }
+        return null;
     }
 
-    private void getAppliance(String applianceId) {
+    // Get a minion started up on the appliance!
+    public void setApplianceMonitoringWorkload(String applianceId, String locationId) {
+        var appliance = getAppliance(applianceId);
+        if (appliance == null) {
+            throw new IllegalStateException("Unable to find appliance with id: " + applianceId);
+        }
+
+        var minion = new ApplianceMinion();
+        minion.setLocationId(locationId);
+        appliance.setMinion(minion);
+
+        updateAppliance(appliance);
     }
 
+    private Appliance getAppliance(String applianceId) {
+        var request = new HttpGet(CLOUD_BASE_URL + "/appliance/" + applianceId);
+        request.addHeader(API_KEY_HEADER, CLOUD_API_KEY);
+
+        try (var response = httpclient.execute(request)) {
+            var statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode >= 200 && statusCode < 300) {
+                return MAPPER.readValue(response.getEntity().getContent(), Appliance.class);
+            } else {
+                throw new IllegalStateException("Unable to get appliance from appliance service:" +
+                        " HTTP " + statusCode + ".");
+            }
+        } catch (Exception e) {
+            LOG.error("Unable to get appliance from the appliance service", e);
+        }
+
+        return null;
+    }
+
+    private void updateAppliance(Appliance appliance) {
+        StringEntity entity;
+        try {
+            entity = new StringEntity(MAPPER.writeValueAsString(appliance));
+        } catch (Exception e) {
+            LOG.error("Unable to update appliance: Unable to serialize request payload.", e);
+            return;
+        }
+
+        var request = new HttpPut(CLOUD_BASE_URL + "/appliance/" + appliance.getId());
+        request.addHeader(API_KEY_HEADER, CLOUD_API_KEY);
+        request.addHeader("Content-Type", "application/json");
+        request.setEntity(entity);
+
+        try (var response = httpclient.execute(request)) {
+            var statusCode = response.getStatusLine().getStatusCode();
+            if (!(statusCode >= 200 && statusCode < 300)) {
+                throw new IllegalStateException("Unable to update appliance:" +
+                        " HTTP " + statusCode);
+            }
+        } catch (Exception e) {
+            LOG.error("Unable to update appliance.", e);
+        }
+    }
 }
