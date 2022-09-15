@@ -1,12 +1,21 @@
 package org.opennms.plugins.cloud.srv.appliance.cloud.api.entities;
 
-public class LocationRequest {
+public class Location {
+    private String id;
     private String name;
     private String onmsInstanceId;
     private String connectivityProfileId;
     private String minionFeatureProfileId;
 
-    public LocationRequest() {
+    public Location() {
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getName() {
@@ -43,8 +52,9 @@ public class LocationRequest {
 
     @Override
     public String toString() {
-        return "LocationRequest{" +
-                "name='" + name + '\'' +
+        return "Location{" +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
                 ", onmsInstanceId='" + onmsInstanceId + '\'' +
                 ", connectivityProfileId='" + connectivityProfileId + '\'' +
                 ", minionFeatureProfileId='" + minionFeatureProfileId + '\'' +

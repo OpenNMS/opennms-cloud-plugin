@@ -49,7 +49,8 @@ import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.GetApplianceIn
 import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.GetApplianceStatesResponse;
 import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.ListAppliancesResponse;
 import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.ListConnectivityProfilesResponse;
-import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.LocationRequest;
+import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.ListLocationsResponse;
+import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.Location;
 import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.OnmsInstance;
 import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.ListOnmsInstancesResponse;
 import org.opennms.plugins.cloud.srv.appliance.portal.api.entities.BrokerType;
@@ -326,7 +327,7 @@ public class ApplianceManager {
     }
 
     public String createLocation(String locationName, String instanceId, String connectivityProfileId) {
-        var location = new LocationRequest();
+        var location = new Location();
         location.setName(locationName);
         location.setOnmsInstanceId(instanceId);
         location.setConnectivityProfileId(connectivityProfileId);
@@ -359,6 +360,27 @@ public class ApplianceManager {
             LOG.error("Unable to create location.", e);
         }
         return null;
+    }
+
+    public List<Location> listLocations() {
+        var request = new HttpGet(CLOUD_BASE_URL + "/location");
+        request.addHeader(API_KEY_HEADER, CLOUD_API_KEY);
+
+        try (var response = httpclient.execute(request)) {
+            var statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode >= 200 && statusCode < 300) {
+                var locations = MAPPER.readValue(response.getEntity().getContent(), ListLocationsResponse.class);
+                LOG.info("Retrieved " + locations.getTotalRecords() + " locations.");
+                return locations.getPagedRecords();
+            } else {
+                throw new IllegalStateException("Unable to list locations from appliance service:" +
+                        " HTTP " + statusCode + ".");
+            }
+        } catch (Exception e) {
+            LOG.error("Unable to list locations from the appliance service", e);
+        }
+
+        return Collections.emptyList();
     }
 
     // Get a minion started up on the appliance!
