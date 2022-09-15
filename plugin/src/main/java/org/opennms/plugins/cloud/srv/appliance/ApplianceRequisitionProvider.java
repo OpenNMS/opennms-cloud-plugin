@@ -87,7 +87,7 @@ public class ApplianceRequisitionProvider implements RequisitionProvider {
             for(String address: cfg.getAddresses()) {
                 if(address.indexOf(':') >= 0)
                     continue;
-                
+
                 try {
                     nodeBuilder.addInterface(ImmutableRequisitionInterface.newBuilder()
                             .setIpAddress(InetAddress.getByName(address))

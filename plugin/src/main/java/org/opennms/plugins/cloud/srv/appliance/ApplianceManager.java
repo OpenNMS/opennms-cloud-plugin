@@ -119,14 +119,16 @@ public class ApplianceManager {
             var applianceConfig = new ApplianceConfig();
             applianceConfig.setUuid(appliance.getId());
             applianceConfig.setName(appliance.getLabel());
-            GetApplianceInfoResponse resp = getApplianceInfo(appliance.getId());
-            resp.getIpInfo().values().forEach(element -> {
-                element.forEach(cidr -> {
-                    int slashpos = cidr.indexOf('/');
-                    String address = cidr.substring(0, slashpos);
-                    applianceConfig.addAddress(address);
+            if(this.getApplianceStates(appliance.getId()).getConnected()) {
+                GetApplianceInfoResponse resp = getApplianceInfo(appliance.getId());
+                resp.getIpInfo().values().forEach(element -> {
+                    element.forEach(cidr -> {
+                        int slashpos = cidr.indexOf('/');
+                        String address = cidr.substring(0, slashpos);
+                        applianceConfig.addAddress(address);
+                    });
                 });
-            });
+            }
             configMap.put(appliance.getId(), applianceConfig);
         });
 
