@@ -1,58 +1,79 @@
 <template>
-    <br/>
-    <div class="container">
-      <FeatherSnackbar v-model="notified" :center="true" :success="true">
-        {{ notification }}
-        <template v-slot:button>
-          <FeatherButton @click="notified = false" text>dismiss</FeatherButton>
-        </template>
-      </FeatherSnackbar>
-      <FeatherButton v-on:click="configureAppliances()">
-          Sync Appliance Inventory
-      </FeatherButton>
-      <FeatherChip v-if="loading" class="chip-checking">
-        <FeatherSpinner v-if="loading"/>
+  <!-- Component to display messages from API-->
+  <FeatherSnackbar v-model="notified" :center="true">
+    {{ notification }}
+    <template v-slot:button>
+      <FeatherButton @click="notified = false" text>dismiss</FeatherButton>
+    </template>
+  </FeatherSnackbar>
+  <FeatherSnackbar v-model="tableNotified" :center="true">
+    {{ tableNotification }}
+    <template v-slot:button>
+      <FeatherButton @click="tableNotified = false" text>dismiss</FeatherButton>
+    </template>
+  </FeatherSnackbar>
+  <br/>
+  <div class="container">
+    <!-- <FeatherSpinner class="label" v-if="loading"/> -->
+    <FeatherChip v-if="loading" class="chip-checking">
+        <div class="label">
+          {{ loadingText }}
+        </div>
+    </FeatherChip>
+    <FeatherChip v-if="error" class="chip-failed">
+        <div class="label">
+          {{ errorText }}
+        </div>
+    </FeatherChip>
+    <FeatherTooltip
+      title="Success"
+    >      
+      <FeatherChip v-if="appSync" class="chip-success">
+          <template v-slot:icon class="label">
+            <FeatherIcon :icon="checkCircle" class="my-primary-icon label" v-if="appSync" />
+          </template>
+          <div class="label">
+            Sync Complete      
+          </div>
       </FeatherChip>
-      <FeatherTooltip
-        title="Success"
-      >      
-        <FeatherChip v-if="appSync" class="chip-success">
-            <template v-slot:icon class="label">
-              <FeatherIcon :icon="checkCircle" class="my-primary-icon label" v-if="appSync" />
-            </template>
-            <div class="label">
-              Complete      
-            </div>
-        </FeatherChip>
-      </FeatherTooltip>
-    </div>
-    <div>
-      <table
-        :class="{ 'tc1 tr2 tc4 tr6': true, hover: true }"
-      >
-        <thead>
-          <tr>
-            <th scope="col">
-              Appliance Name
-          </th>
-            <th scope="col">Node Id</th>
-            <th scope="col">IP Address</th>
-            <th scope="col">Location</th>
-            <th scope="col">Minion Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="appliance in appliances">
-            <td>{{ appliance.applianceLabel }}</td>
-            <td>{{ appliance.nodeId }}</td> 
-            <td>{{ appliance.nodeIpAddress }}</td>
-            <td>{{ appliance.nodeLocation }}</td>
-            <td>{{ appliance.nodeStatus }}</td>
-          </tr>
-        </tbody>
-      </table>
-      <FeatherPagination :total="100" :page-size="10" :modelValue="1" />
-    </div>
+    </FeatherTooltip>
+    <FeatherChip v-if="loading" class="chip-failed">
+        <div class="label">
+          {{ loadingText }}
+        </div>
+    </FeatherChip>
+    
+    <FeatherButton v-on:click="configureAppliances()">
+        Sync Appliance Inventory
+    </FeatherButton>
+  </div>
+  <div id="appliance-table">
+    <table
+      :class="{ 'tc1 tr2 tc4 tr6': true, hover: true }"
+    >
+      <thead>
+        <tr>
+          <th scope="col">
+            Appliance Name
+        </th>
+          <th scope="col">Node Id</th>
+          <th scope="col">IP Address</th>
+          <th scope="col">Location</th>
+          <th scope="col">Minion Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="appliance in appliances">
+          <td>{{ appliance.applianceLabel }}</td>
+          <td>{{ appliance.nodeId }}</td> 
+          <td>{{ appliance.nodeIpAddress }}</td>
+          <td>{{ appliance.nodeLocation }}</td>
+          <td>{{ appliance.nodeStatus }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <FeatherPagination :total="100" :page-size="10" :modelValue="1" />
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -82,10 +103,15 @@ const checkCircle = computed(() => {
   return markRaw(CheckCircle);
 })
 
+const error = ref(false);
+const errorText = ref('Error!')
 const loading = ref(false);
+const loadingText = ref('Loading...');
 const appSync = ref(false);
 const notified = ref(false);
 const notification = ref('');
+const tableNotified = ref(false);
+const tableNotification = ref('');
 
 onMounted(async () => {
   getConfigurationStatus();
@@ -95,19 +121,23 @@ const configureAppliancesDummy = async() => {
   let response = { code : 0, message: '' }
   appSync.value = false;
   loading.value = true;
+  loadingText.value = 'Syncing';
   //Call Appliance manager
   await setTimeout(async() => {
     console.log('faking a request');
     response = { code: 200, message: 'Appliances Synced' };
-    loading.value = false;
 
-    if (response.code >= 200 && response.code <= 300) {
-      console.log('maybe also replace spinner with checkmark');
+    if (response.code >= 200 && response.code < 300) {
       appSync.value = true;
-      //TODO: move to store or use emits or something
-      //along those lines
       notified.value = true;
       notification.value = response.message
+
+      loadingText.value = 'Refreshing Table';
+      await setTimeout(async () => {
+        loading.value = false;
+        tableNotified.value = true;
+        tableNotification.value = 'Table Refreshed';
+      }, 1000);
     }
   }, 1000);
 
@@ -115,19 +145,29 @@ const configureAppliancesDummy = async() => {
 
 const configureAppliances = async () => {
   appSync.value = false;
+  loading.value = true;
+  loadingText.value = 'Syncing';
   const val = await fetch('/opennms/rest/plugin/cloud/appliance/configure', { method: 'POST' });
   try {
     const response = await val.json();
-    if (response.code >= 200 && response.code <= 300) {
-      console.log('maybe also replace spinner with checkmark');
+    if (response.code >= 200 && response.code < 300) {
       appSync.value = true;
       //TODO: move to store or use emits or something along those lines
       notified.value = true;
       notification.value = response.message || 'Sync completed'
-      // fire off a refresh of the table
-      getConfigurationStatus();
+      
+      loadingText.value = 'Refreshing Table.';
+      // fire off a refresh of the table, wait for 2 seconds before doing so though
+      // Just doing this in case behind the scenes theres a call that doesn't complete before our refresh does
+      // should reconfigure to re-poll/refresh the table ever 30 seconds or so
+      setTimeout(() => {
+        getConfigurationStatus();
+      }, 2000);
     }
   } catch (e) {
+    error.value = true;
+    errorText.value = 'Failed to Configure.'
+    loading.value = false;
     console.error('Error executing configureAppliance: ', e);
   }
 };
@@ -141,8 +181,14 @@ const getConfigurationStatus = async () => {
   try {
     const jsonResponse = await val.json();
     appliances.value = jsonResponse;
+    tableNotified.value = true;
+    tableNotification.value = 'Table Refreshed.';
   } catch (e) {
     console.error('Error connecting to API', e);
+    tableNotified.value = true;
+    tableNotification.value = 'Table Refresh Failed.';
+  } finally {
+    loading.value = false;
   }
 }
 </script>
@@ -187,8 +233,12 @@ table {
 }
 .chip-success {
   background-color: var(--feather-success);
-  // margin-top: 50px;
-  margin-left: 25px;;
+  .label {
+    color: var(--feather-surface);
+  }
+}
+.chip-failed {
+  background-color: var(--feather-error);
   .label {
     color: var(--feather-surface);
   }
@@ -196,5 +246,13 @@ table {
 .container {
   display: flex;
   justify-content: flex-end;
+}
+
+.start-item {
+  align-self: flex-start;
+}
+
+.end-item {
+  align-self: flex-end;
 }
 </style>
