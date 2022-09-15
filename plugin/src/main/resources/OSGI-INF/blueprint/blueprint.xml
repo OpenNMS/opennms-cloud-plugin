@@ -100,6 +100,7 @@
 
     <bean id="cloudConfigRestService" class="org.opennms.plugins.cloud.rest.CloudConfigRestServiceImpl" >
         <argument ref="cloudConfigManager"/>
+        <argument ref="applianceManager"/>
     </bean>
     <service interface="org.opennms.plugins.cloud.rest.CloudConfigRestService" ref="cloudConfigRestService" >
         <service-properties>

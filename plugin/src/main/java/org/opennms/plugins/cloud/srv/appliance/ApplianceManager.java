@@ -63,6 +63,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -95,14 +97,66 @@ public class ApplianceManager {
     private static final String CLOUD_BASE_URL = "https://dev.cloud.opennms.com/api/v1/external";
 
     // TODO: fill this in...
-    private static final String PAS_TOKEN = "";
+    private final String PAS_TOKEN;
 
     private static final String PORTAL_BASE_URL = "https://dev.cloud.opennms.com/api/portal";
+    private final InetAddress myAddress;
+    private String connProfileID;
+    private String instanceID;
 
     public ApplianceManager(NodeDao dao, EventForwarder ef) {
+        InetAddress myAddress1;
         this.eventForwarder = ef;
         this.nodeDao = dao;
         httpclient = HttpClients.createDefault();
+
+        PAS_TOKEN = System.getenv("PAS_TOKEN");
+//        LOG.error("PAS_TOKEN is "+PAS_TOKEN);
+
+        try {
+            myAddress1 = InetAddress.getLocalHost();
+        } catch(UnknownHostException e) {
+            LOG.error("Unable to get OpenNMS host address for connectivity profile: "+e.getLocalizedMessage());
+            myAddress1 = InetAddress.getLoopbackAddress();
+        }
+        myAddress = myAddress1;
+    }
+
+    public void configureInstance(String key) {
+        LOG.warn("configureInstance is running for " + key);
+        instanceID = this.getInstanceIdByName("Zoe-Test");
+        if (instanceID == null) {
+            throw new IllegalStateException("Unable to find Onms instance");
+        }
+
+        String url = new String("http://" + myAddress.getHostAddress() + ":8980/opennms");
+        var httpInfo = new OnmsHttpInfo();
+        httpInfo.setHttpUrl(url);
+        httpInfo.setHttpUser("admin");
+        httpInfo.setHttpPassword("admin");
+
+        url = new String("failover:tcp://" + myAddress.getHostAddress() + ":61616");
+        var broker = new OnmsBrokerActiveMq();
+        broker.setUrl(url);
+        broker.setUser("admin");
+        broker.setPassword("admin");
+
+        // Simulate Platform Access Service - create the connectivity profile.
+        this.createConnectivityProfile(instanceID, httpInfo, broker);
+
+        connProfileID = this.getConnectivityProfileIdByInstanceId(instanceID);
+//        if (connProfId == null) {
+//            throw new IllegalStateException("Unable to get connectivity profile");
+//        }
+
+//        var locationId= this.createLocation("kiwis-den", instanceID, connProfileID);
+//        if (locationId == null) {
+//            throw new IllegalStateException("Unable to create location");
+//        }
+
+        System.out.println("Instance Id: " + instanceID);
+        System.out.println("Connectivity Profile Id: " + connProfileID);
+//        System.out.println("Location Id: " + locationId);
     }
 
     public void updateApplianceList() {
@@ -130,6 +184,11 @@ public class ApplianceManager {
                 });
             }
             configMap.put(appliance.getId(), applianceConfig);
+
+            var locationID= this.createLocation("kiwi-" + appliance.getId(), instanceID, connProfileID);
+            if (locationID != null) {
+                this.setApplianceMonitoringWorkload(appliance.getId(), locationID);
+            }
         });
 
         LOG.info("Loaded config map with " + appliances.size() + " entries.");

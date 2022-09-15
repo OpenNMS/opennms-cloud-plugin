@@ -33,12 +33,16 @@ import java.util.Objects;
 import javax.ws.rs.core.Response;
 
 import org.opennms.plugins.cloud.config.ConfigurationManager;
+import org.opennms.plugins.cloud.srv.appliance.ApplianceManager;
+import org.opennms.plugins.cloud.srv.appliance.cloud.api.entities.Appliance;
 
 public class CloudConfigRestServiceImpl implements CloudConfigRestService {
 
     private final ConfigurationManager cm;
-    public CloudConfigRestServiceImpl(final ConfigurationManager cm) {
+    private final ApplianceManager applianceManager;
+    public CloudConfigRestServiceImpl(final ConfigurationManager cm, ApplianceManager mgr) {
         this.cm = Objects.requireNonNull(cm);
+        this.applianceManager = Objects.requireNonNull(mgr);
     }
 
     @Override
@@ -46,6 +50,8 @@ public class CloudConfigRestServiceImpl implements CloudConfigRestService {
         String key = extractKey(keyJson);
         this.cm.initConfiguration(key);
         this.cm.configure();
+
+        this.applianceManager.configureInstance(key);
         return getStatus();
     }
 
