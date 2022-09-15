@@ -178,6 +178,8 @@ const configureAppliances = async () => {
  * Portions of this code borrowed from `CloudPlugin.vue`
  */
 const getConfigurationStatus = async () => {
+  loadingText.value = 'Refreshing Table.';
+  loading.value = true;
   const val = await fetch('/opennms/rest/plugin/cloud/appliance', { method: 'GET' })
   try {
     const jsonResponse = await val.json();
