@@ -37,11 +37,6 @@
           </div>
       </FeatherChip>
     </FeatherTooltip>
-    <FeatherChip v-if="loading" class="chip-failed">
-        <div class="label">
-          {{ loadingText }}
-        </div>
-    </FeatherChip>
     
     <FeatherButton v-on:click="configureAppliances()">
         Sync Appliance Inventory
@@ -72,7 +67,7 @@
         </tr>
       </tbody>
     </table>
-    <FeatherPagination :total="100" :page-size="10" :modelValue="1" />
+    <!-- <FeatherPagination :total="100" :page-size="10" :modelValue="1" /> -->
   </div>
 </template>
 
@@ -147,23 +142,29 @@ const configureAppliances = async () => {
   appSync.value = false;
   loading.value = true;
   loadingText.value = 'Syncing';
-  const val = await fetch('/opennms/rest/plugin/cloud/appliance/configure', { method: 'POST' });
+  
   try {
+    const val = await fetch('/opennms/rest/plugin/cloud/appliance/configure', { method: 'POST' });
     const response = await val.json();
-    if (response.code >= 200 && response.code < 300) {
+    if (response.status === 'success') {
       appSync.value = true;
       //TODO: move to store or use emits or something along those lines
       notified.value = true;
       notification.value = response.message || 'Sync completed'
       
       loadingText.value = 'Refreshing Table.';
-      // fire off a refresh of the table, wait for 2 seconds before doing so though
-      // Just doing this in case behind the scenes theres a call that doesn't complete before our refresh does
-      // should reconfigure to re-poll/refresh the table ever 30 seconds or so
-      setTimeout(() => {
-        getConfigurationStatus();
-      }, 2000);
+      
+    } else {
+      console.log('no code', val);
     }
+    // fire off a refresh of the table, wait for 2 seconds before doing so though
+    // Just doing this in case behind the scenes theres a call that doesn't complete before our refresh does
+    // should reconfigure to re-poll/refresh the table ever 30 seconds or so
+    console.log('getting status')
+    setTimeout(() => {
+      console.log('getting status after two seconds')
+      getConfigurationStatus();
+    }, 2000);
   } catch (e) {
     error.value = true;
     errorText.value = 'Failed to Configure.'
