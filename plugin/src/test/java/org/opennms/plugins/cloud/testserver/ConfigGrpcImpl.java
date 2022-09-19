@@ -103,4 +103,20 @@ public class ConfigGrpcImpl extends AuthenticateGrpc.AuthenticateImplBase implem
                 .build());
         responseObserver.onCompleted();
     }
+
+    public void renewCertificate(AuthenticateOuterClass.RenewCertificateRequest request, StreamObserver<AuthenticateOuterClass.RenewCertificateResponse> responseObserver) {
+        LOG.info("renewCertificate() called.");
+        Path configZipFile = Path.of("src/test/resources/cert/cloud-credentials.zip");
+        ConfigZipExtractor ex = new ConfigZipExtractor(configZipFile);
+        try {
+            AuthenticateOuterClass.RenewCertificateResponse response = AuthenticateOuterClass.RenewCertificateResponse.newBuilder()
+                    .setCertificate(ex.getPublicKey())
+                    .setPrivateKey(ex.getPrivateKey())
+                    .build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        } catch(IOException e) {
+            responseObserver.onError(e);
+        }
+    }
 }
