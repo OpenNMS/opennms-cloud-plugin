@@ -35,6 +35,7 @@ import static org.mockito.Mockito.mockingDetails;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.security.cert.CertificateException;
 import java.time.Duration;
 import java.time.Instant;
 
@@ -46,19 +47,39 @@ public class HousekeeperTest {
     private Housekeeper hk;
 
     @Test
-    public void shouldRenewConfigForExpiredToken() throws InterruptedException {
+    public void shouldRenewConfigForExpiredToken() {
         ConfigurationManager cm = mock(ConfigurationManager.class);
         hk = new Housekeeper(cm, 1);
-        doReturn(Instant.now()
-                .plusSeconds(60*60)) // first time: token valid
+        doReturn(Instant.now().plusSeconds(60*60)) // first time: token valid
                 .doReturn(Instant.now()) // second time: token expired
                 .when(cm).getTokenExpiration();
+        doReturn(Instant.now().plusSeconds(60*60)).when(cm).getCertExpiration(); // cert always valid
+        cm.getTokenExpiration();
         hk.init();
         verify(cm, times(0)).configure();
         await()
                 .during(Duration.ofMillis(800)) // no config should be called during ramp up time (1sec)
                 .atMost(Duration.ofMillis(5000)) // config should have been called by now
                 .until (() -> mockingDetails(cm).getInvocations().stream().anyMatch(i -> "configure".equals(i.getMethod().getName())));
+        verify(cm, times(1)).configure();
+    }
+
+    @Test
+    public void shouldRenewExpiredCerts() throws CertificateException {
+        ConfigurationManager cm = mock(ConfigurationManager.class);
+        hk = new Housekeeper(cm, 1);
+        doReturn(Instant.now().plusSeconds(60*60)) // first time: cert valid
+                .doReturn(Instant.now()) // second time: cert expired
+                .when(cm).getCertExpiration();
+        doReturn(Instant.now().plusSeconds(60*60)).when(cm).getTokenExpiration(); // token always valid
+        hk.init();
+        verify(cm, times(0)).renewCerts();
+        verify(cm, times(0)).configure();
+        await()
+                .during(Duration.ofMillis(800)) // no cert renewal should be called during ramp up time (1sec)
+                .atMost(Duration.ofMillis(5000)) // cert renewal should have been called by now
+                .until (() -> mockingDetails(cm).getInvocations().stream().anyMatch(i -> "renewCerts".equals(i.getMethod().getName())));
+        verify(cm, times(1)).renewCerts();
         verify(cm, times(1)).configure();
     }
 
