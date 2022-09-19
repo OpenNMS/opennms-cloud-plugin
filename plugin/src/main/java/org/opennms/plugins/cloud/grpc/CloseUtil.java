@@ -41,20 +41,25 @@ import lombok.extern.slf4j.Slf4j;
 public class CloseUtil implements AutoCloseable {
     final List<AutoCloseable> closeables = new ArrayList<>();
 
-    public void add(AutoCloseable closeable) {
+    public CloseUtil add(AutoCloseable closeable) {
         if(closeable != null) {
             closeables.add(closeable);
         }
+        return this;
     }
 
     @Override
     public void close() {
         for (AutoCloseable closable : closeables) {
-            try {
-                closable.close();
-            } catch (Exception e) {
-                log.warn("An exception occured while trying to close", e);
-            }
+            close(closable);
+        }
+    }
+
+    public static void close(final AutoCloseable closable) {
+        try {
+            closable.close();
+        } catch (Exception e) {
+            log.warn("An exception occurred while trying to close", e);
         }
     }
 }

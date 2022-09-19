@@ -123,10 +123,14 @@ public class GrpcConnection<T extends AbstractBlockingStub<T>> implements AutoCl
     }
 
     @Override
-    public void close() throws InterruptedException {
+    public void close() {
         if (managedChannel != null) {
             managedChannel.shutdownNow();
-            managedChannel.awaitTermination(15, TimeUnit.SECONDS);
+            try {
+                managedChannel.awaitTermination(15, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 

@@ -47,6 +47,7 @@ import org.opennms.integration.api.v1.timeseries.StorageException;
 import org.opennms.integration.api.v1.timeseries.TagMatcher;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesFetchRequest;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
+import org.opennms.plugins.cloud.grpc.CloseUtil;
 import org.opennms.plugins.cloud.grpc.GrpcConnection;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.GrpcService;
@@ -82,13 +83,7 @@ public class TsaasStorage implements TimeSeriesStorage, GrpcService {
         GrpcConnection<TimeseriesGrpc.TimeseriesBlockingStub> oldGrpc = this.grpc;
         LOG.debug("Initializing Grpc Connection with host {} and port {}", grpcConfig.getHost(), grpcConfig.getPort());
         this.grpc = new GrpcConnection<>(grpcConfig, TimeseriesGrpc::newBlockingStub);
-        if(oldGrpc != null) {
-            try {
-                oldGrpc.close();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
+        CloseUtil.close(oldGrpc);
     }
 
     @Override
@@ -174,8 +169,6 @@ public class TsaasStorage implements TimeSeriesStorage, GrpcService {
     }
 
     public void destroy() throws InterruptedException {
-        if(this.grpc !=null) {
-            grpc.close();
-        }
+        CloseUtil.close(this.grpc);
     }
 }

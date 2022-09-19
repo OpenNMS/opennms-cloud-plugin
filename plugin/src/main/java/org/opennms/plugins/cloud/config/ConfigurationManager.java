@@ -164,7 +164,7 @@ public class ConfigurationManager {
      * This is step
      * 5.) authenticate(String opennmsKey, environment-uuid, system-uuid) return cert, grpc endpoint
      */
-    public void initConfiguration(final String key) throws InterruptedException {
+    public void initConfiguration(final String key) {
         LOG.info("Starting configuration of cloud connection.");
 
         if(!PrerequisiteChecker.isSystemIdOk(this.runtimeInfo.getSystemId())) {
