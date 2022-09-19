@@ -74,8 +74,11 @@ public class GrpcConnection<T extends AbstractBlockingStub<T>> {
         } else {
             builder.sslContext(createSslContext(config));
         }
-        // setup message size
-        builder.maxInboundMessageSize(MAX_MESSAGE_SIZE).maxInboundMetadataSize(MAX_MESSAGE_SIZE);
+        // setup message size & keepalive time DC-282
+        builder.maxInboundMessageSize(MAX_MESSAGE_SIZE).maxInboundMetadataSize(MAX_MESSAGE_SIZE)
+                .keepAliveTime(10, TimeUnit.SECONDS)
+                .keepAliveTimeout(5, TimeUnit.SECONDS)
+                .keepAliveWithoutCalls(true);
         managedChannel = builder
                 .compressorRegistry(ZStdCodecRegisterUtil.createCompressorRegistry())
                 .decompressorRegistry(ZStdCodecRegisterUtil.createDecompressorRegistry())
