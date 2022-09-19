@@ -103,7 +103,7 @@ public class ConfigurationManagerTest {
   }
 
   @Test
-  public void shouldGetCloudConfig() {
+  public void shouldGetCloudConfig() throws InterruptedException {
     TsaasStorage grpc = mock(TsaasStorage.class);
     when(grpc.checkHealth()).thenReturn(Tsaas.CheckHealthResponse.newBuilder().setStatus(Tsaas.CheckHealthResponse.ServingStatus.SERVING).build());
     ConfigurationManager cm = new ConfigurationManager(scv, clientConfig, clientConfig, mock(RegistrationManager.class),
@@ -129,7 +129,7 @@ public class ConfigurationManagerTest {
   }
 
   @Test
-  public void shouldSetStatusForFailedInit() {
+  public void shouldSetStatusForFailedInit() throws InterruptedException {
     ConfigurationManager cm = new ConfigurationManager(scv, clientConfig, clientConfig, mock(RegistrationManager.class),
             info,
             Collections.singletonList(grpc));
@@ -166,6 +166,7 @@ public class ConfigurationManagerTest {
     assertTrue(scvUtil.getOrNull(SecureCredentialsVaultUtil.Type.publickey).startsWith("-----BEGIN CERTIFICATE-----"));
     assertEquals(CONFIGURED, cm.getStatus());
   }
+
   @Test
   public void shouldRenewCredentialsFail() {
     TsaasStorage grpc = mock(TsaasStorage.class);

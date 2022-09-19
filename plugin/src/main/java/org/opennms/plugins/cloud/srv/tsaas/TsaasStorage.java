@@ -84,7 +84,7 @@ public class TsaasStorage implements TimeSeriesStorage, GrpcService {
         this.grpc = new GrpcConnection<>(grpcConfig, TimeseriesGrpc::newBlockingStub);
         if(oldGrpc != null) {
             try {
-                oldGrpc.shutDown();
+                oldGrpc.close();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
@@ -175,7 +175,7 @@ public class TsaasStorage implements TimeSeriesStorage, GrpcService {
 
     public void destroy() throws InterruptedException {
         if(this.grpc !=null) {
-            grpc.shutDown();
+            grpc.close();
         }
     }
 }

@@ -43,9 +43,16 @@ public class CloudConfigRestServiceImpl implements CloudConfigRestService {
 
     @Override
     public Response putActivationKey(final String keyJson) {
-        String key = extractKey(keyJson);
-        this.cm.initConfiguration(key);
-        this.cm.configure();
+        try {
+            String key = extractKey(keyJson);
+            this.cm.initConfiguration(key);
+            this.cm.configure();
+        } catch (Exception e) {
+            return Response
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("{\"status\":\"" + cm.getStatus() + "\", \"message\":\"" + e.getMessage() + "}")
+                    .build();
+        }
         return getStatus();
     }
 

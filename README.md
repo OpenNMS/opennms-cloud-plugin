@@ -8,7 +8,7 @@ Initially it will provide storage for time series data (tsaas).
 ### System Id
 The default system id of older OpenNMS installations is '00000000-0000-0000-0000-000000000000'.
 It is advisable to change it to a true UUID.
-This will help to distinguish different systems.
+This will allow to distinguish different systems in the cloud logs.
 
 Execute this sql against your database:
 ```
@@ -27,6 +27,13 @@ Install into OpenNMS via Karaf shell:
 feature:repo-add mvn:org.opennms.plugins.cloud/karaf-features/1.0.0-SNAPSHOT/xml
 feature:install opennms-cloud-plugin
 ```
+
+Check if it was properly installed and started:
+```
+feature:list | grep opennms-cloud-plugin
+```
+we expect it to say: _Started_
+
 ## Configuration
 ### Initializing
 Before the Cloud Plugin can be used with the OpenNMS Cloud it needs to be configured.

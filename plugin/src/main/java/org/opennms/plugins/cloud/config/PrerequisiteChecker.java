@@ -13,12 +13,8 @@ public class PrerequisiteChecker {
     }
 
     static boolean isSystemIdOk(final String systemId) {
-        if(systemId == null ||
-                systemId.length() < 36 ||
-                systemId.matches("[0-]*")){
-            LOG.error("No unique system id provided: '{}'. Please check in table 'monitoringsystems'.", systemId);
-            return false;
-        }
-        return true;
+        return systemId != null &&
+                systemId.length() >= 36 &&
+                !systemId.matches("[0-]*");
     }
 }

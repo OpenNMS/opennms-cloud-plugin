@@ -59,7 +59,7 @@ import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
 import io.grpc.stub.AbstractBlockingStub;
 
-public class GrpcConnection<T extends AbstractBlockingStub<T>> {
+public class GrpcConnection<T extends AbstractBlockingStub<T>> implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(GrpcConnection.class);
     // 100M sync with cortex server
     private static final int MAX_MESSAGE_SIZE = 104857600;
@@ -122,7 +122,8 @@ public class GrpcConnection<T extends AbstractBlockingStub<T>> {
         }
     }
 
-    public void shutDown() throws InterruptedException {
+    @Override
+    public void close() throws InterruptedException {
         if (managedChannel != null) {
             managedChannel.shutdownNow();
             managedChannel.awaitTermination(15, TimeUnit.SECONDS);

@@ -28,38 +28,31 @@
 
 package org.opennms.plugins.cloud.config.shell;
 
-import java.util.Objects;
+import java.security.cert.CertificateException;
 
 import org.apache.karaf.shell.api.action.Action;
-import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.opennms.plugins.cloud.config.ConfigurationManager;
 
-@Command(scope = "opennms-cloud", name = "configure", description = "Contacts platform access service (PAS) and retrieves configuration")
+@Command(scope = "opennms-cloud", name = "renewcert", description = "Contacts platform access service (PAS) and retrieves new certificates")
 @Service
-public class ConfigureCloud implements Action {
+public class RenewCertificate implements Action {
 
     @Reference
     private ConfigurationManager manager;
 
-    @Argument()
-    String apiKey;
-
     @Override
-    public Object execute() throws InterruptedException {
-        if(apiKey == null || apiKey.isBlank()) {
-            System.out.println("please enter api key");
-            return null;
-        }
-        Objects.requireNonNull(this.apiKey);
-        manager.initConfiguration(apiKey);
-        ConfigurationManager.ConfigStatus status = manager.configure();
+    public Object execute() throws CertificateException {
+        manager.renewCerts();
+        manager.configure();
+        ConfigurationManager.ConfigStatus status = manager.getStatus();
+
         if(ConfigurationManager.ConfigStatus.CONFIGURED == status) {
-            System.out.println("Configuration was successful.");
+            System.out.println("Renewing of certificates was successful.");
         } else {
-            System.out.printf("Configuration failed: %s. Check log (log:display) for details.", status);
+            System.out.printf("Renewing of certificates: %s. Check log (log:display) for details.", status);
         }
         return null;
     }

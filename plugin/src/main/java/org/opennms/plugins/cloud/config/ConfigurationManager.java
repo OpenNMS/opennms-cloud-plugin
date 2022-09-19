@@ -49,6 +49,7 @@ import org.opennms.dataplatform.access.AuthenticateGrpc;
 import org.opennms.integration.api.v1.runtime.RuntimeInfo;
 import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
 import org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.Type;
+import org.opennms.plugins.cloud.grpc.CloseUtil;
 import org.opennms.plugins.cloud.grpc.GrpcConnection;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.GrpcService;
@@ -163,18 +164,18 @@ public class ConfigurationManager {
      * This is step
      * 5.) authenticate(String opennmsKey, environment-uuid, system-uuid) return cert, grpc endpoint
      */
-    public void initConfiguration(final String key) {
+    public void initConfiguration(final String key) throws InterruptedException {
+        LOG.info("Starting configuration of cloud connection.");
+
         if(!PrerequisiteChecker.isSystemIdOk(this.runtimeInfo.getSystemId())) {
             LOG.warn("System id is not set up. It is advisable to set it up, see here: https://github.com/OpenNMS/opennms-cloud-plugin#system-id");
         }
-        try {
-            Objects.requireNonNull(key);
 
-            LOG.info("Starting configuration of cloud connection.");
+        try (GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> grpcWithTls = new GrpcConnection<>(pasConfigTls,
+                AuthenticateGrpc::newBlockingStub)) {
 
+            Objects.requireNonNull(key, "key must not be null");
             // Fetching initial credentials via TLS and cloud key
-            GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> grpcWithTls = new GrpcConnection<>(pasConfigTls,
-                    AuthenticateGrpc::newBlockingStub);
             final PasAccess pasWithTls = new PasAccess(grpcWithTls);
             Map<SecureCredentialsVaultUtil.Type, String> cloudCredentials = pasWithTls.getCredentialsFromAccessService(key, runtimeInfo.getSystemId());
             LOG.info("Cloud configuration received from PAS (Platform Access Service).");
@@ -190,13 +191,14 @@ public class ConfigurationManager {
     }
 
     public void renewCerts() throws CertificateException {
-        try {
+        try (CloseUtil closeUtil = new CloseUtil()) {
             LOG.info("Starting renewing of certificates.");
             GrpcConnectionConfig cloudGatewayConfig = readCloudGatewayConfig();
             this.certExpirationDate = CertUtil.getExpiryDate(cloudGatewayConfig.getPublicKey());
             GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> pasWithMtlsConfig = createPasGrpc(cloudGatewayConfig);
+            closeUtil.add(pasWithMtlsConfig);
             final PasAccess pasWithMtls = new PasAccess(pasWithMtlsConfig);
-            Map<SecureCredentialsVaultUtil.Type, String> cloudCredentials = pasWithMtls.renewCertificate(runtimeInfo.getSystemId());
+            Map<Type, String> cloudCredentials = pasWithMtls.renewCertificate(runtimeInfo.getSystemId());
             LOG.info("New certificates received from PAS (Platform Access Service).");
             cloudCredentials.put(Type.configstatus, AUTHENTCATED.name());
             scv.putProperties(cloudCredentials);
@@ -216,15 +218,11 @@ public class ConfigurationManager {
      */
     public ConfigStatus configure() {
         String systemId = runtimeInfo.getSystemId();
-        if(!PrerequisiteChecker.isSystemIdOk(systemId)) {
-            LOG.error("Cannot configure cloud connection, please fix systemId first!");
-            this.currentStatus = ConfigStatus.FAILED;
-            return this.currentStatus;
-        }
-        try {
+        try (CloseUtil closeUtil = new CloseUtil()) {
             GrpcConnectionConfig cloudGatewayConfig = readCloudGatewayConfig();
             this.certExpirationDate = CertUtil.getExpiryDate(cloudGatewayConfig.getPublicKey());
             GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> pasWithMtlsConfig = createPasGrpc(cloudGatewayConfig);
+            closeUtil.add(pasWithMtlsConfig);
             final PasAccess pasWithMtls = new PasAccess(pasWithMtlsConfig);
 
             // step 7: identify

@@ -26,22 +26,35 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.config;
+package org.opennms.plugins.cloud.grpc;
 
-import java.io.ByteArrayInputStream;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
-public class CertUtil {
+import lombok.extern.slf4j.Slf4j;
 
-    private CertUtil() {}
+/**
+ * Convenient way to collect closables and close them at once.
+ * Handles Exceptions and null objects.
+ */
+@Slf4j
+public class CloseUtil implements AutoCloseable {
+    final List<AutoCloseable> closeables = new ArrayList<>();
 
-    public static Instant getExpiryDate(final String cert) throws CertificateException {
-        X509Certificate x509Certificate = (X509Certificate) CertificateFactory
-                .getInstance("X509")
-                .generateCertificate(new ByteArrayInputStream(cert.getBytes()));
-        return x509Certificate.getNotAfter().toInstant();
+    public void add(AutoCloseable closeable) {
+        if(closeable != null) {
+            closeables.add(closeable);
+        }
+    }
+
+    @Override
+    public void close() {
+        for (AutoCloseable closable : closeables) {
+            try {
+                closable.close();
+            } catch (Exception e) {
+                log.warn("An exception occured while trying to close", e);
+            }
+        }
     }
 }

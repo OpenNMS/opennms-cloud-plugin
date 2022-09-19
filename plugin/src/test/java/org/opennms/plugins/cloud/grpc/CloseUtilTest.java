@@ -26,22 +26,28 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.config;
+package org.opennms.plugins.cloud.grpc;
 
-import java.io.ByteArrayInputStream;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.time.Instant;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
-public class CertUtil {
+import org.junit.Test;
 
-    private CertUtil() {}
+public class CloseUtilTest {
 
-    public static Instant getExpiryDate(final String cert) throws CertificateException {
-        X509Certificate x509Certificate = (X509Certificate) CertificateFactory
-                .getInstance("X509")
-                .generateCertificate(new ByteArrayInputStream(cert.getBytes()));
-        return x509Certificate.getNotAfter().toInstant();
+    @Test
+    public void shouldCloseAll() throws Exception {
+        AutoCloseable goodClosable = mock(AutoCloseable.class);
+        AutoCloseable closeAbleThatThrowsExeption = mock(AutoCloseable.class);
+        doThrow(new NullPointerException()).when(closeAbleThatThrowsExeption).close();
+        CloseUtil closeUtil = new CloseUtil();
+        closeUtil.add(goodClosable);
+        closeUtil.add(closeAbleThatThrowsExeption);
+        closeUtil.add(null); // null should be ignored and not cause an exception
+        closeUtil.close();
+        verify(goodClosable, times(1)).close();
+        verify(closeAbleThatThrowsExeption, times(1)).close();
     }
 }
