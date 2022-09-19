@@ -31,6 +31,7 @@ package org.opennms.plugins.cloud.config;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.AUTHENTCATED;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.CONFIGURED;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.FAILED;
+import static org.opennms.plugins.cloud.config.PrerequisiteChecker.checkAndLogSystemId;
 import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.TOKEN_KEY;
 
 import java.nio.file.Files;
@@ -166,10 +167,7 @@ public class ConfigurationManager {
      */
     public void initConfiguration(final String key) {
         LOG.info("Starting configuration of cloud connection.");
-
-        if(!PrerequisiteChecker.isSystemIdOk(this.runtimeInfo.getSystemId())) {
-            LOG.warn("System id is not set up. It is advisable to set it up, see here: https://github.com/OpenNMS/opennms-cloud-plugin#system-id");
-        }
+        checkAndLogSystemId(this.runtimeInfo.getSystemId());
 
         try (GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> grpcWithTls = new GrpcConnection<>(pasConfigTls,
                 AuthenticateGrpc::newBlockingStub)) {
