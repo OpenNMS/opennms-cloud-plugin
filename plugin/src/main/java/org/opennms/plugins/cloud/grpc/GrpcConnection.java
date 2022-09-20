@@ -124,13 +124,11 @@ public class GrpcConnection<T extends AbstractBlockingStub<T>> implements AutoCl
 
     @Override
     public void close() {
-        if (managedChannel != null) {
-            managedChannel.shutdownNow();
-            try {
-                managedChannel.awaitTermination(15, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+        managedChannel.shutdownNow();
+        try {
+            managedChannel.awaitTermination(15, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -157,9 +155,8 @@ public class GrpcConnection<T extends AbstractBlockingStub<T>> implements AutoCl
                 }
             };
         }
-    }
-
-    private static boolean isNotEmpty(String s) {
-        return s != null && !s.isBlank();
+        private static boolean isNotEmpty(String s) {
+            return s != null && !s.isBlank();
+        }
     }
 }
