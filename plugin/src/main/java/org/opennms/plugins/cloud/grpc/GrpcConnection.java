@@ -28,8 +28,6 @@
 
 package org.opennms.plugins.cloud.grpc;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
-
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
@@ -152,12 +150,16 @@ public class GrpcConnection<T extends AbstractBlockingStub<T>> implements AutoCl
             return new ForwardingClientCall.SimpleForwardingClientCall<>(next.newCall(method, callOptions)) {
                 @Override
                 public void start(final Listener<O> responseListener, final Metadata headers) {
-                    if(!isNullOrEmpty(tokenKey) && !isNullOrEmpty(tokenValue) ) {
+                    if(isNotEmpty(tokenKey) && isNotEmpty(tokenValue)) {
                         headers.put(Metadata.Key.of(tokenKey, Metadata.ASCII_STRING_MARSHALLER), tokenValue);
                     }
                     super.start(responseListener, headers);
                 }
             };
         }
+    }
+
+    private static boolean isNotEmpty(String s) {
+        return s != null && !s.isBlank();
     }
 }
