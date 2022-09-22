@@ -5,22 +5,35 @@ Initially it will provide storage for time series data (tsaas).
 
 # Installation
 ## Prerequisites
+### OpenNMS System
+The cloud plugin requires an [OpenNMS installation](https://docs.opennms.com/horizon/30/deployment/core/getting-started.html).
+
+Before installing stop your OpenNMS instance.
+
 ### System Id
 The default system id of older OpenNMS installations is '00000000-0000-0000-0000-000000000000'.
 It is advisable to change it to a true UUID.
 This will allow to distinguish different systems in the cloud logs.
 
-Execute this sql against your database:
+To change the system id into a UID execute this sql against your database:
 ```
 CREATE EXTENSION pgcrypto;
 UPDATE monitoringsystems SET id=gen_random_uuid () WHERE id = '00000000-0000-0000-0000-000000000000' AND type='OpenNMS' AND location='Default';
 ```
 
-## Build and Install
-Build and install the plugin into your local Maven repository using:
-```
-mvn clean install
-```
+## Installation and Configuration
+###
+### Install 
+The plugin is as `deb` and `rpm` archives available.
+Install with your favorite package manager:
+
+`apt-get install opennms-cloud-plugin`
+### Enabling Timeseries Integration Layer (TSS)
+TSS needs to be activated in order to use the plugin for sending time series data.
+Therefor set `org.opennms.timeseries.strategy=integration` in `[opennms.home]/etc/opennms.properties`
+For more details on TSS and its configuration see [here](https://docs.opennms.com/horizon/30/deployment/time-series-storage/timeseries/ts-integration-layer.html).
+
+Now OpenNMS can be started again.
 
 Install into OpenNMS via Karaf shell:
 ```
@@ -48,6 +61,8 @@ we expect it to say: _Started_
 Before the Cloud Plugin can be used with the OpenNMS Cloud it needs to be configured.
 In order to configure it you need to obtain an access key for your organisation.
 
+TODO: Link to cloud portal where to get access key 
+
 #### Via Web Interface
 Once you have the access key you can enter it into the cloud plugin configuration page within OpenNMS.
 
@@ -64,9 +79,43 @@ In either case the following happens:
 * The Cloud Plugin retrieves all enabled services from PAS.
 * All enabled services are configured and enabled in OpenNMS.
 
-### Configuration Properties
+# Verify / Monitoring
+
+## Health Check
+Check the cloud status with:
+```
+opennms:health-check
+```
+
+# Development
+## Build and Install
+Build and install the plugin into your local Maven repository using:
+```
+mvn clean install
+```
+
+Install into OpenNMS via Karaf shell:
+```
+feature:repo-add mvn:org.opennms.plugins.cloud/karaf-features/1.0.0-SNAPSHOT/xml
+feature:install opennms-cloud-plugin
+```
+
+Check if it was properly installed and started:
+```
+feature:list | grep opennms-cloud-plugin
+```
+we expect it to say: _Started_
+
+## Import Certificates
+
+The initializing can happen via a zip file as an alternative to using PAS.
+
+Move the cloud credentials file to: `[opennms.home]/etc/cloud-credentials.zip`.
+When the plugin is started it will import the cloud credentials automatically and delete the file after successful import.
+
+## Configuration Properties
 The initial properties should be good to go.
-However it is possible to change properties via Karaf shell:
+But for development purposes it is possible to change properties via Karaf shell:
 
 ```
 config:edit org.opennms.plugins.cloud
@@ -77,19 +126,3 @@ property-set tsaas.batchSize 1000
 property-set tsaas.maxBatchWaitTimeInMilliSeconds 5000
 config:update
 ```
-
-# Verify / Monitoring
-
-## Health Check
-Check the cloud status with:
-```
-opennms:health-check
-```
-
-# Development
-## Import Certificates
-
-The initializing can happen via a zip file as an alternative to using PAS.
-
-Move the cloud credentials file to: `[opennms.home]/etc/cloud-credentials.zip`.
-When the plugin is started it will import the cloud credentials automatically and delete the file after successful import.
