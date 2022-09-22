@@ -62,7 +62,7 @@ public class HousekeeperTest {
                 .during(Duration.ofMillis(800)) // no config should be called during ramp up time (1sec)
                 .atMost(Duration.ofMillis(5000)) // config should have been called by now
                 .until (() -> mockingDetails(cm).getInvocations().stream().anyMatch(i -> "configure".equals(i.getMethod().getName())));
-        verify(cm, times(1)).configure();
+        verify(cm, times(2)).configure(); // called by token and cert renewal
     }
 
     @Test
@@ -81,7 +81,7 @@ public class HousekeeperTest {
                 .atMost(Duration.ofMillis(5000)) // cert renewal should have been called by now
                 .until (() -> mockingDetails(cm).getInvocations().stream().anyMatch(i -> "renewCerts".equals(i.getMethod().getName())));
         verify(cm, times(1)).renewCerts();
-        verify(cm, times(1)).configure();
+        verify(cm, times(2)).configure(); // called by token and cert renewal
     }
 
     @Test

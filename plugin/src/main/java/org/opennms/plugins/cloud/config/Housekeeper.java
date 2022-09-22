@@ -68,8 +68,8 @@ public class Housekeeper {
 
 
     public void init() {
-        executor.scheduleAtFixedRate(() -> wrap(this::renewToken), 0, intervalInSecondsForToken, TimeUnit.SECONDS);
-        executor.scheduleAtFixedRate(() -> wrap(this::renewCerts), 0, intervalInSecondsForCert, TimeUnit.SECONDS);
+        executor.scheduleAtFixedRate(() -> wrap(this::renewToken), 1, intervalInSecondsForToken, TimeUnit.SECONDS);
+        executor.scheduleAtFixedRate(() -> wrap(this::renewCerts), 1, intervalInSecondsForCert, TimeUnit.SECONDS);
     }
 
     public void destroy() {
