@@ -61,7 +61,7 @@ public class Housekeeper {
 
     public Housekeeper(final ConfigurationManager configurationManager) {
         this(configurationManager,
-                60 * 5, // token every 5 min
+                60 * 60, // token echeck every 60 min
                 60 * 50 * 24 // cert: check once per day
         );
     }
@@ -78,8 +78,8 @@ public class Housekeeper {
 
     public void renewToken() {
         final Instant expirationDate = configurationManager.getTokenExpiration();
-        // renew 20 min before expiry
-        if (expirationDate.minusSeconds(60L * 20L).isBefore(Instant.now())) {
+        // renew 24h before expiry
+        if (expirationDate.minusSeconds(60L * 60L * 24L).isBefore(Instant.now())) {
             log.info("Triggering renewal of configuration, token will expire soon.");
             this.configurationManager.configure();
         }
