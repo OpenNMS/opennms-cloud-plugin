@@ -28,6 +28,8 @@
 
 package org.opennms.plugins.cloud.config;
 
+import static java.time.temporal.ChronoUnit.DAYS;
+
 import java.security.cert.CertificateException;
 import java.time.Instant;
 import java.util.concurrent.Executors;
@@ -36,29 +38,40 @@ import java.util.concurrent.TimeUnit;
 
 import lombok.extern.slf4j.Slf4j;
 
-/** Schedules and executes needed tasks. */
+/**
+ * Schedules and executes needed tasks.
+ */
 @Slf4j
 public class Housekeeper {
 
     private final ScheduledExecutorService executor;
-    private final int intervalInSeconds;
+    private final int intervalInSecondsForToken;
+    private final int intervalInSecondsForCert;
+
     private final ConfigurationManager configurationManager;
 
-    public Housekeeper(final ConfigurationManager configurationManager, final int intervalInSeconds) {
-        executor = Executors.newSingleThreadScheduledExecutor();
-        this.intervalInSeconds = intervalInSeconds;
+    public Housekeeper(final ConfigurationManager configurationManager,
+                       final int intervalInSecondsForToken,
+                       final int intervalInSecondsForCert) {
         this.configurationManager = configurationManager;
+        executor = Executors.newSingleThreadScheduledExecutor();
+        this.intervalInSecondsForToken = intervalInSecondsForToken;
+        this.intervalInSecondsForCert = intervalInSecondsForCert;
     }
 
     public Housekeeper(final ConfigurationManager configurationManager) {
-        this(configurationManager, 60 * 5);
+        this(configurationManager,
+                60 * 5, // token every 5 min
+                60 * 50 * 24 // cert: check once per day
+        );
     }
 
 
     public void init() {
-        executor.scheduleAtFixedRate(() -> wrap(this::renewToken), intervalInSeconds, intervalInSeconds, TimeUnit.SECONDS);
-        executor.scheduleAtFixedRate(() -> wrap(this::renewCerts), intervalInSeconds, intervalInSeconds, TimeUnit.SECONDS);
+        executor.scheduleAtFixedRate(() -> wrap(this::renewToken), 0, intervalInSecondsForToken, TimeUnit.SECONDS);
+        executor.scheduleAtFixedRate(() -> wrap(this::renewCerts), 0, intervalInSecondsForCert, TimeUnit.SECONDS);
     }
+
     public void destroy() {
         executor.shutdown();
     }
@@ -74,8 +87,8 @@ public class Housekeeper {
 
     public void renewCerts() throws CertificateException {
         final Instant expirationDate = configurationManager.getCertExpiration();
-        // renew 20 min before expiry
-        if(expirationDate.minusSeconds(60L * 20L).isBefore(Instant.now())) {
+        // renew 7 days before expiry
+        if (expirationDate.minus(7, DAYS).isBefore(Instant.now())) {
             log.info("Triggering renewal of certificates, will expire soon.");
             this.configurationManager.renewCerts();
             this.configurationManager.configure();

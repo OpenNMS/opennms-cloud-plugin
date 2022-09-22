@@ -51,11 +51,11 @@ public class HousekeeperTest {
     @Test
     public void shouldRenewConfigForExpiredToken() {
         ConfigurationManager cm = mock(ConfigurationManager.class);
-        hk = new Housekeeper(cm, 1);
-        doReturn(Instant.now().plusSeconds(60*60)) // first time: token valid
+        hk = new Housekeeper(cm, 1, 1);
+        doReturn(Instant.now().plusSeconds(60 * 60)) // first time: token valid
                 .doReturn(Instant.now()) // second time: token expired
                 .when(cm).getTokenExpiration();
-        doReturn(Instant.now().plusSeconds(60*60)).when(cm).getCertExpiration(); // cert always valid
+        doReturn(Instant.now().plusSeconds(60 * 60)).when(cm).getCertExpiration(); // cert always valid
         hk.init();
         verify(cm, times(0)).configure();
         await()
@@ -68,7 +68,7 @@ public class HousekeeperTest {
     @Test
     public void shouldRenewExpiredCerts() throws CertificateException {
         ConfigurationManager cm = mock(ConfigurationManager.class);
-        hk = new Housekeeper(cm, 1);
+        hk = new Housekeeper(cm, 1, 1);
         doReturn(Instant.now().plusSeconds(60*60)) // first time: cert valid
                 .doReturn(Instant.now()) // second time: cert expired
                 .when(cm).getCertExpiration();
@@ -87,7 +87,7 @@ public class HousekeeperTest {
     @Test
     public void shouldNotCrashOnException() throws CertificateException {
         ConfigurationManager cm = mock(ConfigurationManager.class);
-        hk = new Housekeeper(cm, 1);
+        hk = new Housekeeper(cm, 1, 1000);
         doReturn(Instant.now()).when(cm).getTokenExpiration(); // trigger every time
         doReturn(Instant.now().plusSeconds(60*60)).when(cm).getCertExpiration(); // cert always valid
         doThrow(new NullPointerException("oh oh")).when(cm).configure(); // Exception should be ignored
@@ -97,7 +97,7 @@ public class HousekeeperTest {
                 .during(Duration.ofMillis(800)) // no config should be called during ramp up time (1sec)
                 .atMost(Duration.ofMillis(5000)) // config should have been called by now
                 .until (() -> mockingDetails(cm).getInvocations().stream().anyMatch(i -> "configure".equals(i.getMethod().getName())));
-        verify(cm, times(1)).configure();
+        verify(cm, times(2)).configure(); // token + cert
         clearInvocations(cm);
         await()
                 .during(Duration.ofMillis(800)) // no config should be called during ramp up time (1sec)
