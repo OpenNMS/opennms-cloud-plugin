@@ -22,17 +22,17 @@ public class KvConfigStore implements ConfigStore {
 
     @Override
     public Optional<String> get(Key type) {
-        return store.get(STORE_PREFIX, type.name());
+        return store.get(type.name(), STORE_PREFIX);
     }
 
     @Override
     public void putProperty(Key key, String value) {
-        store.put(STORE_PREFIX, key.name(), value);
+        store.put(key.name(), value, STORE_PREFIX);
     }
 
     @Override
     public void putProperties(Map<Key, String> properties) {
         Objects.requireNonNull(properties);
-        properties.forEach((key, value) -> store.put(STORE_PREFIX, key.name(), value));
+        properties.forEach((key, value) -> store.put(key.name(), value, STORE_PREFIX));
     }
 }
