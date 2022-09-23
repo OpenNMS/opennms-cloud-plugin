@@ -28,10 +28,12 @@
 
 package org.opennms.plugins.cloud.config;
 
+import static org.opennms.plugins.cloud.config.ConfigStore.Key.tokenvalue;
 import static org.opennms.plugins.cloud.config.ConfigStore.TOKEN_KEY;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.AUTHENTCATED;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.CONFIGURED;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.FAILED;
+import static org.opennms.plugins.cloud.config.PrerequisiteChecker.checkAndLogContainer;
 import static org.opennms.plugins.cloud.config.PrerequisiteChecker.checkAndLogSystemId;
 
 import java.nio.file.Files;
@@ -61,15 +63,25 @@ import org.slf4j.LoggerFactory;
 
 public class ConfigurationManager {
 
-    /** See also <a href="https://confluence.internal.opennms.com/pages/viewpage.action?spaceKey=PRODDEV&title=High+Level+Message+Sequencing+-+System+Authorization">...</a>. */
+    /**
+     * See also <a href="https://confluence.internal.opennms.com/pages/viewpage.action?spaceKey=PRODDEV&title=High+Level+Message+Sequencing+-+System+Authorization">...</a>.
+     */
     public enum ConfigStatus {
-        /** We never tried to configure the cloud plugin. */
+        /**
+         * We never tried to configure the cloud plugin.
+         */
         NOT_ATTEMPTED,
-        /** The cloud plugin is successfully authenticated (Step 5). */
+        /**
+         * The cloud plugin is successfully authenticated (Step 5).
+         */
         AUTHENTCATED,
-        /** The cloud plugin is configured successfully. (Step 7, 9, 10) */
+        /**
+         * The cloud plugin is configured successfully. (Step 7, 9, 10)
+         */
         CONFIGURED,
-        /** The cloud plugin is configured but the configuration failed. */
+        /**
+         * The cloud plugin is configured but the configuration failed.
+         */
         FAILED
     }
 
@@ -95,7 +107,7 @@ public class ConfigurationManager {
                                 final RegistrationManager serviceManager,
                                 final RuntimeInfo runtimeInfo,
                                 final List<GrpcService> grpcServices
-                                ) {
+    ) {
         this.config = Objects.requireNonNull(config);
         this.pasConfigTls = Objects.requireNonNull(pasConfigTls);
         this.pasConfigMtls = Objects.requireNonNull(pasConfigMtls);
@@ -106,13 +118,15 @@ public class ConfigurationManager {
         boolean importedFromZip = importCloudCredentialsIfPresent();
         if (!importedFromZip
                 // the authentication has been done previously => lets configure and start services
-                && ( AUTHENTCATED.name().equals(this.config.getOrNull(Key.configstatus))
-                  || CONFIGURED.name().equals(this.config.getOrNull(Key.configstatus)))) {
+                && (AUTHENTCATED.name().equals(this.config.getOrNull(Key.configstatus))
+                || CONFIGURED.name().equals(this.config.getOrNull(Key.configstatus)))) {
             configure();
         }
     }
 
-    /** We keep this shortcut currently for testing purposes.  */
+    /**
+     * We keep this shortcut currently for testing purposes.
+     */
     boolean importCloudCredentialsIfPresent() {
         boolean importedFromZipFile = false;
         Path cloudCredentialsFile = Path.of(System.getProperty("opennms.home") + "/etc/cloud-credentials.zip");
@@ -126,7 +140,7 @@ public class ConfigurationManager {
 
                 GrpcConnectionConfig cloudGatewayConfig = readCloudGatewayConfig().toBuilder()
                         .tokenKey(TOKEN_KEY)
-                        .tokenValue(config.getOrNull(Key.tokenvalue))
+                        .tokenValue(config.getOrNull(tokenvalue))
                         .security(GrpcConnectionConfig.Security.MTLS)
                         .build();
 
@@ -167,6 +181,7 @@ public class ConfigurationManager {
     public void initConfiguration(final String key) {
         LOG.info("Starting configuration of cloud connection.");
         checkAndLogSystemId(this.runtimeInfo.getSystemId());
+        checkAndLogContainer(this.runtimeInfo);
 
         try (GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> grpcWithTls = new GrpcConnection<>(pasConfigTls,
                 AuthenticateGrpc::newBlockingStub)) {
@@ -212,8 +227,10 @@ public class ConfigurationManager {
      * These are the steps
      * // 9.) getServices
      * // 10.) getAccessToken (cert, system-uuid, service) return token
+     * synchronized: its ok to call the method multiple times but we don't want it to be called at the same time (just in case).
+     * It is accessed from multiple Threads, e.g. from Housekeeper
      */
-    public ConfigStatus configure() {
+    public synchronized ConfigStatus configure() {
         String systemId = runtimeInfo.getSystemId();
         try (CloseUtil closeUtil = new CloseUtil()) {
             GrpcConnectionConfig cloudGatewayConfig = readCloudGatewayConfig();
@@ -264,14 +281,16 @@ public class ConfigurationManager {
                 AuthenticateGrpc::newBlockingStub);
     }
 
-    /** Registers the active services with OpenNMS. */
-    private void registerServices(final Set<RegistrationManager.Service> activeServices){
-        Set<RegistrationManager.Service> inactiveServices =  new HashSet<>(Arrays.asList(RegistrationManager.Service.values()));
+    /**
+     * Registers the active services with OpenNMS.
+     */
+    private void registerServices(final Set<RegistrationManager.Service> activeServices) {
+        Set<RegistrationManager.Service> inactiveServices = new HashSet<>(Arrays.asList(RegistrationManager.Service.values()));
         inactiveServices.removeAll(activeServices);
-        for(RegistrationManager.Service service : inactiveServices ) {
+        for (RegistrationManager.Service service : inactiveServices) {
             this.serviceManager.deregister(service);
         }
-        for(RegistrationManager.Service service : activeServices ) {
+        for (RegistrationManager.Service service : activeServices) {
             this.serviceManager.register(service);
         }
     }
@@ -288,7 +307,7 @@ public class ConfigurationManager {
     }
 
     public void initGrpcServices(final GrpcConnectionConfig config) {
-        for(GrpcService service: grpcServices) {
+        for (GrpcService service : grpcServices) {
             try {
                 service.initGrpc(config);
             } catch (Exception e) {

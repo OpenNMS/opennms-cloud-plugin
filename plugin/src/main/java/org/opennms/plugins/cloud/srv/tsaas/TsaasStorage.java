@@ -59,6 +59,8 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import lombok.Getter;
+
 /**
  * The OpenNMS Time series as-a-service storage plugin implementation.
  * <p>
@@ -69,8 +71,9 @@ public class TsaasStorage implements TimeSeriesStorage, GrpcService {
     private final TsaasConfig config;
     private final ConcurrentLinkedDeque<Tsaas.Sample> queue; // holds samples to be batched
     private Instant lastBatchSentTs;
+    @Getter
     @VisibleForTesting
-    GrpcConnection<TimeseriesGrpc.TimeseriesBlockingStub> grpc;
+    private GrpcConnection<TimeseriesGrpc.TimeseriesBlockingStub> grpc;
 
     public TsaasStorage(TsaasConfig config) {
         this.config = Objects.requireNonNull(config);
@@ -129,9 +132,9 @@ public class TsaasStorage implements TimeSeriesStorage, GrpcService {
                 .build();
         LOG.trace("Getting the metrics for the following tags: {}", tagsMessage);
         return executeRpcCall(
-            () -> this.grpc.get().findMetrics(tagsMessage),
-            GrpcObjectMapper::toMetrics,
-            Collections::emptyList
+                () -> this.grpc.get().findMetrics(tagsMessage),
+                GrpcObjectMapper::toMetrics,
+                Collections::emptyList
         );
     }
 
@@ -147,9 +150,9 @@ public class TsaasStorage implements TimeSeriesStorage, GrpcService {
                 .build();
         LOG.trace("Getting time series for request: {}", fetchRequest);
         return executeRpcCall(
-            () -> this.grpc.get().getTimeseriesData(fetchRequest),
-            GrpcObjectMapper::toSamples,
-            Collections::emptyList
+                () -> this.grpc.get().getTimeseriesData(fetchRequest),
+                GrpcObjectMapper::toSamples,
+                Collections::emptyList
         );
     }
 

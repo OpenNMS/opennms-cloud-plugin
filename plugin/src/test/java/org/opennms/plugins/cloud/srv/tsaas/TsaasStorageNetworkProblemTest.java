@@ -59,75 +59,75 @@ import org.slf4j.LoggerFactory;
 
 public class TsaasStorageNetworkProblemTest {
 
-  private static final Logger LOG = LoggerFactory.getLogger(TsaasStorageNetworkProblemTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TsaasStorageNetworkProblemTest.class);
 
-  private GrpcTestServer server;
-  private TimeSeriesStorage serverStorage;
-  private GrpcConnectionConfig clientConfig;
+    private GrpcTestServer server;
+    private TimeSeriesStorage serverStorage;
+    private GrpcConnectionConfig clientConfig;
 
-  @Before
-  public void setUp() throws Exception {
-    GrpcConnectionConfig serverConfig = GrpcConnectionConfig.builder()
-            .port(0)
-            .build();
+    @Before
+    public void setUp() throws Exception {
+        GrpcConnectionConfig serverConfig = GrpcConnectionConfig.builder()
+                .port(0)
+                .build();
 
-    serverStorage = Mockito.mock(TimeSeriesStorage.class);
-    server = new GrpcTestServer(serverConfig, new GrpcTestServerInterceptor(), serverStorage);
-    server.startServer();
+        serverStorage = Mockito.mock(TimeSeriesStorage.class);
+        server = new GrpcTestServer(serverConfig, new GrpcTestServerInterceptor(), serverStorage);
+        server.startServer();
 
-    clientConfig = server.getConfig();
-  }
-
-  @After
-  public void tearDown() {
-    if(server !=null) {
-      server.stopServer();
+        clientConfig = server.getConfig();
     }
-  }
 
-  @Test
-  public void shouldRecoverAfterServerFailure() throws StorageException, InterruptedException {
-    TsaasStorage plugin = new TsaasStorage(TsaasConfig.builder().batchSize(1).build());
-    plugin.initGrpc(clientConfig);
+    @After
+    public void tearDown() {
+        if (server != null) {
+            server.stopServer();
+        }
+    }
 
-    plugin.store(createSamples());
-    verify(serverStorage, times(1)).store(any());
-    reset(serverStorage);
+    @Test
+    public void shouldRecoverAfterServerFailure() throws StorageException, InterruptedException {
+        TsaasStorage plugin = new TsaasStorage(TsaasConfig.builder().batchSize(1).build());
+        plugin.initGrpc(clientConfig);
 
-    server.stopServer();
-    assertThrows(StorageException.class, () -> plugin.store(createSamples()));
+        plugin.store(createSamples());
+        verify(serverStorage, times(1)).store(any());
+        reset(serverStorage);
 
-    verify(serverStorage, never()).store(any());
+        server.stopServer();
+        assertThrows(StorageException.class, () -> plugin.store(createSamples()));
 
-    server.startServer();
-    plugin.grpc.managedChannel.resetConnectBackoff(); // make sure the channel is ready. Otherwise it has a short wait time
-    plugin.store(createSamples());
-    verify(serverStorage, times(1)).store(any());
-  }
+        verify(serverStorage, never()).store(any());
 
-  @Test
-  public void shouldRecoverAfterServerException() throws StorageException, InterruptedException {
-    TsaasStorage plugin = new TsaasStorage(TsaasConfig.builder().batchSize(1).build());
-    plugin.initGrpc(clientConfig);
+        server.startServer();
+        plugin.getGrpc().managedChannel.resetConnectBackoff(); // make sure the channel is ready. Otherwise it has a short wait time
+        plugin.store(createSamples());
+        verify(serverStorage, times(1)).store(any());
+    }
 
-    doThrow(new StorageException("hups")).when(serverStorage).store(any());
-    plugin.store(createSamples()); // nothing should happen since this is a non recoverable exception
-    doNothing().when(serverStorage).store(any());
-    plugin.store(createSamples());
-    verify(serverStorage, times(2)).store(any());
-  }
+    @Test
+    public void shouldRecoverAfterServerException() throws StorageException, InterruptedException {
+        TsaasStorage plugin = new TsaasStorage(TsaasConfig.builder().batchSize(1).build());
+        plugin.initGrpc(clientConfig);
+
+        doThrow(new StorageException("hups")).when(serverStorage).store(any());
+        plugin.store(createSamples()); // nothing should happen since this is a non recoverable exception
+        doNothing().when(serverStorage).store(any());
+        plugin.store(createSamples());
+        verify(serverStorage, times(2)).store(any());
+    }
 
 
-  private List<Sample> createSamples () {
-    return Collections.singletonList(
-        ImmutableSample.builder()
-            .time(Instant.now())
-            .metric(ImmutableMetric.builder()
-                .intrinsicTag(IntrinsicTagNames.resourceId, "a")
-                .intrinsicTag(IntrinsicTagNames.name, "b")
-                .build())
-            .value(3.0)
-            .build());
-  }
+    private List<Sample> createSamples() {
+        return Collections.singletonList(
+                ImmutableSample.builder()
+                        .time(Instant.now())
+                        .metric(ImmutableMetric.builder()
+                                .intrinsicTag(IntrinsicTagNames.resourceId, "a")
+                                .intrinsicTag(IntrinsicTagNames.name, "b")
+                                .build())
+                        .value(3.0)
+                        .build());
+    }
 
 }

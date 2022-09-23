@@ -34,24 +34,39 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockingDetails;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.security.cert.CertificateException;
 import java.time.Duration;
 import java.time.Instant;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
+import org.opennms.integration.api.v1.runtime.Container;
+import org.opennms.integration.api.v1.runtime.RuntimeInfo;
 
 public class HousekeeperTest {
 
     private Housekeeper hk;
+    private ConfigurationManager cm;
+    private ConfigStore config;
+    private RuntimeInfo runtimeInfo;
+
+    @Before
+    public void setUp() {
+        config = mock(ConfigStore.class);
+        runtimeInfo = mock(RuntimeInfo.class);
+        cm = mock(ConfigurationManager.class);
+    }
 
     @Test
-    public void shouldRenewConfigForExpiredToken() {
-        ConfigurationManager cm = mock(ConfigurationManager.class);
-        hk = new Housekeeper(cm, 1, 1);
+    public void shouldRenewConfigForExpiredToken_OpenNMS() {
+        when(runtimeInfo.getContainer()).thenReturn(Container.OPENNMS);
+        hk = new Housekeeper(cm, config, runtimeInfo, 1, 1, 1);
         doReturn(Instant.now().plusSeconds(60 * 60)) // first time: token valid
                 .doReturn(Instant.now()) // second time: token expired
                 .when(cm).getTokenExpiration();
@@ -61,49 +76,79 @@ public class HousekeeperTest {
         await()
                 .during(Duration.ofMillis(800)) // no config should be called during ramp up time (1sec)
                 .atMost(Duration.ofMillis(5000)) // config should have been called by now
-                .until (() -> mockingDetails(cm).getInvocations().stream().anyMatch(i -> "configure".equals(i.getMethod().getName())));
+                .until(() -> mockingDetails(cm).getInvocations().stream().anyMatch(i -> "configure".equals(i.getMethod().getName())));
         verify(cm, times(2)).configure(); // called by token and cert renewal
     }
 
     @Test
-    public void shouldRenewExpiredCerts() throws CertificateException {
-        ConfigurationManager cm = mock(ConfigurationManager.class);
-        hk = new Housekeeper(cm, 1, 1);
-        doReturn(Instant.now().plusSeconds(60*60)) // first time: cert valid
+    public void shouldRenewExpiredCerts_OpenNMS() throws CertificateException {
+        when(runtimeInfo.getContainer()).thenReturn(Container.OPENNMS);
+        hk = new Housekeeper(cm, config, runtimeInfo, 1, 1, 1);
+        doReturn(Instant.now().plusSeconds(60 * 60)) // first time: cert valid
                 .doReturn(Instant.now()) // second time: cert expired
                 .when(cm).getCertExpiration();
-        doReturn(Instant.now().plusSeconds(60*60)).when(cm).getTokenExpiration(); // token always valid
+        doReturn(Instant.now().plusSeconds(60 * 60)).when(cm).getTokenExpiration(); // token always valid
         hk.init();
         verify(cm, times(0)).renewCerts();
         verify(cm, times(0)).configure();
         await()
                 .during(Duration.ofMillis(800)) // no cert renewal should be called during ramp up time (1sec)
                 .atMost(Duration.ofMillis(5000)) // cert renewal should have been called by now
-                .until (() -> mockingDetails(cm).getInvocations().stream().anyMatch(i -> "renewCerts".equals(i.getMethod().getName())));
+                .until(() -> mockingDetails(cm).getInvocations().stream().anyMatch(i -> "renewCerts".equals(i.getMethod().getName())));
         verify(cm, times(1)).renewCerts();
         verify(cm, times(2)).configure(); // called by token and cert renewal
     }
 
     @Test
-    public void shouldNotCrashOnException() throws CertificateException {
-        ConfigurationManager cm = mock(ConfigurationManager.class);
-        hk = new Housekeeper(cm, 1, 1000);
+    public void shouldNotCrashOnException_OpenNMS() throws CertificateException {
+        when(runtimeInfo.getContainer()).thenReturn(Container.OPENNMS);
+        hk = new Housekeeper(cm, config, runtimeInfo, 1, 1000, 1);
         doReturn(Instant.now()).when(cm).getTokenExpiration(); // trigger every time
-        doReturn(Instant.now().plusSeconds(60*60)).when(cm).getCertExpiration(); // cert always valid
+        doReturn(Instant.now().plusSeconds(60 * 60)).when(cm).getCertExpiration(); // cert always valid
         doThrow(new NullPointerException("oh oh")).when(cm).configure(); // Exception should be ignored
         hk.init();
         verify(cm, times(0)).configure();
         await()
                 .during(Duration.ofMillis(800)) // no config should be called during ramp up time (1sec)
                 .atMost(Duration.ofMillis(5000)) // config should have been called by now
-                .until (() -> mockingDetails(cm).getInvocations().stream().anyMatch(i -> "configure".equals(i.getMethod().getName())));
+                .until(() -> mockingDetails(cm).getInvocations().stream().anyMatch(i -> "configure".equals(i.getMethod().getName())));
         verify(cm, times(2)).configure(); // token + cert
         clearInvocations(cm);
         await()
                 .during(Duration.ofMillis(800)) // no config should be called during ramp up time (1sec)
                 .atMost(Duration.ofMillis(5000)) // config should have been called by now
-                .until (() -> mockingDetails(cm).getInvocations().stream().anyMatch(i -> "configure".equals(i.getMethod().getName())));
+                .until(() -> mockingDetails(cm).getInvocations().stream().anyMatch(i -> "configure".equals(i.getMethod().getName())));
         verify(cm, times(1)).configure();
+    }
+
+    @Test
+    public void shouldReconfigureIfConfigChanged_Sentinel() {
+        when(runtimeInfo.getContainer()).thenReturn(Container.SENTINEL);
+        hk = new Housekeeper(cm, config, runtimeInfo, 1, 1, 1);
+        hk.init();
+
+        // wait for a bit to check if configure was called. It shouldn't since the token hasn't changed
+        await()
+                .during(Duration.ofMillis(2000))
+                .atMost(Duration.ofMillis(3000))
+                .until(() -> mockingDetails(cm).getInvocations().stream().noneMatch(i -> "configure".equals(i.getMethod().getName())));
+        verify(cm, never()).configure();
+
+        // change token and see if configure has been called
+        doReturn("someNewHost").when(config).getOrNull(ConfigStore.Key.grpchost); // change config
+        await()
+                .during(Duration.ofMillis(2000))
+                .atMost(Duration.ofMillis(3000))
+                .until(() -> mockingDetails(cm).getInvocations().stream().anyMatch(i -> "configure".equals(i.getMethod().getName())));
+        verify(cm, times(1)).configure();
+        clearInvocations(cm);
+
+        // wait for a bit again to check if configure was called. It shouldn't since the token hasn't changed
+        await()
+                .during(Duration.ofMillis(2000))
+                .atMost(Duration.ofMillis(3000))
+                .until(() -> mockingDetails(cm).getInvocations().stream().noneMatch(i -> "configure".equals(i.getMethod().getName())));
+        verify(cm, never()).configure();
     }
 
     @After
