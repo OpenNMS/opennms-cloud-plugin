@@ -31,10 +31,12 @@ package org.opennms.plugins.cloud.config;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.AUTHENTCATED;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.CONFIGURED;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.FAILED;
+import static org.opennms.plugins.cloud.config.PrerequisiteChecker.checkAndLogSystemId;
 import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.TOKEN_KEY;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.cert.CertificateException;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
@@ -48,6 +50,7 @@ import org.opennms.dataplatform.access.AuthenticateGrpc;
 import org.opennms.integration.api.v1.runtime.RuntimeInfo;
 import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
 import org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.Type;
+import org.opennms.plugins.cloud.grpc.CloseUtil;
 import org.opennms.plugins.cloud.grpc.GrpcConnection;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.GrpcService;
@@ -85,6 +88,7 @@ public class ConfigurationManager {
     private final RuntimeInfo runtimeInfo;
 
     private Instant tokenExpirationDate;
+    private Instant certExpirationDate;
 
     public ConfigurationManager(final SecureCredentialsVault scv,
                                 final GrpcConnectionConfig pasConfigTls,
@@ -162,21 +166,16 @@ public class ConfigurationManager {
      * 5.) authenticate(String opennmsKey, environment-uuid, system-uuid) return cert, grpc endpoint
      */
     public void initConfiguration(final String key) {
-        if(!PrerequisiteChecker.isSystemIdOk(this.runtimeInfo.getSystemId())) {
-            LOG.error("Cannot initConfiguration, please fix systemId first!");
-            this.currentStatus = ConfigStatus.FAILED;
-            return;
-        }
-        try {
-            Objects.requireNonNull(key);
+        LOG.info("Starting configuration of cloud connection.");
+        checkAndLogSystemId(this.runtimeInfo.getSystemId());
 
-            LOG.info("Starting configuration of cloud connection.");
+        try (GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> grpcWithTls = new GrpcConnection<>(pasConfigTls,
+                AuthenticateGrpc::newBlockingStub)) {
 
+            Objects.requireNonNull(key, "key must not be null");
             // Fetching initial credentials via TLS and cloud key
-            GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> grpcWithTls = new GrpcConnection<>(pasConfigTls,
-                    AuthenticateGrpc::newBlockingStub);
             final PasAccess pasWithTls = new PasAccess(grpcWithTls);
-            Map<SecureCredentialsVaultUtil.Type, String> cloudCredentials = pasWithTls.fetchCredentialsFromAccessService(key, runtimeInfo.getSystemId());
+            Map<SecureCredentialsVaultUtil.Type, String> cloudCredentials = pasWithTls.getCredentialsFromAccessService(key, runtimeInfo.getSystemId());
             LOG.info("Cloud configuration received from PAS (Platform Access Service).");
             cloudCredentials.put(Type.configstatus, AUTHENTCATED.name());
             scv.putProperties(cloudCredentials);
@@ -189,6 +188,26 @@ public class ConfigurationManager {
         }
     }
 
+    public void renewCerts() throws CertificateException {
+        try (CloseUtil closeUtil = new CloseUtil()) {
+            LOG.info("Starting renewing of certificates.");
+            GrpcConnectionConfig cloudGatewayConfig = readCloudGatewayConfig();
+            this.certExpirationDate = CertUtil.getExpiryDate(cloudGatewayConfig.getPublicKey());
+            GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> pasWithMtlsConfig = createPasGrpc(cloudGatewayConfig);
+            closeUtil.add(pasWithMtlsConfig);
+            final PasAccess pasWithMtls = new PasAccess(pasWithMtlsConfig);
+            Map<Type, String> cloudCredentials = pasWithMtls.renewCertificate(runtimeInfo.getSystemId());
+            LOG.info("New certificates received from PAS (Platform Access Service).");
+            cloudCredentials.put(Type.configstatus, AUTHENTCATED.name());
+            scv.putProperties(cloudCredentials);
+            LOG.info("Cloud configuration stored in OpenNMS.");
+        } catch (Exception e) {
+            this.currentStatus = ConfigStatus.FAILED;
+            LOG.error("fetching new certs failed.", e);
+            throw e;
+        }
+    }
+
     /**
      * See also: <a href="https://confluence.internal.opennms.com/pages/viewpage.action?spaceKey=PRODDEV&title=High+Level+Message+Sequencing+-+System+Authorization">...</a>
      * These are the steps
@@ -197,14 +216,11 @@ public class ConfigurationManager {
      */
     public ConfigStatus configure() {
         String systemId = runtimeInfo.getSystemId();
-        if(!PrerequisiteChecker.isSystemIdOk(systemId)) {
-            LOG.error("Cannot configure cloud connection, please fix systemId first!");
-            this.currentStatus = ConfigStatus.FAILED;
-            return this.currentStatus;
-        }
-        try {
+        try (CloseUtil closeUtil = new CloseUtil()) {
             GrpcConnectionConfig cloudGatewayConfig = readCloudGatewayConfig();
+            this.certExpirationDate = CertUtil.getExpiryDate(cloudGatewayConfig.getPublicKey());
             GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> pasWithMtlsConfig = createPasGrpc(cloudGatewayConfig);
+            closeUtil.add(pasWithMtlsConfig);
             final PasAccess pasWithMtls = new PasAccess(pasWithMtlsConfig);
 
             // step 7: identify
@@ -288,5 +304,9 @@ public class ConfigurationManager {
 
     public Instant getTokenExpiration() {
         return this.tokenExpirationDate == null ? Instant.now() : this.tokenExpirationDate;
+    }
+
+    public Instant getCertExpiration() {
+        return this.certExpirationDate == null ? Instant.now() : this.certExpirationDate;
     }
 }

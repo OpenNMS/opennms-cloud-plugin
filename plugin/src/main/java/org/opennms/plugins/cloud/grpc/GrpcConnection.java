@@ -59,7 +59,7 @@ import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
 import io.grpc.stub.AbstractBlockingStub;
 
-public class GrpcConnection<T extends AbstractBlockingStub<T>> {
+public class GrpcConnection<T extends AbstractBlockingStub<T>> implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(GrpcConnection.class);
     // 100M sync with cortex server
     private static final int MAX_MESSAGE_SIZE = 104857600;
@@ -122,10 +122,13 @@ public class GrpcConnection<T extends AbstractBlockingStub<T>> {
         }
     }
 
-    public void shutDown() throws InterruptedException {
-        if (managedChannel != null) {
-            managedChannel.shutdownNow();
+    @Override
+    public void close() {
+        managedChannel.shutdownNow();
+        try {
             managedChannel.awaitTermination(15, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -145,12 +148,15 @@ public class GrpcConnection<T extends AbstractBlockingStub<T>> {
             return new ForwardingClientCall.SimpleForwardingClientCall<>(next.newCall(method, callOptions)) {
                 @Override
                 public void start(final Listener<O> responseListener, final Metadata headers) {
-                    if(tokenKey != null && !tokenKey.isBlank() && tokenValue != null && !tokenValue.isBlank()) {
+                    if(isNotEmpty(tokenKey) && isNotEmpty(tokenValue)) {
                         headers.put(Metadata.Key.of(tokenKey, Metadata.ASCII_STRING_MARSHALLER), tokenValue);
                     }
                     super.start(responseListener, headers);
                 }
             };
+        }
+        private static boolean isNotEmpty(String s) {
+            return s != null && !s.isBlank();
         }
     }
 }

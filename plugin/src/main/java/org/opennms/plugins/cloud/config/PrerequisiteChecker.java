@@ -1,24 +1,26 @@
 package org.opennms.plugins.cloud.config;
 
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class PrerequisiteChecker {
-
-    private static final Logger LOG = LoggerFactory.getLogger(PrerequisiteChecker.class);
 
     private PrerequisiteChecker() {
         // Utility class
     }
 
-    static boolean isSystemIdOk(final String systemId) {
-        if(systemId == null ||
-                systemId.length() < 36 ||
-                systemId.matches("[0-]*")){
-            LOG.error("No unique system id provided: '{}'. Please check in table 'monitoringsystems'.", systemId);
-            return false;
+    public static void checkAndLogSystemId(final String systemId) {
+        if(isSystemIdOk(systemId)) {
+            log.info("System id is set to {}", systemId);
+        } else {
+            log.warn("System id is not set up. It is advisable to set it up, see here: https://github.com/OpenNMS/opennms-cloud-plugin#system-id");
         }
-        return true;
+    }
+
+    static boolean isSystemIdOk(final String systemId) {
+        return systemId != null &&
+                systemId.length() >= 36 &&
+                !systemId.matches("[0-]*");
     }
 }

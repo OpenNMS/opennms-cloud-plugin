@@ -31,6 +31,7 @@ package org.opennms.plugins.cloud.srv.tsaas;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.junit.After;
 import org.junit.Before;
@@ -78,10 +79,19 @@ public class CloudHealthCheckTest {
     }
 
     @Test
-    public void shouldReturnStatus() throws Exception {
+    public void shouldReturnStatusSuccess() throws Exception {
         assertEquals(Tsaas.CheckHealthResponse.ServingStatus.SERVING, storage.checkHealth().getStatus());
         Response response = new CloudHealthCheck(this.storage).perform(mock(Context.class));
         assertEquals(Status.Success, response.getStatus());
+        assertTrue(response.getMessage().contains(Tsaas.CheckHealthResponse.ServingStatus.SERVING.name()));
+    }
+
+    @Test
+    public void shouldReturnStatusFailure() throws Exception {
+        TsaasStorage tsaas = mock(TsaasStorage.class);
+        when(tsaas.checkHealth()).thenReturn(Tsaas.CheckHealthResponse.newBuilder().setStatus(Tsaas.CheckHealthResponse.ServingStatus.NOT_SERVING).build());
+        Response response = new CloudHealthCheck(tsaas).perform(mock(Context.class));
+        assertEquals(Status.Failure, response.getStatus());
         assertTrue(response.getMessage().contains(Tsaas.CheckHealthResponse.ServingStatus.SERVING.name()));
     }
 }

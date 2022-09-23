@@ -43,14 +43,21 @@ public class CloudConfigRestServiceImpl implements CloudConfigRestService {
 
     @Override
     public Response putActivationKey(final String keyJson) {
-        String key = extractKey(keyJson);
-        this.cm.initConfiguration(key);
-        this.cm.configure();
+        try {
+            String key = extractKey(keyJson);
+            this.cm.initConfiguration(key);
+            this.cm.configure();
+        } catch (Exception e) {
+            return Response
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(exceptionToJson(e))
+                    .build();
+        }
         return getStatus();
     }
 
     private String extractKey(final String json) {
-        // TODO: Patrick: check why we get the key in such a strange format.
+        // not sure why we get the key in such a strange format.
         // {"key":{"__v_isShallow":false,"dep":{"w":0,"n":0},"__v_isRef":true,"_rawValue":"aaa","_value":"aaa"}}
         String before = "\"_rawValue\":\"";
         String key = json.substring(json.indexOf(before) + before.length());
@@ -61,7 +68,15 @@ public class CloudConfigRestServiceImpl implements CloudConfigRestService {
     public Response getStatus() {
         return Response
                 .status(Response.Status.OK)
-                .entity("{\"status\":\"" + cm.getStatus() + "\"}")
+                .entity(String.format("{\"status\":\"%s\"}", cm.getStatus()))
                 .build();
+    }
+
+    String exceptionToJson(Exception e) {
+        return String.format(
+                "{%n" +
+                "  \"status\":\"%s\",%n" +
+                "  \"message\":\"%s\"%n" +
+                "}", cm.getStatus(), e.getMessage());
     }
 }

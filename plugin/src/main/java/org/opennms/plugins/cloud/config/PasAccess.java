@@ -49,7 +49,7 @@ class PasAccess {
         this.grpc = Objects.requireNonNull(grpc);
     }
 
-    Map<Type, String> fetchCredentialsFromAccessService(final String key, final String systemId) {
+    Map<Type, String> getCredentialsFromAccessService(final String key, final String systemId) {
 
         AuthenticateOuterClass.AuthenticateKeyRequest keyRequest = AuthenticateOuterClass.AuthenticateKeyRequest.newBuilder()
                 .setAuthenticationKey(key)
@@ -92,5 +92,16 @@ class PasAccess {
                 .build();
         AuthenticateOuterClass.GetAccessTokenResponse response = this.grpc.get().getAccessToken(request);
         return response.getToken();
+    }
+
+    public Map<Type, String> renewCertificate(String systemId) {
+        AuthenticateOuterClass.RenewCertificateResponse response = this.grpc.get().renewCertificate(
+                AuthenticateOuterClass.RenewCertificateRequest.newBuilder()
+                .setSystemUuid(systemId)
+                .build());
+        Map<Type, String> attributes = new EnumMap<>(SecureCredentialsVaultUtil.Type.class);
+        attributes.put(Type.privatekey, response.getPrivateKey());
+        attributes.put(Type.publickey, response.getCertificate());
+        return attributes;
     }
 }
