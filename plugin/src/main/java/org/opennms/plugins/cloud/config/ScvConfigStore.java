@@ -48,7 +48,7 @@ public class ScvConfigStore implements ConfigStore {
     }
 
     private Optional<Credentials> getCredentials() {
-        return Optional.ofNullable(this.scv.getCredentials(SCV_ALIAS));
+        return Optional.ofNullable(this.scv.getCredentials(STORE_PREFIX));
     }
 
     public String getOrNull(Key type) {
@@ -82,6 +82,6 @@ public class ScvConfigStore implements ConfigStore {
 
         // Store modified credentials
         Credentials newCredentials = new ImmutableCredentials("", "", propertiesToSave);
-        scv.setCredentials(SCV_ALIAS, newCredentials);
+        scv.setCredentials(STORE_PREFIX, newCredentials);
     }
 }

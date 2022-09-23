@@ -36,8 +36,8 @@ import java.util.Optional;
  * Makes the accessing properties easier.
  */
 public interface ConfigStore {
-  public static final String SCV_ALIAS = "plugin.cloud";
-  public final static String TOKEN_KEY = "token";
+  String STORE_PREFIX = "plugin.cloud";
+  String TOKEN_KEY = "token";
 
   /**
    * All enums must be lower case.
