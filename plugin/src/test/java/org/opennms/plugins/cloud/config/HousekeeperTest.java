@@ -151,6 +151,14 @@ public class HousekeeperTest {
                 .atMost(Duration.ofMillis(3000))
                 .until(() -> mockingDetails(cm).getInvocations().stream().noneMatch(i -> "configure".equals(i.getMethod().getName())));
         verify(cm, never()).configure();
+        clearInvocations(cm);
+
+        // wait for a bit again to check if configure was called. It shouldn't since the token hasn't changed
+        await()
+                .during(Duration.ofMillis(2000))
+                .atMost(Duration.ofMillis(3000))
+                .until(() -> mockingDetails(cm).getInvocations().stream().noneMatch(i -> "configure".equals(i.getMethod().getName())));
+        verify(cm, never()).configure();
     }
 
     @Test
