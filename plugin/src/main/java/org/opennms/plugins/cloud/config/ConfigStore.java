@@ -28,22 +28,14 @@
 
 package org.opennms.plugins.cloud.config;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-
-import org.opennms.integration.api.v1.scv.Credentials;
-import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
-import org.opennms.integration.api.v1.scv.immutables.ImmutableCredentials;
 
 /**
  * A thin wrapper around the SecureCredentialsVault.
  * Makes the accessing properties easier.
  */
-public class SecureCredentialsVaultUtil {
+public interface ConfigStore {
   public static final String SCV_ALIAS = "plugin.cloud";
   public final static String TOKEN_KEY = "token";
 
@@ -51,7 +43,7 @@ public class SecureCredentialsVaultUtil {
    * All enums must be lower case.
    * Otherwise scv won't save them correctly.
    */
-  public enum Type {
+  enum Key {
     truststore, publickey, privatekey, tokenkey, tokenvalue, grpchost, grpcport,
     activeservices,
     /** Defines if plugin was already configured via ConfigurationManager.
@@ -59,49 +51,11 @@ public class SecureCredentialsVaultUtil {
     configstatus
   }
 
-  private final SecureCredentialsVault scv;
+  String getOrNull(Key type);
 
-  public SecureCredentialsVaultUtil(SecureCredentialsVault scv) {
-    this.scv = Objects.requireNonNull(scv);
-  }
+  Optional<String> get(Key type);
 
-  public Optional<Credentials> getCredentials() {
-    return Optional.ofNullable(this.scv.getCredentials(SCV_ALIAS));
-  }
-
-  public String getOrNull(Type type) {
-    return get(type)
-            .orElse(null);
-  }
-
-  public Optional<String> get(Type type) {
-    return getCredentials()
-            .map(c -> c.getAttribute(type.name()));
-  }
-
-  public void putProperty(final Type key, String value) {
-    Objects.requireNonNull(key);
-    Objects.requireNonNull(value);
-    putProperties(Collections.singletonMap(key, value));
-  }
-  public void putProperties(final Map<Type, String> properties) {
-    Objects.requireNonNull(properties);
-
-    // retain old values if present
-    Map<String, String> propertiesToSave = new HashMap<>();
-    SecureCredentialsVaultUtil scvUtil = new SecureCredentialsVaultUtil(scv);
-    scvUtil.getCredentials()
-            .map(Credentials::getAttributes)
-            .map(Map::entrySet)
-            .stream()
-            .flatMap(Set::stream)
-            .forEach(e -> propertiesToSave.put(e.getKey(), e.getValue()));
-    properties
-            .forEach((key, value) -> propertiesToSave.put(key.name(), value));
-
-    // Store modified credentials
-    Credentials newCredentials = new ImmutableCredentials("", "", propertiesToSave);
-    scv.setCredentials(SCV_ALIAS, newCredentials);
-  }
+  void putProperty(final Key key, String value);
+  void putProperties(final Map<Key, String> properties);
 
 }

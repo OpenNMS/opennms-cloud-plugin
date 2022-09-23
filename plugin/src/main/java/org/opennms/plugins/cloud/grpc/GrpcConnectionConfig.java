@@ -1,6 +1,6 @@
 package org.opennms.plugins.cloud.grpc;
 
-import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.TOKEN_KEY;
+import static org.opennms.plugins.cloud.config.ConfigStore.TOKEN_KEY;
 
 import java.util.Objects;
 

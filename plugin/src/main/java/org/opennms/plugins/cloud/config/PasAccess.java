@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 
 import org.opennms.dataplatform.access.AuthenticateGrpc;
 import org.opennms.dataplatform.access.AuthenticateOuterClass;
-import org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.Type;
+import org.opennms.plugins.cloud.config.ConfigStore.Key;
 import org.opennms.plugins.cloud.grpc.GrpcConnection;
 import org.opennms.plugins.cloud.srv.RegistrationManager;
 
@@ -49,21 +49,21 @@ class PasAccess {
         this.grpc = Objects.requireNonNull(grpc);
     }
 
-    Map<Type, String> getCredentialsFromAccessService(final String key, final String systemId) {
+    Map<Key, String> getCredentialsFromAccessService(final String key, final String systemId) {
 
         AuthenticateOuterClass.AuthenticateKeyRequest keyRequest = AuthenticateOuterClass.AuthenticateKeyRequest.newBuilder()
                 .setAuthenticationKey(key)
                 .setSystemUuid(systemId)
                 .build();
         AuthenticateOuterClass.AuthenticateKeyResponse response = grpc.get().authenticateKey(keyRequest);
-        Map<Type, String> attributes = new EnumMap<>(SecureCredentialsVaultUtil.Type.class);
+        Map<Key, String> attributes = new EnumMap<>(Key.class);
         if(response.getGrpcEndpoint().contains(":")) {
             String[] split = response.getGrpcEndpoint().split(":");
-            attributes.put(Type.grpchost, split[0]);
-            attributes.put(Type.grpcport, split[1]);
+            attributes.put(Key.grpchost, split[0]);
+            attributes.put(ConfigStore.Key.grpcport, split[1]);
         }
-        attributes.put(Type.privatekey, response.getPrivateKey());
-        attributes.put(Type.publickey, response.getCertificate());
+        attributes.put(Key.privatekey, response.getPrivateKey());
+        attributes.put(Key.publickey, response.getCertificate());
         return attributes;
     }
 
@@ -94,14 +94,14 @@ class PasAccess {
         return response.getToken();
     }
 
-    public Map<Type, String> renewCertificate(String systemId) {
+    public Map<Key, String> renewCertificate(String systemId) {
         AuthenticateOuterClass.RenewCertificateResponse response = this.grpc.get().renewCertificate(
                 AuthenticateOuterClass.RenewCertificateRequest.newBuilder()
                 .setSystemUuid(systemId)
                 .build());
-        Map<Type, String> attributes = new EnumMap<>(SecureCredentialsVaultUtil.Type.class);
-        attributes.put(Type.privatekey, response.getPrivateKey());
-        attributes.put(Type.publickey, response.getCertificate());
+        Map<Key, String> attributes = new EnumMap<>(Key.class);
+        attributes.put(Key.privatekey, response.getPrivateKey());
+        attributes.put(Key.publickey, response.getCertificate());
         return attributes;
     }
 }

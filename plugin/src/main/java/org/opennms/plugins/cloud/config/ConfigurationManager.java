@@ -28,6 +28,7 @@
 
 package org.opennms.plugins.cloud.config;
 
+import static org.opennms.plugins.cloud.config.ConfigStore.TOKEN_KEY;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.AUTHENTCATED;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.CONFIGURED;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.FAILED;
@@ -51,6 +52,7 @@ import org.opennms.integration.api.v1.runtime.RuntimeInfo;
 import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
 import org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.Type;
 import org.opennms.plugins.cloud.grpc.CloseUtil;
+import org.opennms.plugins.cloud.config.ConfigStore.Key;
 import org.opennms.plugins.cloud.grpc.GrpcConnection;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.GrpcService;
@@ -78,7 +80,7 @@ public class ConfigurationManager {
 
     private ConfigStatus currentStatus = ConfigStatus.NOT_ATTEMPTED;
 
-    private final SecureCredentialsVaultUtil scv;
+    private final ConfigStore scv;
 
     private final RegistrationManager serviceManager;
     private final List<GrpcService> grpcServices;
@@ -90,14 +92,14 @@ public class ConfigurationManager {
     private Instant tokenExpirationDate;
     private Instant certExpirationDate;
 
-    public ConfigurationManager(final SecureCredentialsVault scv,
+    public ConfigurationManager(final ConfigStore scv,
                                 final GrpcConnectionConfig pasConfigTls,
                                 final GrpcConnectionConfig pasConfigMtls,
                                 final RegistrationManager serviceManager,
                                 final RuntimeInfo runtimeInfo,
                                 final List<GrpcService> grpcServices
                                 ) {
-        this.scv = new SecureCredentialsVaultUtil(Objects.requireNonNull(scv));
+        this.scv = Objects.requireNonNull(scv);
         this.pasConfigTls = Objects.requireNonNull(pasConfigTls);
         this.pasConfigMtls = Objects.requireNonNull(pasConfigMtls);
         this.serviceManager = Objects.requireNonNull(serviceManager);
@@ -107,8 +109,8 @@ public class ConfigurationManager {
         boolean importedFromZip = importCloudCredentialsIfPresent();
         if (!importedFromZip
                 // the authentication has been done previously => lets configure and start services
-                && ( AUTHENTCATED.name().equals(this.scv.getOrNull(SecureCredentialsVaultUtil.Type.configstatus))
-                  || CONFIGURED.name().equals(this.scv.getOrNull(SecureCredentialsVaultUtil.Type.configstatus)))) {
+                && ( AUTHENTCATED.name().equals(this.scv.getOrNull(Key.configstatus))
+                  || CONFIGURED.name().equals(this.scv.getOrNull(Key.configstatus)))) {
             configure();
         }
     }
@@ -127,7 +129,7 @@ public class ConfigurationManager {
 
                 GrpcConnectionConfig cloudGatewayConfig = readCloudGatewayConfig().toBuilder()
                         .tokenKey(TOKEN_KEY)
-                        .tokenValue(scv.getOrNull(Type.tokenvalue))
+                        .tokenValue(scv.getOrNull(Key.tokenvalue))
                         .security(GrpcConnectionConfig.Security.MTLS)
                         .build();
 
@@ -175,9 +177,9 @@ public class ConfigurationManager {
             Objects.requireNonNull(key, "key must not be null");
             // Fetching initial credentials via TLS and cloud key
             final PasAccess pasWithTls = new PasAccess(grpcWithTls);
-            Map<SecureCredentialsVaultUtil.Type, String> cloudCredentials = pasWithTls.getCredentialsFromAccessService(key, runtimeInfo.getSystemId());
+            Map<ConfigStore.Key, String> cloudCredentials = pasWithTls.getCredentialsFromAccessService(key, runtimeInfo.getSystemId());
             LOG.info("Cloud configuration received from PAS (Platform Access Service).");
-            cloudCredentials.put(Type.configstatus, AUTHENTCATED.name());
+            cloudCredentials.put(Key.configstatus, AUTHENTCATED.name());
             scv.putProperties(cloudCredentials);
             LOG.info("Cloud configuration stored in OpenNMS.");
             this.currentStatus = AUTHENTCATED;
@@ -279,12 +281,12 @@ public class ConfigurationManager {
 
     GrpcConnectionConfig readCloudGatewayConfig() {
         return GrpcConnectionConfig.builder()
-                .host(this.scv.getOrNull(SecureCredentialsVaultUtil.Type.grpchost))
-                .port(this.scv.get(SecureCredentialsVaultUtil.Type.grpcport).map(Integer::parseInt).orElse(0))
-                .privateKey(this.scv.getOrNull(SecureCredentialsVaultUtil.Type.privatekey))
-                .publicKey(this.scv.getOrNull(SecureCredentialsVaultUtil.Type.publickey))
-                .tokenKey(this.scv.getOrNull(SecureCredentialsVaultUtil.Type.tokenkey))
-                .tokenValue(this.scv.getOrNull(SecureCredentialsVaultUtil.Type.tokenvalue))
+                .host(this.scv.getOrNull(ConfigStore.Key.grpchost))
+                .port(this.scv.get(ConfigStore.Key.grpcport).map(Integer::parseInt).orElse(0))
+                .privateKey(this.scv.getOrNull(ConfigStore.Key.privatekey))
+                .publicKey(this.scv.getOrNull(ConfigStore.Key.publickey))
+                .tokenKey(this.scv.getOrNull(ConfigStore.Key.tokenkey))
+                .tokenValue(this.scv.getOrNull(Key.tokenvalue))
                 .build();
     }
 

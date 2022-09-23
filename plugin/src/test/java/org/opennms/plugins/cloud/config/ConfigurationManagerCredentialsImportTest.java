@@ -35,7 +35,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.FAILED;
-import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.SCV_ALIAS;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,7 +48,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.opennms.integration.api.v1.runtime.RuntimeInfo;
-import org.opennms.integration.api.v1.scv.Credentials;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.RegistrationManager;
 import org.opennms.plugins.cloud.srv.tsaas.TsaasStorage;
@@ -73,7 +71,7 @@ public class ConfigurationManagerCredentialsImportTest {
         when(tsaas.checkHealth())
                 .thenReturn(Tsaas.CheckHealthResponse.newBuilder()
                 .setStatus(Tsaas.CheckHealthResponse.ServingStatus.SERVING).build());
-        InMemoryScv scv = new InMemoryScv();
+        InMemoryConfigStore scv = new InMemoryConfigStore();
         ConfigurationManager registrationManager = new ConfigurationManager(scv,
                 GrpcConnectionConfig.builder().build(),
                 GrpcConnectionConfig.builder().build(),
@@ -87,9 +85,7 @@ public class ConfigurationManagerCredentialsImportTest {
         Files.copy(Path.of("src/test/resources/cert/cloud-credentials.zip"), credentialsFile);
         assertTrue(Files.exists(credentialsFile));
         registrationManager.importCloudCredentialsIfPresent();
-        Credentials credentials = scv.getCredentials(SCV_ALIAS);
-        assertNotNull(credentials);
-        String value = credentials.getAttribute(SecureCredentialsVaultUtil.Type.publickey.name());
+        String value = scv.getOrNull(ConfigStore.Key.publickey);
         assertNotNull(value);
         assertTrue(value.startsWith("-----BEGIN CERTIFICATE-----"));
 
@@ -103,7 +99,7 @@ public class ConfigurationManagerCredentialsImportTest {
         when(tsaas.checkHealth())
                 .thenReturn(Tsaas.CheckHealthResponse.newBuilder()
                         .setStatus(Tsaas.CheckHealthResponse.ServingStatus.SERVING).build());
-        InMemoryScv scv = new InMemoryScv();
+        InMemoryConfigStore scv = new InMemoryConfigStore();
         ConfigurationManager configurationManager = new ConfigurationManager(scv,
                 GrpcConnectionConfig.builder().build(),
                 GrpcConnectionConfig.builder().build(),

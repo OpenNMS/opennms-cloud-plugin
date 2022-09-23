@@ -26,7 +26,6 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-
 package org.opennms.plugins.cloud.config;
 
 import java.io.IOException;
@@ -35,7 +34,7 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
 
-import org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.Type;
+import org.opennms.plugins.cloud.config.ConfigStore.Key;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,12 +44,12 @@ public class CertificateImporter {
 
     private final String fileParam;
 
-    private final SecureCredentialsVaultUtil scv;
+    private final ConfigStore scv;
 
     private static final Logger LOG = LoggerFactory.getLogger(CertificateImporter.class);
 
     public CertificateImporter(final String fileParam,
-                               final SecureCredentialsVaultUtil scv,
+                               final ConfigStore scv,
                                final GrpcConnectionConfig config) {
         this.fileParam = Objects.requireNonNull(fileParam);
         this.scv = Objects.requireNonNull(scv);
@@ -67,7 +66,7 @@ public class CertificateImporter {
             throw new IllegalArgumentException(String.format("%s is not a readable.", fileParam));
         }
 
-        final Map<Type, String> cloudGatewayConfig = new ConfigZipExtractor(file).getGrpcConnectionConfig();
+        final Map<ConfigStore.Key, String> cloudGatewayConfig = new ConfigZipExtractor(file).getGrpcConnectionConfig();
         scv.putProperties(cloudGatewayConfig);
         LOG.info("Imported certificates from {}", fileParam);
 
@@ -80,9 +79,9 @@ public class CertificateImporter {
         }
     }
 
-    public boolean isConfigStored(final Map<Type, String> config) {
-        return Objects.equals(config.get(Type.privatekey), scv.getOrNull(Type.privatekey))
-                && Objects.equals(config.get(Type.publickey), scv.getOrNull(Type.publickey))
-                && Objects.equals(config.get(Type.tokenvalue), scv.getOrNull(Type.tokenvalue));
+    public boolean isConfigStored(final Map<Key, String> config) {
+        return Objects.equals(config.get(ConfigStore.Key.privatekey), scv.getOrNull(ConfigStore.Key.privatekey))
+                && Objects.equals(config.get(Key.publickey), scv.getOrNull(ConfigStore.Key.publickey))
+                && Objects.equals(config.get(Key.tokenvalue), scv.getOrNull(Key.tokenvalue));
     }
 }

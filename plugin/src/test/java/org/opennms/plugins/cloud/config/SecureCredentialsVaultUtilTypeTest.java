@@ -35,7 +35,7 @@ import org.junit.Test;
 public class SecureCredentialsVaultUtilTypeTest {
     @Test
     public void typeNamesMustBeLowerCase() {
-        for(SecureCredentialsVaultUtil.Type type : SecureCredentialsVaultUtil.Type .values()) {
+        for(ConfigStore.Key type : ConfigStore.Key.values()) {
             if(!type.name().equals(type.name().toLowerCase())) {
                 fail(type.name() + " must be lower case. Otherwise the scv won't work properly.");
             }
