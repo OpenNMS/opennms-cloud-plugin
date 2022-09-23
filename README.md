@@ -6,7 +6,7 @@ Initially it will provide storage for time series data (tsaas).
 # Installation
 ## Prerequisites
 ### OpenNMS System
-The cloud plugin requires an [OpenNMS installation](https://docs.opennms.com/horizon/30/deployment/core/getting-started.html).
+The cloud plugin requires an [OpenNMS installation](https://docs.opennms.com/horizon/latest/deployment/core/getting-started.html).
 
 Before installing stop your OpenNMS instance.
 
@@ -33,7 +33,7 @@ Install with your favorite package manager:
 ### Enabling Timeseries Integration Layer (TSS)
 TSS needs to be activated in order to use the plugin for sending time series data.
 Therefor set `org.opennms.timeseries.strategy=integration` in `[opennms.home]/etc/opennms.properties`
-For more details on TSS and its configuration see [here](https://docs.opennms.com/horizon/30/deployment/time-series-storage/timeseries/ts-integration-layer.html).
+For more details on TSS and its configuration see [here](https://docs.opennms.com/horizon/latest/deployment/time-series-storage/timeseries/ts-integration-layer.html).
 
 Now OpenNMS can be started again.
 
