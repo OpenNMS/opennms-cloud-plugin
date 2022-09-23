@@ -36,14 +36,13 @@ import java.util.Optional;
  * Makes the accessing properties easier.
  */
 public interface ConfigStore {
-  String STORE_PREFIX = "plugin.cloud";
-  String TOKEN_KEY = "token";
+  public static final String SCV_ALIAS = "plugin.cloud";
+  public final static String TOKEN_KEY = "token";
 
   /**
    * All enums must be lower case.
    * Otherwise scv won't save them correctly.
    */
-  @SuppressWarnings("java:S115") // we don't want to be warned about lower case
   enum Key {
     truststore, publickey, privatekey, tokenkey, tokenvalue, grpchost, grpcport,
     activeservices,
