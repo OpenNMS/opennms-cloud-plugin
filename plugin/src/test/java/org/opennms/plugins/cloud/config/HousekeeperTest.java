@@ -38,6 +38,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.opennms.plugins.cloud.config.ConfigStore.Key.configstatus;
 
 import java.security.cert.CertificateException;
 import java.time.Duration;
@@ -61,6 +62,7 @@ public class HousekeeperTest {
         config = mock(ConfigStore.class);
         runtimeInfo = mock(RuntimeInfo.class);
         cm = mock(ConfigurationManager.class);
+        when(config.getOrNull(configstatus)).thenReturn(ConfigurationManager.ConfigStatus.CONFIGURED.name());
     }
 
     @Test
@@ -149,6 +151,30 @@ public class HousekeeperTest {
                 .atMost(Duration.ofMillis(3000))
                 .until(() -> mockingDetails(cm).getInvocations().stream().noneMatch(i -> "configure".equals(i.getMethod().getName())));
         verify(cm, never()).configure();
+    }
+
+    @Test
+    public void shouldTriggerNothingIfNotInitialized_OpenNms() throws CertificateException {
+        shouldTriggerNothingIfNotInitialized_OpenNms(Container.OPENNMS);
+    }
+
+    @Test
+    public void shouldTriggerNothingIfNotInitialized_Sentinel() throws CertificateException {
+        shouldTriggerNothingIfNotInitialized_OpenNms(Container.SENTINEL);
+    }
+
+    private void shouldTriggerNothingIfNotInitialized_OpenNms(final Container container) throws CertificateException {
+        when(runtimeInfo.getContainer()).thenReturn(container);
+        hk = new Housekeeper(cm, config, runtimeInfo, 1, 1, 1);
+        hk.init();
+
+        // wait for a bit to check if configure was called. It shouldn't since the token hasn't changed
+        await()
+                .during(Duration.ofMillis(2000))
+                .atMost(Duration.ofMillis(3000))
+                .until(() -> mockingDetails(cm).getInvocations().stream().noneMatch(i -> "configure".equals(i.getMethod().getName())));
+        verify(cm, never()).configure();
+        verify(cm, never()).renewCerts();
     }
 
     @After

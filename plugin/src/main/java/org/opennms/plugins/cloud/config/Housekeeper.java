@@ -31,10 +31,13 @@ package org.opennms.plugins.cloud.config;
 import static java.time.temporal.ChronoUnit.DAYS;
 import static org.opennms.integration.api.v1.runtime.Container.OPENNMS;
 import static org.opennms.integration.api.v1.runtime.Container.SENTINEL;
+import static org.opennms.plugins.cloud.config.ConfigStore.Key.configstatus;
 import static org.opennms.plugins.cloud.config.ConfigStore.Key.grpchost;
 import static org.opennms.plugins.cloud.config.ConfigStore.Key.grpcport;
 import static org.opennms.plugins.cloud.config.ConfigStore.Key.privatekey;
 import static org.opennms.plugins.cloud.config.ConfigStore.Key.publickey;
+import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.AUTHENTCATED;
+import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.CONFIGURED;
 
 import java.security.cert.CertificateException;
 import java.time.Instant;
@@ -121,7 +124,7 @@ public class Housekeeper {
     public void renewToken() {
         final Instant expirationDate = configurationManager.getTokenExpiration();
         // renew 24h before expiry
-        if (expirationDate.minusSeconds(60L * 60L * 24L).isBefore(Instant.now())) {
+        if (expirationDate.minusSeconds(60L * 60L * 24L).isBefore(Instant.now()) && isInitialized()) {
             log.info("Triggering renewal of configuration, token will expire soon.");
             this.configurationManager.configure();
         }
@@ -130,11 +133,20 @@ public class Housekeeper {
     public void renewCerts() throws CertificateException {
         final Instant expirationDate = configurationManager.getCertExpiration();
         // renew 7 days before expiry
-        if (expirationDate.minus(7, DAYS).isBefore(Instant.now())) {
+        if (expirationDate.minus(7, DAYS).isBefore(Instant.now()) && isInitialized()) {
             log.info("Triggering renewal of certificates, will expire soon.");
             this.configurationManager.renewCerts();
             this.configurationManager.configure();
         }
+    }
+
+    /**
+     * If the configurationManager was not initialized we can't renew anything.
+     * Initialization needs to be done first via Karaf or via web ui.
+     */
+    private boolean isInitialized() {
+        return AUTHENTCATED.name().equals(this.config.getOrNull(configstatus))
+        ||     CONFIGURED.name().equals(this.config.getOrNull(configstatus));
     }
 
     public void syncConfig() {

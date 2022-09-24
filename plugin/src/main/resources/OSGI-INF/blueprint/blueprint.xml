@@ -76,6 +76,8 @@
     <bean id="houseKeeper" class="org.opennms.plugins.cloud.config.Housekeeper"
           destroy-method="destroy" init-method="init">
         <argument ref="cloudConfigManager"/>
+        <argument ref="configStore"/>
+        <argument ref="runtimeInfo"/>
     </bean>
 
     <!-- HEALTH -->
