@@ -9,7 +9,7 @@ executors:
   system-test-executor:
     machine:
       # image: ubuntu-2004:202010-01
-      image: ubuntu-2204:2022.07.1
+      image: ubuntu-2004:202111-02
 
 workflows:
   build-deploy:
