@@ -1,8 +1,11 @@
-<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:ext="http://aries.apache.org/blueprint/xmlns/blueprint-ext/v1.5.0"
            xsi:schemaLocation="http://www.osgi.org/xmlns/blueprint/v1.0.0
                 http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd">
 
-    <service ref="cloudConfigManager" interface="org.opennms.plugins.cloud.config.ConfigurationManager" />
+    <reference id="cloudConfigManager" interface="org.opennms.plugins.cloud.config.ConfigurationManager"
+               availability="mandatory" ext:proxy-method="classes"/>
 
     <!-- UI -->
     <service id="cloudUiExtension" interface="org.opennms.integration.api.v1.ui.UIExtension">

@@ -33,6 +33,7 @@
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Karaf-Commands>*</Karaf-Commands>
+                        <Export-Package>org.opennms.plugins.cloud.config;version=${project.version};-noimport:=true</Export-Package>
                     </instructions>
                 </configuration>
             </plugin>

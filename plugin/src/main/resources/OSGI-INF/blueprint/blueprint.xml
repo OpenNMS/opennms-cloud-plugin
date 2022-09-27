@@ -71,7 +71,11 @@
             </list>
         </argument>
     </bean>
-    <service ref="cloudConfigManager" interface="org.opennms.plugins.cloud.config.ConfigurationManager" />
+    <service ref="cloudConfigManager" interface="org.opennms.plugins.cloud.config.ConfigurationManager">
+        <service-properties><!-- needed by opennms-plugin-core-fragment -->
+            <entry key="registration.export" value="true" />
+        </service-properties>
+    </service>
 
     <bean id="houseKeeper" class="org.opennms.plugins.cloud.config.Housekeeper"
           destroy-method="destroy" init-method="init">
