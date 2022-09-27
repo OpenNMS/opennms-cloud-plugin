@@ -47,51 +47,46 @@ import org.opennms.plugins.cloud.config.ConfigurationManager;
 
 
 @Service
-public class ConfigureCloud implements Action {
+public class InitCloud implements Action {
 
     @Reference
-    private ConfigurationManager manager;
+    ConfigurationManager manager;
 
     @Reference
-    private RuntimeInfo runtimeInfo;
+    RuntimeInfo runtimeInfo;
 
     @Argument()
     String apiKey;
 
     @Override
     public Object execute() {
+        ConfigurationManager.ConfigStatus status;
         if (OPENNMS.equals(this.runtimeInfo.getContainer())) {
-            initForCore();
+            status = initForCore();
         } else if (SENTINEL.equals(this.runtimeInfo.getContainer())) {
-            initForSentinel();
+            status = manager.configure();
         } else {
             System.err.printf("It looks like we are running in a non supported environment, supported=OPENNMS, SENTINEL but it is %s",
                     this.runtimeInfo.getContainer());
+            return null;
         }
+
+        if(ConfigurationManager.ConfigStatus.CONFIGURED == status) {
+            System.out.printf("Initialization of %s was successful.%n", this.runtimeInfo.getContainer());
+        } else {
+            System.out.printf("Initialization of %s failed: %s. Check log (log:display) for details.%n", this.runtimeInfo.getContainer(), status);
+        }
+
         return null;
     }
 
-    public void initForCore() {
+    private ConfigurationManager.ConfigStatus initForCore() {
         if(apiKey == null || apiKey.isBlank()) {
             System.out.println("please enter api key");
         }
         Objects.requireNonNull(this.apiKey);
         manager.initConfiguration(apiKey);
-        ConfigurationManager.ConfigStatus status = manager.configure();
-        if(ConfigurationManager.ConfigStatus.CONFIGURED == status) {
-            System.out.println("Initialization of Core was successful.");
-        } else {
-            System.out.printf("Initialization failed: %s. Check log (log:display) for details.", status);
-        }
-    }
-
-    public void initForSentinel() {
-        ConfigurationManager.ConfigStatus status = manager.configure();
-        if(ConfigurationManager.ConfigStatus.CONFIGURED == status) {
-            System.out.println("Initialization of Sentinel from Core was successful.");
-        } else {
-            System.out.printf("Initialization failed: %s. Check log (log:display) for details.", status);
-        }
+        return manager.configure();
     }
 
 }
