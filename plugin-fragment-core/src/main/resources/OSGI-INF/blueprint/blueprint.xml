@@ -1,0 +1,26 @@
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://www.osgi.org/xmlns/blueprint/v1.0.0
+                http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd">
+
+    <service ref="cloudConfigManager" interface="org.opennms.plugins.cloud.config.ConfigurationManager" />
+
+    <!-- UI -->
+    <service id="cloudUiExtension" interface="org.opennms.integration.api.v1.ui.UIExtension">
+        <bean class="org.opennms.plugins.cloud.ui.CloudUiExtension">
+            <property name="id" value="cloudUiExtension"/>
+            <property name="menuEntry" value="OpenNMS Cloud"/>
+            <property name="resourceRoot" value="ui-ext"/>
+            <property name="moduleFileName" value="uiextension.es.js"/>
+        </bean>
+    </service>
+
+    <!-- REST -->
+    <bean id="cloudConfigRestService" class="org.opennms.plugins.cloud.rest.CloudConfigRestServiceImpl" >
+        <argument ref="cloudConfigManager"/>
+    </bean>
+    <service interface="org.opennms.plugins.cloud.rest.CloudConfigRestService" ref="cloudConfigRestService" >
+        <service-properties>
+            <entry key="application-path" value="/rest/plugin" /><!-- TODO: Patrick not sure which base path we should use -->
+        </service-properties>
+    </service>
+</blueprint>
