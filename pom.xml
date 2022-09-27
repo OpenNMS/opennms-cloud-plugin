@@ -15,6 +15,7 @@
         <tsaasClientVersion>LATEST</tsaasClientVersion>
         <pasClientVersion>0.8.0</pasClientVersion><!-- PAS service -->
         <java.version>11</java.version>
+        <jsonVersion>20220924</jsonVersion>
         <jwtVersion>4.0.0</jwtVersion>
         <zstd.version>1.5.0-2</zstd.version>
         <junit.version>4.13.2</junit.version>

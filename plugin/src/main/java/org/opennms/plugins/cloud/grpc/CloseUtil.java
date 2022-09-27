@@ -57,7 +57,9 @@ public class CloseUtil implements AutoCloseable {
 
     public static void close(final AutoCloseable closable) {
         try {
-            closable.close();
+            if (closable != null) {
+                closable.close();
+            }
         } catch (Exception e) {
             log.warn("An exception occurred while trying to close", e);
         }
