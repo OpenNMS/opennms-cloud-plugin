@@ -163,15 +163,24 @@ public class HousekeeperTest {
 
     @Test
     public void shouldTriggerNothingIfNotInitialized_OpenNms() throws CertificateException {
-        shouldTriggerNothingIfNotInitialized_OpenNms(Container.OPENNMS);
+        when(cm.getStatus()).thenReturn(ConfigurationManager.ConfigStatus.NOT_ATTEMPTED);
+        shouldTriggerNothing(Container.OPENNMS);
     }
 
     @Test
     public void shouldTriggerNothingIfNotInitialized_Sentinel() throws CertificateException {
-        shouldTriggerNothingIfNotInitialized_OpenNms(Container.SENTINEL);
+        when(cm.getStatus()).thenReturn(ConfigurationManager.ConfigStatus.NOT_ATTEMPTED);
+        shouldTriggerNothing(Container.SENTINEL);
     }
 
-    private void shouldTriggerNothingIfNotInitialized_OpenNms(final Container container) throws CertificateException {
+    @Test
+    public void shouldTriggerNothingIfUnsupportedContainer() throws CertificateException {
+        when(cm.getStatus()).thenReturn(ConfigurationManager.ConfigStatus.CONFIGURED);
+        shouldTriggerNothing(Container.MINION);
+        shouldTriggerNothing(Container.OTHER);
+    }
+
+    private void shouldTriggerNothing(final Container container) throws CertificateException {
         when(runtimeInfo.getContainer()).thenReturn(container);
         hk = new Housekeeper(cm, config, runtimeInfo, 1, 1, 1);
         hk.init();

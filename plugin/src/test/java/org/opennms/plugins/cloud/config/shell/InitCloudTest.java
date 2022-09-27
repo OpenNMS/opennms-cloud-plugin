@@ -28,6 +28,7 @@
 
 package org.opennms.plugins.cloud.config.shell;
 
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -35,6 +36,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.opennms.integration.api.v1.runtime.Container;
 import org.opennms.integration.api.v1.runtime.RuntimeInfo;
@@ -42,30 +44,51 @@ import org.opennms.plugins.cloud.config.ConfigurationManager;
 
 public class InitCloudTest {
 
-    @Test
-    public void shouldTalkToPasForCore() {
-        RuntimeInfo info = mock(RuntimeInfo.class);
+    private RuntimeInfo info;
+    private ConfigurationManager manager;
+    private InitCloud cmd;
+
+
+    @Before
+    public void setUp() {
+        info = mock(RuntimeInfo.class);
         when(info.getContainer()).thenReturn(Container.OPENNMS);
-        ConfigurationManager manager = mock(ConfigurationManager.class);
-        InitCloud cmd = new InitCloud();
+        manager =  mock(ConfigurationManager.class);
+        cmd = new InitCloud();
         cmd.runtimeInfo = info;
         cmd.manager = manager;
         cmd.apiKey = "apiKey";
+    }
+
+
+    @Test
+    public void shouldTalkToPasForCore() {
         cmd.execute();
         verify(manager, times(1)).initConfiguration(anyString());
         verify(manager, times(1)).configure();
     }
 
     @Test
+    public void shouldRejectMissingApiKey() {
+        cmd.apiKey = null;
+        assertThrows(NullPointerException.class, cmd::execute);
+        verify(manager, never()).initConfiguration(anyString());
+        verify(manager, never()).configure();
+    }
+
+    @Test
     public void shouldTalkToDbForSentinel() {
-        RuntimeInfo info = mock(RuntimeInfo.class);
         when(info.getContainer()).thenReturn(Container.SENTINEL);
-        ConfigurationManager manager = mock(ConfigurationManager.class);
-        InitCloud cmd = new InitCloud();
-        cmd.runtimeInfo = info;
-        cmd.manager = manager;
         cmd.execute();
         verify(manager, never()).initConfiguration(anyString());
         verify(manager, times(1)).configure();
+    }
+
+    @Test
+    public void shouldRejectUnsupportedContainer() {
+        when(info.getContainer()).thenReturn(Container.MINION);
+        cmd.execute();
+        verify(manager, never()).initConfiguration(anyString());
+        verify(manager, never()).configure();
     }
 }
