@@ -40,7 +40,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.opennms.dataplatform.access.AuthenticateGrpc;
 import org.opennms.dataplatform.access.AuthenticateOuterClass;
-import org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.Type;
+import org.opennms.plugins.cloud.config.ConfigStore.Key;
 import org.opennms.plugins.cloud.grpc.GrpcConnection;
 import org.opennms.plugins.cloud.srv.RegistrationManager;
 
@@ -59,7 +59,6 @@ public class PasAccessTest {
     @Test
     public void shouldConfigure() throws IOException {
         ConfigZipExtractor zip =  new ConfigZipExtractor(Path.of("src/test/resources/cert/cloud-credentials.zip"));
-        InMemoryScv scv = new InMemoryScv();
         final String serverHost = "myHost";
         final int serverPort = 12345;
         final String privateKey = zip.getPrivateKey();
@@ -123,19 +122,19 @@ public class PasAccessTest {
         GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> grpc = new GrpcConnection<>(stub, channel);
         PasAccess pas = new PasAccess(grpc);
 
-        Map<Type, String> config = pas.getCredentialsFromAccessService("key", "systemId");
-        assertEquals(serverHost, config.get(Type.grpchost));
-        assertEquals(Integer.toString(serverPort), config.get(Type.grpcport));
-        assertEquals(privateKey, config.get(Type.privatekey));
-        assertEquals(certificate, config.get(Type.publickey));
+        Map<Key, String> config = pas.getCredentialsFromAccessService("key", "systemId");
+        assertEquals(serverHost, config.get(ConfigStore.Key.grpchost));
+        assertEquals(Integer.toString(serverPort), config.get(Key.grpcport));
+        assertEquals(privateKey, config.get(ConfigStore.Key.privatekey));
+        assertEquals(certificate, config.get(Key.publickey));
         // FAAS shouldn't show up since it is not enabled:
         assertEquals(Set.of(RegistrationManager.Service.TSAAS), pas.getActiveServices("systemId"));
         assertEquals("myToken", pas.getToken(new HashSet<>(), "systemId"));
 
         // renew certs
-        Map<Type, String> newCerts = pas.renewCertificate("systemId");
-        assertEquals(privateKey, newCerts.get(Type.privatekey));
-        assertEquals(certificate, newCerts.get(Type.publickey));
+        Map<Key, String> newCerts = pas.renewCertificate("systemId");
+        assertEquals(privateKey, newCerts.get(Key.privatekey));
+        assertEquals(certificate, newCerts.get(Key.publickey));
 
         server.shutdown();
     }

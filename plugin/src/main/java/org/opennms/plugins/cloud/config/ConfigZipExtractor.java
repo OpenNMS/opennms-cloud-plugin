@@ -40,7 +40,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 
-import org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.Type;
+import org.opennms.plugins.cloud.config.ConfigStore.Key;
 
 /**
  * The Zip file looks like this:
@@ -62,18 +62,18 @@ public class ConfigZipExtractor {
         }
     }
 
-    public Map<Type, String> getGrpcConnectionConfig() throws IOException {
-        Map<Type, String> properties = new EnumMap<>(Type.class);
+    public Map<ConfigStore.Key, String> getGrpcConnectionConfig() throws IOException {
+        Map<ConfigStore.Key, String> properties = new EnumMap<>(ConfigStore.Key.class);
         Map<String, String> configFromZip = getConfig();
-        for(Type type : Type.values()) {
+        for(Key type : ConfigStore.Key.values()) {
             String value = configFromZip.get(type.name());
             if(value != null) {
                 properties.put(type, value);
             }
         }
-        properties.put(Type.publickey, getPublicKey());
-        properties.put(Type.privatekey, getPrivateKey());
-        properties.put(Type.tokenvalue, getJwtToken());
+        properties.put(ConfigStore.Key.publickey, getPublicKey());
+        properties.put(Key.privatekey, getPrivateKey());
+        properties.put(ConfigStore.Key.tokenvalue, getJwtToken());
         return properties;
     }
 

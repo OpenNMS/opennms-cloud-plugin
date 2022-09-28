@@ -6,7 +6,23 @@
                 http://aries.apache.org/schemas/blueprint-cm/blueprint-cm-1.1.0.xsd">
 
     <!-- CONFIG -->
+
+    <!-- SecureCredentialsVault backed ConfigStore -->
+    <!-- uncomment this section to use SecureCredentialsVault as config store
     <reference id="secureCredentialsVault" interface="org.opennms.integration.api.v1.scv.SecureCredentialsVault" availability="mandatory"/>
+    <bean id="configStore" class="org.opennms.plugins.cloud.config.ScvConfigStore" >
+        <argument ref="secureCredentialsVault"/>
+    </bean>
+    -->
+
+    <!-- KeyValue store backed ConfigStore -->
+    <reference id="keyValueStore" interface="org.opennms.integration.api.v1.distributed.KeyValueStore" availability="mandatory"/>
+    <bean id="configStore" class="org.opennms.plugins.cloud.config.KvConfigStore" >
+        <argument ref="keyValueStore"/>
+    </bean>
+
+    <service ref="configStore" interface="org.opennms.plugins.cloud.config.ConfigStore" />
+
     <reference id="runtimeInfo" interface="org.opennms.integration.api.v1.runtime.RuntimeInfo" availability="mandatory"/>
     <!-- Configuration stored in $OPENNMS_HOME/etc/org.opennms.plugins.cloud.cfg file -->
     <cm:property-placeholder id="tsaas-pocPluginProperties" persistent-id="org.opennms.plugins.cloud"
@@ -43,7 +59,7 @@
     </bean>
 
     <bean id="cloudConfigManager" class="org.opennms.plugins.cloud.config.ConfigurationManager">
-        <argument ref="secureCredentialsVault" />
+        <argument ref="configStore" />
         <argument ref="pasConfigTls"/>
         <argument ref="pasConfigMtls"/>
         <argument ref="registrationManager" />
@@ -60,6 +76,8 @@
     <bean id="houseKeeper" class="org.opennms.plugins.cloud.config.Housekeeper"
           destroy-method="destroy" init-method="init">
         <argument ref="cloudConfigManager"/>
+        <argument ref="configStore"/>
+        <argument ref="runtimeInfo"/>
     </bean>
 
     <!-- HEALTH -->

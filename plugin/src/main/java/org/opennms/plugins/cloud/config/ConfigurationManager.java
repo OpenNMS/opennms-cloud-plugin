@@ -28,11 +28,13 @@
 
 package org.opennms.plugins.cloud.config;
 
+import static org.opennms.plugins.cloud.config.ConfigStore.Key.tokenvalue;
+import static org.opennms.plugins.cloud.config.ConfigStore.TOKEN_KEY;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.AUTHENTCATED;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.CONFIGURED;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.FAILED;
+import static org.opennms.plugins.cloud.config.PrerequisiteChecker.checkAndLogContainer;
 import static org.opennms.plugins.cloud.config.PrerequisiteChecker.checkAndLogSystemId;
-import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.TOKEN_KEY;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -48,8 +50,7 @@ import java.util.Set;
 
 import org.opennms.dataplatform.access.AuthenticateGrpc;
 import org.opennms.integration.api.v1.runtime.RuntimeInfo;
-import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
-import org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.Type;
+import org.opennms.plugins.cloud.config.ConfigStore.Key;
 import org.opennms.plugins.cloud.grpc.CloseUtil;
 import org.opennms.plugins.cloud.grpc.GrpcConnection;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
@@ -62,15 +63,25 @@ import org.slf4j.LoggerFactory;
 
 public class ConfigurationManager {
 
-    /** See also <a href="https://confluence.internal.opennms.com/pages/viewpage.action?spaceKey=PRODDEV&title=High+Level+Message+Sequencing+-+System+Authorization">...</a>. */
+    /**
+     * See also <a href="https://confluence.internal.opennms.com/pages/viewpage.action?spaceKey=PRODDEV&title=High+Level+Message+Sequencing+-+System+Authorization">...</a>.
+     */
     public enum ConfigStatus {
-        /** We never tried to configure the cloud plugin. */
+        /**
+         * We never tried to configure the cloud plugin.
+         */
         NOT_ATTEMPTED,
-        /** The cloud plugin is successfully authenticated (Step 5). */
+        /**
+         * The cloud plugin is successfully authenticated (Step 5).
+         */
         AUTHENTCATED,
-        /** The cloud plugin is configured successfully. (Step 7, 9, 10) */
+        /**
+         * The cloud plugin is configured successfully. (Step 7, 9, 10)
+         */
         CONFIGURED,
-        /** The cloud plugin is configured but the configuration failed. */
+        /**
+         * The cloud plugin is configured but the configuration failed.
+         */
         FAILED
     }
 
@@ -78,7 +89,7 @@ public class ConfigurationManager {
 
     private ConfigStatus currentStatus = ConfigStatus.NOT_ATTEMPTED;
 
-    private final SecureCredentialsVaultUtil scv;
+    private final ConfigStore config;
 
     private final RegistrationManager serviceManager;
     private final List<GrpcService> grpcServices;
@@ -90,14 +101,14 @@ public class ConfigurationManager {
     private Instant tokenExpirationDate;
     private Instant certExpirationDate;
 
-    public ConfigurationManager(final SecureCredentialsVault scv,
+    public ConfigurationManager(final ConfigStore config,
                                 final GrpcConnectionConfig pasConfigTls,
                                 final GrpcConnectionConfig pasConfigMtls,
                                 final RegistrationManager serviceManager,
                                 final RuntimeInfo runtimeInfo,
                                 final List<GrpcService> grpcServices
-                                ) {
-        this.scv = new SecureCredentialsVaultUtil(Objects.requireNonNull(scv));
+    ) {
+        this.config = Objects.requireNonNull(config);
         this.pasConfigTls = Objects.requireNonNull(pasConfigTls);
         this.pasConfigMtls = Objects.requireNonNull(pasConfigMtls);
         this.serviceManager = Objects.requireNonNull(serviceManager);
@@ -107,13 +118,15 @@ public class ConfigurationManager {
         boolean importedFromZip = importCloudCredentialsIfPresent();
         if (!importedFromZip
                 // the authentication has been done previously => lets configure and start services
-                && ( AUTHENTCATED.name().equals(this.scv.getOrNull(SecureCredentialsVaultUtil.Type.configstatus))
-                  || CONFIGURED.name().equals(this.scv.getOrNull(SecureCredentialsVaultUtil.Type.configstatus)))) {
+                && (AUTHENTCATED.name().equals(this.config.getOrNull(Key.configstatus))
+                || CONFIGURED.name().equals(this.config.getOrNull(Key.configstatus)))) {
             configure();
         }
     }
 
-    /** We keep this shortcut currently for testing purposes.  */
+    /**
+     * We keep this shortcut currently for testing purposes.
+     */
     boolean importCloudCredentialsIfPresent() {
         boolean importedFromZipFile = false;
         Path cloudCredentialsFile = Path.of(System.getProperty("opennms.home") + "/etc/cloud-credentials.zip");
@@ -121,13 +134,13 @@ public class ConfigurationManager {
             try {
                 CertificateImporter importer = new CertificateImporter(
                         cloudCredentialsFile.toString(),
-                        scv,
+                        config,
                         pasConfigTls);
                 importer.doIt();
 
                 GrpcConnectionConfig cloudGatewayConfig = readCloudGatewayConfig().toBuilder()
                         .tokenKey(TOKEN_KEY)
-                        .tokenValue(scv.getOrNull(Type.tokenvalue))
+                        .tokenValue(config.getOrNull(tokenvalue))
                         .security(GrpcConnectionConfig.Security.MTLS)
                         .build();
 
@@ -168,6 +181,7 @@ public class ConfigurationManager {
     public void initConfiguration(final String key) {
         LOG.info("Starting configuration of cloud connection.");
         checkAndLogSystemId(this.runtimeInfo.getSystemId());
+        checkAndLogContainer(this.runtimeInfo);
 
         try (GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> grpcWithTls = new GrpcConnection<>(pasConfigTls,
                 AuthenticateGrpc::newBlockingStub)) {
@@ -175,10 +189,10 @@ public class ConfigurationManager {
             Objects.requireNonNull(key, "key must not be null");
             // Fetching initial credentials via TLS and cloud key
             final PasAccess pasWithTls = new PasAccess(grpcWithTls);
-            Map<SecureCredentialsVaultUtil.Type, String> cloudCredentials = pasWithTls.getCredentialsFromAccessService(key, runtimeInfo.getSystemId());
+            Map<ConfigStore.Key, String> cloudCredentials = pasWithTls.getCredentialsFromAccessService(key, runtimeInfo.getSystemId());
             LOG.info("Cloud configuration received from PAS (Platform Access Service).");
-            cloudCredentials.put(Type.configstatus, AUTHENTCATED.name());
-            scv.putProperties(cloudCredentials);
+            cloudCredentials.put(Key.configstatus, AUTHENTCATED.name());
+            config.putProperties(cloudCredentials);
             LOG.info("Cloud configuration stored in OpenNMS.");
             this.currentStatus = AUTHENTCATED;
         } catch (Exception e) {
@@ -196,10 +210,10 @@ public class ConfigurationManager {
             GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> pasWithMtlsConfig = createPasGrpc(cloudGatewayConfig);
             closeUtil.add(pasWithMtlsConfig);
             final PasAccess pasWithMtls = new PasAccess(pasWithMtlsConfig);
-            Map<Type, String> cloudCredentials = pasWithMtls.renewCertificate(runtimeInfo.getSystemId());
+            Map<Key, String> cloudCredentials = pasWithMtls.renewCertificate(runtimeInfo.getSystemId());
             LOG.info("New certificates received from PAS (Platform Access Service).");
-            cloudCredentials.put(Type.configstatus, AUTHENTCATED.name());
-            scv.putProperties(cloudCredentials);
+            cloudCredentials.put(Key.configstatus, AUTHENTCATED.name());
+            config.putProperties(cloudCredentials);
             LOG.info("Cloud configuration stored in OpenNMS.");
         } catch (Exception e) {
             this.currentStatus = ConfigStatus.FAILED;
@@ -213,8 +227,10 @@ public class ConfigurationManager {
      * These are the steps
      * // 9.) getServices
      * // 10.) getAccessToken (cert, system-uuid, service) return token
+     * synchronized: its ok to call the method multiple times but we don't want it to be called at the same time (just in case).
+     * It is accessed from multiple Threads, e.g. from Housekeeper
      */
-    public ConfigStatus configure() {
+    public synchronized ConfigStatus configure() {
         String systemId = runtimeInfo.getSystemId();
         try (CloseUtil closeUtil = new CloseUtil()) {
             GrpcConnectionConfig cloudGatewayConfig = readCloudGatewayConfig();
@@ -265,31 +281,33 @@ public class ConfigurationManager {
                 AuthenticateGrpc::newBlockingStub);
     }
 
-    /** Registers the active services with OpenNMS. */
-    private void registerServices(final Set<RegistrationManager.Service> activeServices){
-        Set<RegistrationManager.Service> inactiveServices =  new HashSet<>(Arrays.asList(RegistrationManager.Service.values()));
+    /**
+     * Registers the active services with OpenNMS.
+     */
+    private void registerServices(final Set<RegistrationManager.Service> activeServices) {
+        Set<RegistrationManager.Service> inactiveServices = new HashSet<>(Arrays.asList(RegistrationManager.Service.values()));
         inactiveServices.removeAll(activeServices);
-        for(RegistrationManager.Service service : inactiveServices ) {
+        for (RegistrationManager.Service service : inactiveServices) {
             this.serviceManager.deregister(service);
         }
-        for(RegistrationManager.Service service : activeServices ) {
+        for (RegistrationManager.Service service : activeServices) {
             this.serviceManager.register(service);
         }
     }
 
     GrpcConnectionConfig readCloudGatewayConfig() {
         return GrpcConnectionConfig.builder()
-                .host(this.scv.getOrNull(SecureCredentialsVaultUtil.Type.grpchost))
-                .port(this.scv.get(SecureCredentialsVaultUtil.Type.grpcport).map(Integer::parseInt).orElse(0))
-                .privateKey(this.scv.getOrNull(SecureCredentialsVaultUtil.Type.privatekey))
-                .publicKey(this.scv.getOrNull(SecureCredentialsVaultUtil.Type.publickey))
-                .tokenKey(this.scv.getOrNull(SecureCredentialsVaultUtil.Type.tokenkey))
-                .tokenValue(this.scv.getOrNull(SecureCredentialsVaultUtil.Type.tokenvalue))
+                .host(this.config.getOrNull(ConfigStore.Key.grpchost))
+                .port(this.config.get(ConfigStore.Key.grpcport).map(Integer::parseInt).orElse(0))
+                .privateKey(this.config.getOrNull(ConfigStore.Key.privatekey))
+                .publicKey(this.config.getOrNull(ConfigStore.Key.publickey))
+                .tokenKey(this.config.getOrNull(ConfigStore.Key.tokenkey))
+                .tokenValue(this.config.getOrNull(Key.tokenvalue))
                 .build();
     }
 
     public void initGrpcServices(final GrpcConnectionConfig config) {
-        for(GrpcService service: grpcServices) {
+        for (GrpcService service : grpcServices) {
             try {
                 service.initGrpc(config);
             } catch (Exception e) {

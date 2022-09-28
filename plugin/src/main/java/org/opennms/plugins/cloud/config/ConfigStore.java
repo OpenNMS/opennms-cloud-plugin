@@ -28,17 +28,35 @@
 
 package org.opennms.plugins.cloud.config;
 
-import static org.junit.Assert.fail;
+import java.util.Map;
+import java.util.Optional;
 
-import org.junit.Test;
+/**
+ * A thin wrapper around the SecureCredentialsVault.
+ * Makes the accessing properties easier.
+ */
+public interface ConfigStore {
+  String STORE_PREFIX = "plugin.cloud";
+  String TOKEN_KEY = "token";
 
-public class SecureCredentialsVaultUtilTypeTest {
-    @Test
-    public void typeNamesMustBeLowerCase() {
-        for(ConfigStore.Key type : ConfigStore.Key.values()) {
-            if(!type.name().equals(type.name().toLowerCase())) {
-                fail(type.name() + " must be lower case. Otherwise the scv won't work properly.");
-            }
-        }
-    }
+  /**
+   * All enums must be lower case.
+   * Otherwise scv won't save them correctly.
+   */
+  @SuppressWarnings("java:S115") // we don't want to be warned about lower case
+  enum Key {
+    truststore, publickey, privatekey, tokenkey, tokenvalue, grpchost, grpcport,
+    activeservices,
+    /** Defines if plugin was already configured via ConfigurationManager.
+     * See ConfigurationManager.ConfigStatus */
+    configstatus
+  }
+
+  String getOrNull(Key type);
+
+  Optional<String> get(Key type);
+
+  void putProperty(final Key key, String value);
+  void putProperties(final Map<Key, String> properties);
+
 }

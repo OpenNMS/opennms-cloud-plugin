@@ -30,26 +30,28 @@ package org.opennms.plugins.cloud.config;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
+import java.util.Optional;
 
-import org.opennms.integration.api.v1.scv.Credentials;
-import org.opennms.integration.api.v1.scv.SecureCredentialsVault;
-
-public final class InMemoryScv implements SecureCredentialsVault {
-    final Map<String, Credentials> creds = new HashMap<>();
+public final class InMemoryConfigStore implements ConfigStore {
+    final Map<Key, String> store = new HashMap<>();
 
     @Override
-    public Set<String> getAliases() {
-        return creds.keySet();
+    public String getOrNull(Key type) {
+        return store.get(type);
     }
 
     @Override
-    public Credentials getCredentials(String s) {
-        return creds.get(s);
+    public Optional<String> get(Key type) {
+        return Optional.ofNullable(getOrNull(type));
     }
 
     @Override
-    public void setCredentials(String s, Credentials credentials) {
-        creds.put(s, credentials);
+    public void putProperty(Key key, String value) {
+        this.store.put(key, value);
+    }
+
+    @Override
+    public void putProperties(Map<Key, String> properties) {
+        this.store.putAll(properties);
     }
 }

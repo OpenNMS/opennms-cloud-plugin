@@ -37,11 +37,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.opennms.plugins.cloud.config.ConfigStore.Key.grpchost;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.AUTHENTCATED;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.CONFIGURED;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.FAILED;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.NOT_ATTEMPTED;
-import static org.opennms.plugins.cloud.config.SecureCredentialsVaultUtil.Type.grpchost;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -54,6 +54,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.opennms.integration.api.v1.runtime.RuntimeInfo;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
+import org.opennms.plugins.cloud.config.ConfigStore.Key;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.GrpcService;
 import org.opennms.plugins.cloud.srv.RegistrationManager;
@@ -68,8 +69,7 @@ public class ConfigurationManagerTest {
   private TimeSeriesStorage serverStorage;
   private GrpcConnectionConfig clientConfig;
 
-  private InMemoryScv scv;
-  SecureCredentialsVaultUtil scvUtil;
+  ConfigStore config;
   GrpcService grpc;
   RuntimeInfo info;
 
@@ -88,8 +88,7 @@ public class ConfigurationManagerTest {
             .clientTrustStore(Files.readString(Path.of("src/test/resources/cert/clienttruststore.pem")))
             .build();
 
-    scv = new InMemoryScv();
-    scvUtil = new SecureCredentialsVaultUtil(scv);
+    config = new InMemoryConfigStore();
     grpc = mock(GrpcService.class);
     info = mock(RuntimeInfo.class);
     when(info.getSystemId()).thenReturn(UUID.randomUUID().toString());
@@ -106,7 +105,7 @@ public class ConfigurationManagerTest {
   public void shouldGetCloudConfig() throws InterruptedException {
     TsaasStorage grpc = mock(TsaasStorage.class);
     when(grpc.checkHealth()).thenReturn(Tsaas.CheckHealthResponse.newBuilder().setStatus(Tsaas.CheckHealthResponse.ServingStatus.SERVING).build());
-    ConfigurationManager cm = new ConfigurationManager(scv, clientConfig, clientConfig, mock(RegistrationManager.class),
+    ConfigurationManager cm = new ConfigurationManager(config, clientConfig, clientConfig, mock(RegistrationManager.class),
             info,
             Collections.singletonList(grpc));
     assertEquals(NOT_ATTEMPTED, cm.getStatus());
@@ -115,12 +114,12 @@ public class ConfigurationManagerTest {
     cm.configure();
     assertEquals(CONFIGURED, cm.getStatus());
     verify(grpc, times(1)).initGrpc(any());
-    assertTrue(scvUtil.getOrNull(SecureCredentialsVaultUtil.Type.privatekey).startsWith("-----BEGIN PRIVATE KEY-----"));
-    assertTrue(scvUtil.getOrNull(SecureCredentialsVaultUtil.Type.publickey).startsWith("-----BEGIN CERTIFICATE-----"));
+    assertTrue(config.getOrNull(ConfigStore.Key.privatekey).startsWith("-----BEGIN PRIVATE KEY-----"));
+    assertTrue(config.getOrNull(ConfigStore.Key.publickey).startsWith("-----BEGIN CERTIFICATE-----"));
   }
   @Test
   public void shouldSetStatusForFailedConfig() {
-    ConfigurationManager cm = new ConfigurationManager(scv, clientConfig, clientConfig, mock(RegistrationManager.class),
+    ConfigurationManager cm = new ConfigurationManager(config, clientConfig, clientConfig, mock(RegistrationManager.class),
             info,
             Collections.singletonList(grpc));
     final String key = null; // will fail
@@ -130,18 +129,18 @@ public class ConfigurationManagerTest {
 
   @Test
   public void shouldSetStatusForFailedInit() throws InterruptedException {
-    ConfigurationManager cm = new ConfigurationManager(scv, clientConfig, clientConfig, mock(RegistrationManager.class),
+    ConfigurationManager cm = new ConfigurationManager(config, clientConfig, clientConfig, mock(RegistrationManager.class),
             info,
             Collections.singletonList(grpc));
     cm.initConfiguration("something");
-    scvUtil.putProperty(grpchost, "I don't exist");
+    config.putProperty(grpchost, "I don't exist");
     assertEquals(FAILED, cm.configure());
   }
 
   @Test
   public void shouldCatchAllErrorsFromGrpcInit() {
     doThrow(new RuntimeException("failed")).when(grpc).initGrpc(any(GrpcConnectionConfig.class));
-    ConfigurationManager cm = new ConfigurationManager(scv, clientConfig, clientConfig, mock(RegistrationManager.class),
+    ConfigurationManager cm = new ConfigurationManager(config, clientConfig, clientConfig, mock(RegistrationManager.class),
             info,
             Collections.singletonList(grpc));
     cm.initGrpcServices(GrpcConnectionConfig.builder().build()); // should swallow exception
@@ -151,7 +150,7 @@ public class ConfigurationManagerTest {
   public void shouldRenewCredentials() throws Exception {
     TsaasStorage grpc = mock(TsaasStorage.class);
     when(grpc.checkHealth()).thenReturn(Tsaas.CheckHealthResponse.newBuilder().setStatus(Tsaas.CheckHealthResponse.ServingStatus.SERVING).build());
-    ConfigurationManager cm = new ConfigurationManager(scv, clientConfig, clientConfig, mock(RegistrationManager.class),
+    ConfigurationManager cm = new ConfigurationManager(config, clientConfig, clientConfig, mock(RegistrationManager.class),
             info,
             Collections.singletonList(grpc));
     assertEquals(NOT_ATTEMPTED, cm.getStatus());
@@ -162,8 +161,8 @@ public class ConfigurationManagerTest {
     verify(grpc, times(1)).initGrpc(any());
 
     cm.renewCerts();
-    assertTrue(scvUtil.getOrNull(SecureCredentialsVaultUtil.Type.privatekey).startsWith("-----BEGIN PRIVATE KEY-----"));
-    assertTrue(scvUtil.getOrNull(SecureCredentialsVaultUtil.Type.publickey).startsWith("-----BEGIN CERTIFICATE-----"));
+    assertTrue(config.getOrNull(Key.privatekey).startsWith("-----BEGIN PRIVATE KEY-----"));
+    assertTrue(config.getOrNull(Key.publickey).startsWith("-----BEGIN CERTIFICATE-----"));
     assertEquals(CONFIGURED, cm.getStatus());
   }
 
@@ -171,7 +170,7 @@ public class ConfigurationManagerTest {
   public void shouldRenewCredentialsFail() {
     TsaasStorage grpc = mock(TsaasStorage.class);
     when(grpc.checkHealth()).thenReturn(Tsaas.CheckHealthResponse.newBuilder().setStatus(Tsaas.CheckHealthResponse.ServingStatus.SERVING).build());
-    ConfigurationManager cm = new ConfigurationManager(scv, clientConfig, clientConfig, mock(RegistrationManager.class),
+    ConfigurationManager cm = new ConfigurationManager(config, clientConfig, clientConfig, mock(RegistrationManager.class),
             info,
             Collections.singletonList(grpc));
     assertThrows(NullPointerException.class, cm::renewCerts); // this will fail because cm was never initialized and configured

@@ -67,7 +67,7 @@ public class GrpcConnection<T extends AbstractBlockingStub<T>> implements AutoCl
     public final ManagedChannel managedChannel;
     private final T clientStub;
 
-    public GrpcConnection(final GrpcConnectionConfig config, final Function<ManagedChannel,T> stubCreator) {
+    public GrpcConnection(final GrpcConnectionConfig config, final Function<ManagedChannel, T> stubCreator) {
         final NettyChannelBuilder builder = NettyChannelBuilder.forAddress(config.getHost(), config.getPort());
         if (GrpcConnectionConfig.Security.PLAIN_TEXT == config.getSecurity()) {
             builder.usePlaintext();
@@ -85,7 +85,7 @@ public class GrpcConnection<T extends AbstractBlockingStub<T>> implements AutoCl
                 .build();
         clientStub = stubCreator.apply(managedChannel)
                 .withCompression("gzip") // ZStdGrpcCodec.ZSTD
-                .withInterceptors(new TokenAddingInterceptor(config));
+                .withInterceptors(new TokenAddingInterceptor(config.getTokenKey(), config.getTokenValue()));
     }
 
     public GrpcConnection(T clientStub, ManagedChannel managedChannel) {
@@ -137,9 +137,9 @@ public class GrpcConnection<T extends AbstractBlockingStub<T>> implements AutoCl
         final String tokenKey;
         final String tokenValue;
 
-        TokenAddingInterceptor(final GrpcConnectionConfig config) {
-            this.tokenKey = config.getTokenKey();
-            this.tokenValue = config.getTokenValue();
+        TokenAddingInterceptor(final String tokenKey, final String tokenValue) {
+            this.tokenKey = tokenKey;
+            this.tokenValue = tokenValue;
         }
 
         @Override
@@ -148,13 +148,14 @@ public class GrpcConnection<T extends AbstractBlockingStub<T>> implements AutoCl
             return new ForwardingClientCall.SimpleForwardingClientCall<>(next.newCall(method, callOptions)) {
                 @Override
                 public void start(final Listener<O> responseListener, final Metadata headers) {
-                    if(isNotEmpty(tokenKey) && isNotEmpty(tokenValue)) {
+                    if (isNotEmpty(tokenKey) && isNotEmpty(tokenValue)) {
                         headers.put(Metadata.Key.of(tokenKey, Metadata.ASCII_STRING_MARSHALLER), tokenValue);
                     }
                     super.start(responseListener, headers);
                 }
             };
         }
+
         private static boolean isNotEmpty(String s) {
             return s != null && !s.isBlank();
         }
