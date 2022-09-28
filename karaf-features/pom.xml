@@ -130,13 +130,13 @@
         </dependency>
         <dependency>
             <groupId>org.opennms.plugins.cloud</groupId>
-            <artifactId>cloud-plugin</artifactId>
+            <artifactId>plugin-common</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.opennms.plugins.cloud</groupId>
-            <artifactId>cloud-plugin-fragment-core</artifactId>
+            <artifactId>plugin-core</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
