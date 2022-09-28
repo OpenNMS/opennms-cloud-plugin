@@ -86,6 +86,7 @@
 
     <!-- HEALTH -->
     <bean id="cloudHealthCheck" class="org.opennms.plugins.cloud.srv.tsaas.CloudHealthCheck">
+        <argument ref="cloudConfigManager"/>
         <argument ref="timeSeriesStorage"/>
     </bean>
     <service ref="cloudHealthCheck" interface="org.opennms.integration.api.v1.health.HealthCheck">

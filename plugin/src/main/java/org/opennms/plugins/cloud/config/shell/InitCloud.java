@@ -72,9 +72,9 @@ public class InitCloud implements Action {
         }
 
         if(ConfigurationManager.ConfigStatus.CONFIGURED == status) {
-            System.out.printf("Initialization of %s was successful.%n", this.runtimeInfo.getContainer());
+            System.out.printf("Initialization of cloud plugin in %s was successful.%n", this.runtimeInfo.getContainer());
         } else {
-            System.out.printf("Initialization of %s failed: %s. Check log (log:display) for details.%n", this.runtimeInfo.getContainer(), status);
+            System.out.printf("Initialization of cloud plugin in %s failed: %s. Check log (log:display) for details.%n", this.runtimeInfo.getContainer(), status);
         }
 
         return null;
