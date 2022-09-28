@@ -169,7 +169,6 @@ public class HousekeeperTest {
 
     @Test
     public void shouldTriggerNothingIfNotInitialized_Sentinel() throws CertificateException {
-        when(cm.getStatus()).thenReturn(ConfigurationManager.ConfigStatus.NOT_ATTEMPTED);
         shouldTriggerNothing(Container.SENTINEL);
     }
 
@@ -181,30 +180,6 @@ public class HousekeeperTest {
     }
 
     private void shouldTriggerNothing(final Container container) throws CertificateException {
-        when(runtimeInfo.getContainer()).thenReturn(container);
-        hk = new Housekeeper(cm, config, runtimeInfo, 1, 1, 1);
-        hk.init();
-
-        // wait for a bit to check if configure was called. It shouldn't since the token hasn't changed
-        await()
-                .during(Duration.ofMillis(2000))
-                .atMost(Duration.ofMillis(3000))
-                .until(() -> mockingDetails(cm).getInvocations().stream().noneMatch(i -> "configure".equals(i.getMethod().getName())));
-        verify(cm, never()).configure();
-        verify(cm, never()).renewCerts();
-    }
-
-    @Test
-    public void shouldTriggerNothingIfNotInitialized_OpenNms() throws CertificateException {
-        shouldTriggerNothingIfNotInitialized_OpenNms(Container.OPENNMS);
-    }
-
-    @Test
-    public void shouldTriggerNothingIfNotInitialized_Sentinel() throws CertificateException {
-        shouldTriggerNothingIfNotInitialized_OpenNms(Container.SENTINEL);
-    }
-
-    private void shouldTriggerNothingIfNotInitialized_OpenNms(final Container container) throws CertificateException {
         when(runtimeInfo.getContainer()).thenReturn(container);
         hk = new Housekeeper(cm, config, runtimeInfo, 1, 1, 1);
         hk.init();
