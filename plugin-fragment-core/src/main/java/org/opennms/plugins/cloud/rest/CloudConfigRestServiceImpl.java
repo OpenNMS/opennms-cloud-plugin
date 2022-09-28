@@ -32,6 +32,7 @@ import java.util.Objects;
 
 import javax.ws.rs.core.Response;
 
+import org.json.JSONObject;
 import org.opennms.plugins.cloud.config.ConfigurationManager;
 
 public class CloudConfigRestServiceImpl implements CloudConfigRestService {
@@ -56,27 +57,26 @@ public class CloudConfigRestServiceImpl implements CloudConfigRestService {
         return getStatus();
     }
 
-    private String extractKey(final String json) {
-        // not sure why we get the key in such a strange format.
-        // {"key":{"__v_isShallow":false,"dep":{"w":0,"n":0},"__v_isRef":true,"_rawValue":"aaa","_value":"aaa"}}
-        String before = "\"_rawValue\":\"";
-        String key = json.substring(json.indexOf(before) + before.length());
-        return key.substring(0, key.indexOf("\""));
+    String extractKey(final String json) {
+        return new JSONObject(json)
+                .getJSONObject("key")
+                .getString("_rawValue");
     }
 
     @Override
     public Response getStatus() {
         return Response
                 .status(Response.Status.OK)
-                .entity(String.format("{\"status\":\"%s\"}", cm.getStatus()))
+                .entity( new JSONObject()
+                        .put("status", cm.getStatus().name())
+                        .toString())
                 .build();
     }
 
     String exceptionToJson(Exception e) {
-        return String.format(
-                "{%n" +
-                "  \"status\":\"%s\",%n" +
-                "  \"message\":\"%s\"%n" +
-                "}", cm.getStatus(), e.getMessage());
+        return new JSONObject()
+                .put("status", cm.getStatus().name())
+                .put("message", e.getMessage())
+                .toString();
     }
 }

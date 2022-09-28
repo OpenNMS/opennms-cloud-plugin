@@ -273,7 +273,7 @@ public class ConfigurationManager {
         return this.currentStatus;
     }
 
-    GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> createPasGrpc(final GrpcConnectionConfig cloudGatewayConfig) {
+    private GrpcConnection<AuthenticateGrpc.AuthenticateBlockingStub> createPasGrpc(final GrpcConnectionConfig cloudGatewayConfig) {
         GrpcConnectionConfig mtlsConfig = pasConfigMtls.toBuilder()
                 .privateKey(cloudGatewayConfig.getPrivateKey())
                 .publicKey(cloudGatewayConfig.getPublicKey())

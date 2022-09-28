@@ -31,7 +31,9 @@ package org.opennms.plugins.cloud.rest;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.CONFIGURED;
 
+import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.opennms.plugins.cloud.config.ConfigurationManager;
@@ -47,11 +49,17 @@ public class CloudConfigRestServiceImplTest {
 
     @Test
     public void shouldReturnStatus() {
-        when(cm.getStatus()).thenReturn(ConfigurationManager.ConfigStatus.CONFIGURED);
-        String json = new CloudConfigRestServiceImpl(cm).exceptionToJson(new NullPointerException("myProblem"));
-        assertEquals("{\n" +
-                "  \"status\":\"CONFIGURED\",\n" +
-                "  \"message\":\"myProblem\"\n" +
-                "}", json);
+        when(cm.getStatus()).thenReturn(CONFIGURED);
+        String jsonString = new CloudConfigRestServiceImpl(cm).exceptionToJson(new NullPointerException("myProblem"));
+        JSONObject json = new JSONObject(jsonString);
+        assertEquals(CONFIGURED.name(), json.get("status"));
+        assertEquals("myProblem", json.get("message"));
+    }
+
+    @Test
+    public void shouldExtractKeyFromJson() {
+        // not sure why we get the key in such a strange format.
+        String json = "{\"key\":{\"__v_isShallow\":false,\"dep\":{\"w\":0,\"n\":0},\"__v_isRef\":true,\"_rawValue\":\"aaa\",\"_value\":\"aaa\"}}";
+        assertEquals("aaa", new CloudConfigRestServiceImpl(cm).extractKey(json));
     }
 }

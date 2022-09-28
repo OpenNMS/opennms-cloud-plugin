@@ -196,5 +196,11 @@
             <artifactId>awaitility</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.opennms.tsaas.platform</groupId>
+            <artifactId>tsaas-authenticate-grpc</artifactId>
+            <version>${pasClientVersion}</version>
+            <scope>test</scope><!-- needed for Mockito, not sure why... -->
+        </dependency>
     </dependencies>
 </project>
