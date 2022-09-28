@@ -289,8 +289,8 @@
 
     <modules>
         <module>assembly</module>
-        <module>plugin</module>
-        <module>plugin-fragment-core</module>
+        <module>plugin-common</module>
+        <module>plugin-core</module>
         <module>karaf-features</module>
         <module>wrap</module>
         <module>it-test</module>
