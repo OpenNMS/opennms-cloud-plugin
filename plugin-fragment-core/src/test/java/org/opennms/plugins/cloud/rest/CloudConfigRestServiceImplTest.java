@@ -29,9 +29,14 @@
 package org.opennms.plugins.cloud.rest;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.CONFIGURED;
+import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.FAILED;
+
+import javax.ws.rs.core.Response;
 
 import org.json.JSONObject;
 import org.junit.Before;
@@ -39,6 +44,9 @@ import org.junit.Test;
 import org.opennms.plugins.cloud.config.ConfigurationManager;
 
 public class CloudConfigRestServiceImplTest {
+
+    // not sure why we get the key in such a strange format.
+    private final static String API_KEY_JSON =  "{\"key\":{\"__v_isShallow\":false,\"dep\":{\"w\":0,\"n\":0},\"__v_isRef\":true,\"_rawValue\":\"aaa\",\"_value\":\"aaa\"}}";
 
     private ConfigurationManager cm;
 
@@ -58,8 +66,30 @@ public class CloudConfigRestServiceImplTest {
 
     @Test
     public void shouldExtractKeyFromJson() {
-        // not sure why we get the key in such a strange format.
-        String json = "{\"key\":{\"__v_isShallow\":false,\"dep\":{\"w\":0,\"n\":0},\"__v_isRef\":true,\"_rawValue\":\"aaa\",\"_value\":\"aaa\"}}";
-        assertEquals("aaa", new CloudConfigRestServiceImpl(cm).extractKey(json));
+        assertEquals("aaa", new CloudConfigRestServiceImpl(cm).extractKey(API_KEY_JSON));
+    }
+
+    @Test
+    public void shouldPutActivationKey() {
+        when(cm.getStatus()).thenReturn(CONFIGURED);
+        Response response = new CloudConfigRestServiceImpl(cm)
+                .putActivationKey(API_KEY_JSON);
+        assertEquals(200, response.getStatus());
+        String entity = (String) response.getEntity();
+        JSONObject json = new JSONObject(entity);
+        assertEquals(CONFIGURED.name(), json.get("status"));
+    }
+
+    @Test
+    public void shouldPutActivationKeyWithException() {
+        doThrow(new NullPointerException("ohoh")).when(cm).initConfiguration(anyString());
+        when(cm.getStatus()).thenReturn(FAILED);
+        Response response = new CloudConfigRestServiceImpl(cm)
+                .putActivationKey(API_KEY_JSON);
+        assertEquals(500, response.getStatus());
+        String entity = (String) response.getEntity();
+        JSONObject json = new JSONObject(entity);
+        assertEquals(FAILED.name(), json.get("status"));
+        assertEquals("ohoh", json.get("message"));
     }
 }
