@@ -52,8 +52,7 @@ public class TsaasStorageIT {
   public void canInstallAndStartPlugin() {
 
     // install plugin for core
-    karafShell.runCommand("kar:install --no-start file:/usr/share/opennms/deploy/kar-1.0.0-SNAPSHOT.kar");
-    karafShell.runCommand("feature:repo-add mvn:org.opennms.plugins.cloud/karaf-features/1.0.0-SNAPSHOT/xml");
+    karafShell.runCommand("kar:install --no-start mvn:org.opennms.plugins.cloud/kar/1.0.0-SNAPSHOT/kar");
     karafShell.runCommand("feature:install opennms-cloud-plugin");
 
     // check if plugin has been started, if so we assume the installation worked well.
