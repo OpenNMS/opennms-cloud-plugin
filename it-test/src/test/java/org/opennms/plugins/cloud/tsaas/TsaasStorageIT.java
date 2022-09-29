@@ -29,6 +29,7 @@ public class TsaasStorageIT {
 
   @BeforeClass
   public static void beforeAll() {
+    LOG.info("Starting docker-compose with \"USER_HOME\"={}", System.getProperty("user.home"));
     environment = new DockerComposeContainer<>(new File("src/test/resources/docker-compose.yaml"))
         .withEnv("USER_HOME", System.getProperty("user.home"))
         .withTailChildContainers(true)
