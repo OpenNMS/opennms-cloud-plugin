@@ -1,15 +1,9 @@
 package org.opennms.plugins.cloud.tsaas;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.time.Duration;
-import java.util.List;
 
-import org.apache.logging.log4j.util.Strings;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -55,7 +49,7 @@ public class TsaasStorageIT {
 
     // install plugin for core
     karafShell.runCommand("kar:install --no-start mvn:org.opennms.plugins.cloud/kar/1.0.0-SNAPSHOT/kar");
-    karafShell.runCommand("feature:install opennms-cloud-plugin");
+    karafShell.runCommand("feature:install opennms-cloud-plugin-core");
 
     // check if plugin has been started, if so we assume the installation worked well.
     karafShell.runCommand("feature:list | grep opennms-cloud-plugin-core", output -> output.contains("Started"));
