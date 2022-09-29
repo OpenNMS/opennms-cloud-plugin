@@ -36,10 +36,10 @@ public class TsaasStorageIT {
     environment = new DockerComposeContainer<>(new File("src/test/resources/docker-compose.yaml"))
         .withEnv("USER_HOME", userHome)
         .withTailChildContainers(true)
-        .withExposedService("database", 5432, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(15)))
-        .withLogConsumer("database", new Slf4jLogConsumer(LOG))
-        .withExposedService("horizon", 8980, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(240)))
-        .withLogConsumer("horizon", new Slf4jLogConsumer(LOG));
+        .withExposedService("database_1", 5432, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(15)))
+        .withLogConsumer("database_1", new Slf4jLogConsumer(LOG))
+        .withExposedService("horizon_1", 8980, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(240)))
+        .withLogConsumer("horizon_1", new Slf4jLogConsumer(LOG));
     environment.start();
   }
 
