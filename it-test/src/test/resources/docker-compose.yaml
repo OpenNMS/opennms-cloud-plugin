@@ -25,7 +25,7 @@ services:
       retries: 3
 
   horizon:
-    image: ${DOCKER_REGISTRY:-docker.io}/${DOCKER_ORG:-opennms}/${HORIZON_OCI:-horizon}:${ONMS_VERSION:-30.0.3}
+    image: docker.io/${DOCKER_ORG:-opennms}/${HORIZON_OCI:-horizon}:${ONMS_VERSION:-release-30.x}
     hostname: horizon
     sysctls:
       net.ipv4.ping_group_range: "0 429496729"
@@ -33,9 +33,10 @@ services:
       - database
     environment:
       TZ: ${TIMEZONE:-America/New_York}
-   # volumes:
+    volumes:
       # we overlay the deploy folder with kar. It contains the plugin jars and dependencies:
-  #    - ${HOME}/.m2/repository/org/opennms/plugins/cloud/kar/1.0.0-SNAPSHOT:/usr/share/opennms/.m2/repository/org/opennms/plugins/cloud/kar/1.0.0-SNAPSHOT:ro
+      - /Users/freddy/.m2/repository/org/opennms/plugins/cloud/kar/1.0.0-SNAPSHOT:/usr/share/opennms/.m2/repository/org/opennms/plugins/cloud/kar/1.0.0-SNAPSHOT:ro
+    entrypoint: /bin/bash -x /entrypoint.sh
     command: ["-s"]
     ports:
       - "8101:8101/tcp" # ssh port for karaf console
