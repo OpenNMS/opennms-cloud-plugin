@@ -29,7 +29,10 @@ public class TsaasStorageIT {
 
   @BeforeClass
   public static void beforeAll() {
+    String userHome = System.getProperty("user.home");
     LOG.info("Starting docker-compose with \"USER_HOME\"={}", System.getProperty("user.home"));
+    File karFile = new File(userHome, "/.m2/repository/org/opennms/plugins/cloud/kar/1.0.0-SNAPSHOT/kar-1.0.0-SNAPSHOT.kar");
+    LOG.info("Checking for Kar file: {}: File {}", karFile, karFile.exists());
     environment = new DockerComposeContainer<>(new File("src/test/resources/docker-compose.yaml"))
         .withEnv("USER_HOME", System.getProperty("user.home"))
         .withTailChildContainers(true)
