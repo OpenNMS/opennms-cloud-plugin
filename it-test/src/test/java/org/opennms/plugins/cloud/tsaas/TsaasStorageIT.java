@@ -34,7 +34,7 @@ public class TsaasStorageIT {
     File karFile = new File(userHome, "/.m2/repository/org/opennms/plugins/cloud/kar/1.0.0-SNAPSHOT/kar-1.0.0-SNAPSHOT.kar");
     LOG.info("Checking for Kar file: {}: File {}", karFile, karFile.exists());
     environment = new DockerComposeContainer<>(new File("src/test/resources/docker-compose.yaml"))
-        .withEnv("USER_HOME", System.getProperty("user.home"))
+        .withEnv("USER_HOME", userHome)
         .withTailChildContainers(true)
         .withExposedService("database", 5432, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(15)))
         .withLogConsumer("database", new Slf4jLogConsumer(LOG))
