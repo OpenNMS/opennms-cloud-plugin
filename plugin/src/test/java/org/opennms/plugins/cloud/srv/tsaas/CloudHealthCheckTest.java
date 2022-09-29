@@ -32,6 +32,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.AUTHENTCATED;
+import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.CONFIGURED;
+import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.FAILED;
+import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.NOT_ATTEMPTED;
 
 import org.junit.After;
 import org.junit.Before;
@@ -40,6 +44,7 @@ import org.opennms.integration.api.v1.health.Context;
 import org.opennms.integration.api.v1.health.Response;
 import org.opennms.integration.api.v1.health.Status;
 import org.opennms.integration.api.v1.timeseries.InMemoryStorage;
+import org.opennms.plugins.cloud.config.ConfigurationManager;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.testserver.GrpcTestServer;
 import org.opennms.plugins.cloud.testserver.GrpcTestServerInterceptor;
@@ -48,6 +53,8 @@ import org.opennms.tsaas.Tsaas;
 public class CloudHealthCheckTest {
     private TsaasStorage storage;
     private GrpcTestServer server;
+
+    private ConfigurationManager cm;
 
     @Before
     public void setUp() throws Exception {
@@ -66,6 +73,7 @@ public class CloudHealthCheckTest {
 
         storage = new TsaasStorage(tsaasConfig);
         storage.initGrpc(clientConfig);
+        cm = mock(ConfigurationManager.class);
     }
 
     @After
@@ -79,19 +87,48 @@ public class CloudHealthCheckTest {
     }
 
     @Test
-    public void shouldReturnStatusSuccess() throws Exception {
+    public void shouldReturnStatusForTsaasSuccess() throws Exception {
+        when(cm.getStatus()).thenReturn(CONFIGURED);
         assertEquals(Tsaas.CheckHealthResponse.ServingStatus.SERVING, storage.checkHealth().getStatus());
-        Response response = new CloudHealthCheck(this.storage).perform(mock(Context.class));
+        Response response = new CloudHealthCheck(cm, this.storage).perform(mock(Context.class));
         assertEquals(Status.Success, response.getStatus());
         assertTrue(response.getMessage().contains(Tsaas.CheckHealthResponse.ServingStatus.SERVING.name()));
     }
 
     @Test
-    public void shouldReturnStatusFailure() throws Exception {
+    public void shouldReturnStatusForTsaasFailure() throws Exception {
+        when(cm.getStatus()).thenReturn(CONFIGURED);
         TsaasStorage tsaas = mock(TsaasStorage.class);
         when(tsaas.checkHealth()).thenReturn(Tsaas.CheckHealthResponse.newBuilder().setStatus(Tsaas.CheckHealthResponse.ServingStatus.NOT_SERVING).build());
-        Response response = new CloudHealthCheck(tsaas).perform(mock(Context.class));
+        Response response = new CloudHealthCheck(cm, tsaas).perform(mock(Context.class));
         assertEquals(Status.Failure, response.getStatus());
         assertTrue(response.getMessage().contains(Tsaas.CheckHealthResponse.ServingStatus.SERVING.name()));
+    }
+
+    @Test
+    public void shouldReturnStatusForInitNotAttempted() throws Exception {
+        when(cm.getStatus()).thenReturn(NOT_ATTEMPTED);
+        TsaasStorage tsaas = mock(TsaasStorage.class);
+        Response response = new CloudHealthCheck(cm, tsaas).perform(mock(Context.class));
+        assertEquals(Status.Success, response.getStatus());
+        assertTrue(response.getMessage().contains(NOT_ATTEMPTED.name()));
+    }
+
+    @Test
+    public void shouldReturnStatusForInitFailed() throws Exception {
+        when(cm.getStatus()).thenReturn(FAILED);
+        TsaasStorage tsaas = mock(TsaasStorage.class);
+        Response response = new CloudHealthCheck(cm, tsaas).perform(mock(Context.class));
+        assertEquals(Status.Failure, response.getStatus());
+        assertTrue(response.getMessage().contains(FAILED.name()));
+    }
+
+    @Test
+    public void shouldReturnStatusForInitSuccessful() throws Exception {
+        when(cm.getStatus()).thenReturn(AUTHENTCATED);
+        TsaasStorage tsaas = mock(TsaasStorage.class);
+        Response response = new CloudHealthCheck(cm, tsaas).perform(mock(Context.class));
+        assertEquals(Status.Starting, response.getStatus());
+        assertTrue(response.getMessage().contains(AUTHENTCATED.name()));
     }
 }

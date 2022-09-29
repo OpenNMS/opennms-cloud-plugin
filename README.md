@@ -25,7 +25,16 @@ mvn clean install
 Install into OpenNMS via Karaf shell:
 ```
 feature:repo-add mvn:org.opennms.plugins.cloud/karaf-features/1.0.0-SNAPSHOT/xml
-feature:install opennms-cloud-plugin
+```
+
+for Core (OpenNMS main system): 
+```
+feature:install opennms-cloud-plugin-core
+```
+
+for Sentinel:
+```
+feature:install opennms-cloud-plugin-sentinel
 ```
 
 Check if it was properly installed and started:
@@ -45,7 +54,7 @@ Once you have the access key you can enter it into the cloud plugin configuratio
 #### Via Karaf Shell
 An alternative is to use the command line in the Karaf shell:
 ```
-opennms-cloud:configure <access token>
+opennms-cloud:init <access token>
 ```
 
 #### Configuration sequence

@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <features name="openmms-cloud-plugin-features" xmlns="http://karaf.apache.org/xmlns/features/v1.4.0">
-    <feature name="opennms-cloud-plugin" description="OpenNMS :: Plugins :: Cloud" version="${project.version}">
+
+    <!-- common for Core and Sentinel -->
+    <feature name="opennms-cloud-plugin-common" description="OpenNMS :: Plugins :: Cloud :: Common" version="${project.version}">
         <feature dependency="true">aries-blueprint</feature>
         <feature dependency="true">shell</feature>
         <feature version="${opennms.api.version}" dependency="true">opennms-integration-api</feature>
@@ -13,9 +15,21 @@
         <bundle>mvn:org.opennms.plugins.cloud.wrap/grpc/${project.version}</bundle>
         <bundle>mvn:org.opennms.plugins.cloud.wrap/jwt/${project.version}</bundle>
         <bundle>mvn:org.json/json/${jsonVersion}</bundle>
-    </feature>
-    <feature name="cloud-guava" description="guava" version="${project.version}">
         <bundle dependency="true">mvn:com.google.guava/failureaccess/${failureAccessVersion}</bundle>
         <bundle dependency="true">mvn:com.google.guava/guava/${guavaVersion}</bundle>
     </feature>
+
+    <!-- to be installed into OpenNMS core -->
+    <feature name="opennms-cloud-plugin-core" description="OpenNMS :: Plugins :: Cloud :: Core" version="${project.version}">
+        <feature version="${project.version}">opennms-cloud-plugin-common</feature>
+        <bundle>mvn:org.opennms.plugins.cloud/cloud-plugin-fragment-core/${project.version}</bundle>
+    </feature>
+
+    <!-- to be installed into sentinel -->
+    <feature name="opennms-cloud-plugin-sentinel" description="OpenNMS :: Plugins :: Cloud :: Sentinel" version="${project.version}">
+        <feature version="${project.version}">opennms-cloud-plugin-common</feature>
+        <feature>sentinel-api-layer</feature>
+        <feature>sentinel-jsonstore-postgres</feature>
+    </feature>
+
 </features>

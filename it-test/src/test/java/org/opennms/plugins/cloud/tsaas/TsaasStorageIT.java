@@ -3,6 +3,7 @@ package org.opennms.plugins.cloud.tsaas;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.time.Duration;
+
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -48,10 +49,10 @@ public class TsaasStorageIT {
 
     // install plugin
     karafShell.runCommand("feature:repo-add mvn:org.opennms.plugins.cloud/karaf-features/1.0.0-SNAPSHOT/xml");
-    karafShell.runCommand("feature:install opennms-cloud-plugin");
+    karafShell.runCommand("feature:install opennms-cloud-plugin-core");
 
     // check if plugin has been started, if so we assume the installation worked well.
-    karafShell.runCommand("feature:list | grep opennms-cloud-plugin", output -> output.contains("Started"));
+    karafShell.runCommand("feature:list | grep opennms-cloud-plugin-core", output -> output.contains("Started"));
   }
 
   @AfterClass

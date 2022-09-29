@@ -28,6 +28,11 @@
 
 package org.opennms.plugins.cloud.srv.tsaas;
 
+import static org.opennms.integration.api.v1.health.Status.Failure;
+import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.AUTHENTCATED;
+import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.FAILED;
+import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.NOT_ATTEMPTED;
+
 import java.util.Objects;
 
 import org.opennms.integration.api.v1.health.Context;
@@ -35,6 +40,7 @@ import org.opennms.integration.api.v1.health.HealthCheck;
 import org.opennms.integration.api.v1.health.Response;
 import org.opennms.integration.api.v1.health.Status;
 import org.opennms.integration.api.v1.health.immutables.ImmutableResponse;
+import org.opennms.plugins.cloud.config.ConfigurationManager;
 import org.opennms.tsaas.Tsaas;
 
 /**
@@ -43,9 +49,11 @@ import org.opennms.tsaas.Tsaas;
  */
 public class CloudHealthCheck implements HealthCheck {
 
+    private final ConfigurationManager cm;
     private final TsaasStorage cloud;
 
-    public CloudHealthCheck(final TsaasStorage cloud) {
+    public CloudHealthCheck(final ConfigurationManager cm, final TsaasStorage cloud) {
+        this.cm = Objects.requireNonNull(cm);
         this.cloud = Objects.requireNonNull(cloud);
     }
 
@@ -56,9 +64,22 @@ public class CloudHealthCheck implements HealthCheck {
 
     @Override
     public Response perform(final Context context) throws Exception {
-        Tsaas.CheckHealthResponse response = cloud.checkHealth();
-        Status status = toStatus(response.getStatus());
-        String message = String.format("Cloud status=%s", response.getStatus().name());
+        Status status;
+        String message;
+        if (cm.getStatus() == FAILED) {
+            status = Failure;
+            message =  String.format("Cloud init failed (status=%s)", FAILED);
+        } else if(cm.getStatus() == NOT_ATTEMPTED) {
+            status = Status.Success;
+            message = String.format("Cloud init not attempted (status=%s)", NOT_ATTEMPTED);
+        } else if(cm.getStatus() == AUTHENTCATED) {
+            status = Status.Starting;
+            message = String.format("Cloud init successful, configuration has not happened yet (status=%s)", AUTHENTCATED);
+        } else {
+            Tsaas.CheckHealthResponse response = cloud.checkHealth();
+            status = toStatus(response.getStatus());
+            message = String.format("Cloud status=%s", response.getStatus().name());
+        }
         return ImmutableResponse.newInstance(status, message);
     }
 
@@ -66,6 +87,6 @@ public class CloudHealthCheck implements HealthCheck {
         if (cloudStatus == Tsaas.CheckHealthResponse.ServingStatus.SERVING) {
             return Status.Success;
         }
-        return Status.Failure;
+        return Failure;
     }
 }

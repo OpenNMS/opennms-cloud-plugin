@@ -135,6 +135,12 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>org.opennms.plugins.cloud</groupId>
+            <artifactId>cloud-plugin-fragment-core</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>org.opennms.plugins.cloud.wrap</groupId>
             <artifactId>grpc</artifactId>
             <version>${project.version}</version>

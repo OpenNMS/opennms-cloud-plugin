@@ -139,16 +139,14 @@ public class Housekeeper {
             this.configurationManager.configure();
         }
     }
-
     /**
      * If the configurationManager was not initialized we can't renew anything.
      * Initialization needs to be done first via Karaf or via web ui.
      */
     private boolean isInitialized() {
         return AUTHENTCATED.name().equals(this.config.getOrNull(configstatus))
-        ||     CONFIGURED.name().equals(this.config.getOrNull(configstatus));
+                ||     CONFIGURED.name().equals(this.config.getOrNull(configstatus));
     }
-
     public void syncConfig() {
         GrpcConnectionConfig newConfig = createConfig();
         if (!Objects.equals(this.currentConfig, newConfig)) {

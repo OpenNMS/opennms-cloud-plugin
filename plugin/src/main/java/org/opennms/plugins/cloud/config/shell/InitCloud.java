@@ -28,6 +28,9 @@
 
 package org.opennms.plugins.cloud.config.shell;
 
+import static org.opennms.integration.api.v1.runtime.Container.OPENNMS;
+import static org.opennms.integration.api.v1.runtime.Container.SENTINEL;
+
 import java.util.Objects;
 
 import org.apache.karaf.shell.api.action.Action;
@@ -35,33 +38,55 @@ import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
+import org.opennms.integration.api.v1.runtime.RuntimeInfo;
 import org.opennms.plugins.cloud.config.ConfigurationManager;
 
-@Command(scope = "opennms-cloud", name = "configure", description = "Contacts platform access service (PAS) and retrieves configuration")
+@Command(scope = "opennms-cloud", name = "init",
+        description = "Core: Contacts platform access service (PAS) and retrieves configuration\n" +
+                "Sentinel: Contacts Core and retrieves configuration")
+
+
 @Service
-public class ConfigureCloud implements Action {
+public class InitCloud implements Action {
 
     @Reference
-    private ConfigurationManager manager;
+    ConfigurationManager manager;
+
+    @Reference
+    RuntimeInfo runtimeInfo;
 
     @Argument()
     String apiKey;
 
     @Override
-    public Object execute() throws InterruptedException {
+    public Object execute() {
+        ConfigurationManager.ConfigStatus status;
+        if (OPENNMS.equals(this.runtimeInfo.getContainer())) {
+            status = initForCore();
+        } else if (SENTINEL.equals(this.runtimeInfo.getContainer())) {
+            status = manager.configure();
+        } else {
+            System.err.printf("It looks like we are running in a non supported environment, supported=OPENNMS, SENTINEL but it is %s",
+                    this.runtimeInfo.getContainer());
+            return null;
+        }
+
+        if(ConfigurationManager.ConfigStatus.CONFIGURED == status) {
+            System.out.printf("Initialization of cloud plugin in %s was successful.%n", this.runtimeInfo.getContainer());
+        } else {
+            System.out.printf("Initialization of cloud plugin in %s failed: %s. Check log (log:display) for details.%n", this.runtimeInfo.getContainer(), status);
+        }
+
+        return null;
+    }
+
+    private ConfigurationManager.ConfigStatus initForCore() {
         if(apiKey == null || apiKey.isBlank()) {
             System.out.println("please enter api key");
-            return null;
         }
         Objects.requireNonNull(this.apiKey);
         manager.initConfiguration(apiKey);
-        ConfigurationManager.ConfigStatus status = manager.configure();
-        if(ConfigurationManager.ConfigStatus.CONFIGURED == status) {
-            System.out.println("Configuration was successful.");
-        } else {
-            System.out.printf("Configuration failed: %s. Check log (log:display) for details.", status);
-        }
-        return null;
+        return manager.configure();
     }
 
 }
