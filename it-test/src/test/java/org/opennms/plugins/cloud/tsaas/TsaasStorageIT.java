@@ -32,10 +32,10 @@ public class TsaasStorageIT {
     environment = new DockerComposeContainer<>(new File("src/test/resources/docker-compose.yaml"))
         .withEnv("USER_HOME", System.getProperty("user.home"))
         .withTailChildContainers(true)
-        .withExposedService("database", 5432, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(15)))
-        .withLogConsumer("database", new Slf4jLogConsumer(LOG))
-        .withExposedService("horizon", 8980, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(240)))
-        .withLogConsumer("horizon", new Slf4jLogConsumer(LOG));
+        .withExposedService("database_1", 5432, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(15)))
+        .withLogConsumer("database_1", new Slf4jLogConsumer(LOG))
+        .withExposedService("horizon_1", 8980, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(240)))
+        .withLogConsumer("horizon_1", new Slf4jLogConsumer(LOG));
     environment.start();
   }
 
@@ -47,8 +47,8 @@ public class TsaasStorageIT {
   @Test
   public void canInstallAndStartPlugin() {
 
-    // install plugin
-    karafShell.runCommand("feature:repo-add mvn:org.opennms.plugins.cloud/karaf-features/1.0.0-SNAPSHOT/xml");
+    // install plugin for core
+    karafShell.runCommand("kar:install --no-start mvn:org.opennms.plugins.cloud/kar/1.0.0-SNAPSHOT/kar");
     karafShell.runCommand("feature:install opennms-cloud-plugin-core");
 
     // check if plugin has been started, if so we assume the installation worked well.
