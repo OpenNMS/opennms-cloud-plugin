@@ -1,0 +1,116 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <groupId>org.opennms.plugins.cloud</groupId>
+        <artifactId>assembly</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.opennms.plugins.cloud.assembly</groupId>
+    <artifactId>org.opennms.plugins.cloud.assembly.opennms.rpm</artifactId>
+    <name>OpenNMS :: Plugins :: Assembly :: OpenNMS RPM</name>
+    <packaging>pom</packaging>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/filtered-resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>rpm-maven-plugin</artifactId>
+                    <version>2.2.0</version>
+                    <executions>
+                        <execution>
+                            <id>generate-rpm</id>
+                            <goals>
+                                <goal>rpm</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <name>opennms-cloud-plugin</name>
+                        <summary>OpenNMS :: Plugins :: Cloud Plugin</summary>
+                        <description>OpenNMS cloud plugin</description>
+                        <license>AGPL v3</license>
+                        <group>Applications/System</group>
+                        <defaultDirmode>755</defaultDirmode>
+                        <defaultFilemode>644</defaultFilemode>
+                        <defaultUsername>root</defaultUsername>
+                        <defaultGroupname>wheel</defaultGroupname>
+                        <release>${rpmRelease}</release>
+                        <requires>
+                            <require>opennms-core &gt;= 30.0.0</require>
+                        </requires>
+                        <mappings>
+                            <mapping>
+                                <directory>/opt/opennms/deploy</directory>
+                                <directoryIncluded>false</directoryIncluded>
+                                <dependency>
+                                    <includes>
+                                        <include>org.opennms.cloud:kar</include>
+                                    </includes>
+                                </dependency>
+                            </mapping>
+                        </mappings>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>build.rpms.usr</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <file>
+                    <exists>/usr/bin/rpmbuild</exists>
+                </file>
+                <property>
+                    <name>build.packages</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>rpm-maven-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>build.rpms.usr.clocal</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <file>
+                    <exists>/usr/local/bin/rpmbuild</exists>
+                </file>
+                <property>
+                    <name>build.packages</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>rpm-maven-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.opennms.cloud</groupId>
+            <artifactId>kar</artifactId>
+            <version>${project.version}</version>
+            <type>kar</type>
+        </dependency>
+    </dependencies>
+</project>
