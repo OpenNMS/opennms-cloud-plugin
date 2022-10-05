@@ -7,7 +7,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.opennms.plugins.cloud.assembly</groupId>
     <artifactId>org.opennms.plugins.cloud.assembly.sentinel.deb</artifactId>
-    <name>OpenNMS :: Plugins :: Assembly :: Sentinel Deb</name>
+    <name>OpenNMS :: Plugins :: Cloud :: Assembly :: Sentinel Deb</name>
     <packaging>pom</packaging>
 
     <build>
@@ -75,7 +75,7 @@
                         </goals>
                         <configuration>
                             <sourceFile>
-                               ${project.build.directory}/releases/${project.artifactId}-${project.version}/opennms-cloud-plugin/kar-${project.version}.kar
+                               ${project.build.directory}/releases/${project.artifactId}-${project.version}/opennms-cloud-plugin/org.opennms.plugins.cloud.assembly.kar-${project.version}.kar
                             </sourceFile>
                             <destinationFile>
                                 ${project.build.directory}/deb/usr/share/opennms/deploy/opennms-cloud-plugin.kar
@@ -112,8 +112,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.opennms.plugins.cloud</groupId>
-            <artifactId>kar</artifactId>
+            <groupId>org.opennms.plugins.cloud.assembly</groupId>
+            <artifactId>org.opennms.plugins.cloud.assembly.kar</artifactId>
             <version>${project.version}</version>
             <type>kar</type>
         </dependency>

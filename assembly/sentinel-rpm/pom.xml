@@ -7,7 +7,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.opennms.plugins.cloud.assembly</groupId>
     <artifactId>org.opennms.plugins.cloud.assembly.sentinel.rpm</artifactId>
-    <name>OpenNMS :: Plugins :: Assembly :: Sentinel RPM</name>
+    <name>OpenNMS :: Plugins :: Cloud :: Assembly :: Sentinel RPM</name>
     <packaging>pom</packaging>
 
     <build>
@@ -51,7 +51,7 @@
                                 <directoryIncluded>false</directoryIncluded>
                                 <dependency>
                                     <includes>
-                                        <include>org.opennms.cloud:kar</include>
+                                        <include>org.opennms.plugins.cloud.assembly:org.opennms.plugins.cloud.assembly.kar</include>
                                     </includes>
                                 </dependency>
                             </mapping>
@@ -104,10 +104,11 @@
             </build>
         </profile>
     </profiles>
+
     <dependencies>
         <dependency>
-            <groupId>org.opennms.plugins.cloud</groupId>
-            <artifactId>kar</artifactId>
+            <groupId>org.opennms.plugins.cloud.assembly</groupId>
+            <artifactId>org.opennms.plugins.cloud.assembly.kar</artifactId>
             <version>${project.version}</version>
             <type>kar</type>
         </dependency>
