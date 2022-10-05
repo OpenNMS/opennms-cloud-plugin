@@ -93,12 +93,12 @@
       </dependency>
       <dependency>
         <groupId>org.opennms.plugins.cloud</groupId>
-        <artifactId>cloud-plugin</artifactId>
+        <artifactId>plugin-common</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.opennms.plugins.cloud</groupId>
-        <artifactId>cloud-plugin</artifactId>
+        <artifactId>plugin-common</artifactId>
         <version>${project.version}</version>
         <type>test-jar</type>
         <scope>compile</scope>

@@ -55,7 +55,7 @@ public class TsaasStorageIT {
                 .getStdout();
         assertNotNull(stdout);
         LOG.info(stdout);
-        assertTrue(stdout.contains("MockCloud Server started"));
+        assertTrue("Could not find 'MockCloud Server started' in output.", stdout.contains("MockCloud Server started"));
     }
 
     @Before
