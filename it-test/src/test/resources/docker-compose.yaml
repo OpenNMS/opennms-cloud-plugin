@@ -35,7 +35,7 @@ services:
       TZ: ${TIMEZONE:-America/New_York}
     volumes:
       # we overlay folder with kar into maven repo. It contains the plugin jars and dependencies:
-      - ${USER_HOME}/.m2/repository/org/opennms/plugins/cloud/kar/1.0.0-SNAPSHOT:/usr/share/opennms/.m2/repository/org/opennms/plugins/cloud/kar/1.0.0-SNAPSHOT:ro
+      - ${USER_HOME}/.m2/repository/org/opennms/plugins/cloud/assembly/org.opennms.plugins.cloud.assembly.kar/1.0.0-SNAPSHOT/org.opennms.plugins.cloud.assembly.kar-1.0.0-SNAPSHOT.kar:/usr/share/opennms/deploy/org.opennms.plugins.cloud.assembly.kar-1.0.0-SNAPSHOT.kar:ro
       # add CloudMock server into horizon container: We will run our tests against it.
       # the path is a bit ugly but the jar is not yet in the local mvn repo.
       - ../../../target:/usr/share/opennms/.m2/repository/org/opennms/plugins/cloud/it-test/1.0.0-SNAPSHOT:ro

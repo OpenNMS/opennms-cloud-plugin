@@ -38,8 +38,10 @@ workflows:
               only:
                 - main
       - build-debian:
+          context: "OpenNMS Build"
           requires:
             - build
+              #            - tests
           filters:
             tags:
               only: /.*/
@@ -55,6 +57,7 @@ workflows:
               only:
                 - main
                 - /release-.*/
+                - /.*DC-301/
 
 jobs:
 
@@ -158,7 +161,7 @@ jobs:
       - run:
           name: Build Debian packages
           command: |
-            mvn install --projects org.opennms.cloud.assembly:org.opennms.plugins.cloud.assembly.opennms.deb,org.opennms.cloud.assembly:org.opennms.plugins.cloud.assembly.sentinel.deb --also-make -DskipTests=true -Dbuild.packages
+            mvn install --projects org.opennms.plugins.cloud.assembly:org.opennms.plugins.cloud.assembly.opennms.deb,org.opennms.plugins.cloud.assembly:org.opennms.plugins.cloud.assembly.sentinel.deb --also-make -DskipTests=true -Dbuild.packages
 
       - run:
           name: Remove old artifacts to keep workspace size down
