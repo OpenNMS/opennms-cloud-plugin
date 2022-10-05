@@ -37,6 +37,18 @@
                     </instructions>
                 </configuration>
             </plugin>
+            <plugin><!-- create a test jar so we can reference it from it-test -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
@@ -73,7 +85,6 @@
             <groupId>org.opennms.tsaas.platform</groupId>
             <artifactId>tsaas-authenticate-grpc</artifactId>
             <version>${pasClientVersion}</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.google.protobuf</groupId>
@@ -109,7 +120,6 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.24</version>
             <scope>provided</scope>
         </dependency>
 
@@ -149,6 +159,14 @@
                 <exclusion>
                     <groupId>io.grpc</groupId>
                     <artifactId>grpc-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.errorprone</groupId>
+                    <artifactId>error_prone_annotations</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>

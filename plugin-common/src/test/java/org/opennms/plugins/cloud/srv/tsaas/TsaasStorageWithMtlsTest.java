@@ -29,9 +29,8 @@
 package org.opennms.plugins.cloud.srv.tsaas;
 
 import static org.junit.Assert.assertTrue;
+import static org.opennms.plugins.cloud.testserver.FileUtil.classpathFileToString;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -40,43 +39,36 @@ import java.util.Map;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.opennms.integration.api.v1.timeseries.AbstractStorageIntegrationTest;
-import org.opennms.integration.api.v1.timeseries.InMemoryStorage;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.plugins.cloud.config.ConfigZipExtractor;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
-import org.opennms.plugins.cloud.testserver.GrpcTestServer;
-import org.opennms.plugins.cloud.testserver.GrpcTestServerInterceptor;
-
-import com.google.common.base.Charsets;
-import com.google.common.io.CharStreams;
+import org.opennms.plugins.cloud.testserver.MockCloud;
 
 public class TsaasStorageWithMtlsTest extends AbstractStorageIntegrationTest {
 
   private TsaasStorage storage;
-  private GrpcTestServer server;
+  @Rule
+  public final MockCloud cloud = MockCloud.builder()
+          .serverConfig(MockCloud
+                  .defaultServerConfig()
+                  .security(GrpcConnectionConfig.Security.MTLS)
+                  .build())
+          .build();
 
   @Before
   public void setUp() throws Exception {
-    GrpcConnectionConfig serverConfig = GrpcConnectionConfig.builder()
-        .security(GrpcConnectionConfig.Security.MTLS)
-        .port(0)
-        .build();
-
-    server = new GrpcTestServer(serverConfig, new GrpcTestServerInterceptor(), new InMemoryStorage());
-    server.startServer();
-
-    GrpcConnectionConfig.GrpcConnectionConfigBuilder clientConfig = server.getConfig().toBuilder();
-
+    GrpcConnectionConfig.GrpcConnectionConfigBuilder clientConfig = cloud.getClientConfigWithToken().toBuilder();
     Path pathToZipFile = Path.of("src/test/resources/cert/cloud-credentials.zip");
     assertTrue(Files.exists(pathToZipFile));
     ConfigZipExtractor certs = new ConfigZipExtractor(pathToZipFile);
     Map<String, String> attributes = new HashMap<>();
-    clientConfig.publicKey(certs.getPublicKey());
-    clientConfig.privateKey(certs.getPrivateKey());
+    clientConfig.publicKey(classpathFileToString("/cert/client_cert.crt"));
+    clientConfig.privateKey(classpathFileToString("/cert/client_private_key.key"));
     // we have self signed certs, so we do need to provide a trust store with our ca:
-    clientConfig.clientTrustStore(getCert("clienttruststore.pem"));
+    clientConfig.clientTrustStore(classpathFileToString("/cert/clienttruststore.pem"));
 
     TsaasConfig tsaasConfig = TsaasConfig.builder().batchSize(1).build(); // set to 1 so that samples are not held back in the queue
     storage = new TsaasStorage(tsaasConfig);
@@ -84,18 +76,10 @@ public class TsaasStorageWithMtlsTest extends AbstractStorageIntegrationTest {
     super.setUp();
   }
 
-  private String getCert(final String filename) throws IOException {
-    return CharStreams.toString(new InputStreamReader(
-        this.getClass().getResourceAsStream("/cert/" + filename), Charsets.UTF_8));
-  }
-
   @After
   public void tearDown() throws InterruptedException {
     if (storage != null) {
       storage.destroy();
-    }
-    if(server !=null) {
-      server.stopServer();
     }
   }
 

@@ -29,6 +29,7 @@
 package org.opennms.plugins.cloud.config;
 
 import static org.opennms.plugins.cloud.config.ConfigStore.Key.tokenvalue;
+import static org.opennms.plugins.cloud.config.ConfigStore.Key.truststore;
 import static org.opennms.plugins.cloud.config.ConfigStore.TOKEN_KEY;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.AUTHENTCATED;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.CONFIGURED;
@@ -178,7 +179,7 @@ public class ConfigurationManager {
      * 5.) authenticate(String opennmsKey, environment-uuid, system-uuid) return cert, grpc endpoint
      */
     public void initConfiguration(final String key) {
-        LOG.info("Starting configuration of cloud connection.");
+        LOG.info("Starting initialization of cloud plugin.");
         checkAndLogSystemId(this.runtimeInfo.getSystemId());
         checkAndLogContainer(this.runtimeInfo);
 
@@ -190,13 +191,16 @@ public class ConfigurationManager {
             final PasAccess pasWithTls = new PasAccess(grpcWithTls);
             Map<ConfigStore.Key, String> cloudCredentials = pasWithTls.getCredentialsFromAccessService(key, runtimeInfo.getSystemId());
             LOG.info("Cloud configuration received from PAS (Platform Access Service).");
+            if (pasConfigTls.getClientTrustStore() !=null && !pasConfigTls.getClientTrustStore().isBlank()) {
+               cloudCredentials.put(truststore, pasConfigTls.getClientTrustStore()); // pass the trust store to cloud credentials
+            }
             cloudCredentials.put(Key.configstatus, AUTHENTCATED.name());
             config.putProperties(cloudCredentials);
             LOG.info("Cloud configuration stored in OpenNMS.");
             this.currentStatus = AUTHENTCATED;
         } catch (Exception e) {
             this.currentStatus = ConfigStatus.FAILED;
-            LOG.error("configure failed.", e);
+            LOG.error("Configure failed. Used config:\n{}", pasConfigTls, e);
             throw e;
         }
     }
@@ -302,6 +306,7 @@ public class ConfigurationManager {
                 .publicKey(this.config.getOrNull(ConfigStore.Key.publickey))
                 .tokenKey(this.config.getOrNull(ConfigStore.Key.tokenkey))
                 .tokenValue(this.config.getOrNull(Key.tokenvalue))
+                .clientTrustStore(this.config.getOrNull(Key.truststore))
                 .build();
     }
 

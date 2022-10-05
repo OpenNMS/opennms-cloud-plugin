@@ -30,7 +30,8 @@ public class GrpcConnectionConfig {
     public GrpcConnectionConfig(
             final String host,
             final int port,
-            final Security security) {
+            final Security security,
+            final String clientTrustStore) {
         this(
                 host,
                 port,
@@ -39,7 +40,7 @@ public class GrpcConnectionConfig {
                 security,
                 null,
                 null,
-                null);
+                clientTrustStore);
     }
 
     @SuppressWarnings("java:S107") // this constructor is only used by builder => ok to have many parameters
@@ -72,9 +73,7 @@ public class GrpcConnectionConfig {
     @SuppressWarnings("java:S1068") // fields are not unused but part of lombok builder
     public static class GrpcConnectionConfigBuilder {
         private String host = "localhost"; // default value
-        private int port = 5001; // default value
-        private String tokenKey = "token"; // default value
-        private String tokenValue = TOKEN_KEY; // default value
-        private Security security = Security.PLAIN_TEXT; // default value
+        private String tokenKey = TOKEN_KEY; // default value
+        private Security security = Security.TLS; // default value
     }
 }

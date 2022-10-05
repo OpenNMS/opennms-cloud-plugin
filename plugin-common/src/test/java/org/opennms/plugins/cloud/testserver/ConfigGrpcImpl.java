@@ -29,15 +29,13 @@
 package org.opennms.plugins.cloud.testserver;
 
 import static java.time.temporal.ChronoUnit.HOURS;
+import static org.opennms.plugins.cloud.testserver.FileUtil.classpathFileToString;
 
-import java.io.IOException;
-import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Objects;
 
 import org.opennms.dataplatform.access.AuthenticateGrpc;
 import org.opennms.dataplatform.access.AuthenticateOuterClass;
-import org.opennms.plugins.cloud.config.ConfigZipExtractor;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.RegistrationManager;
 import org.slf4j.Logger;
@@ -55,28 +53,27 @@ public class ConfigGrpcImpl extends AuthenticateGrpc.AuthenticateImplBase implem
     private static final Logger LOG = LoggerFactory.getLogger(ConfigGrpcImpl.class);
 
 
-    private final GrpcConnectionConfig config;
+    private GrpcConnectionConfig config;
 
-    public ConfigGrpcImpl(final GrpcConnectionConfig config) {
+    public void init(final GrpcConnectionConfig config) {
         this.config = Objects.requireNonNull(config);
     }
 
     @Override
     public void authenticateKey(AuthenticateOuterClass.AuthenticateKeyRequest request, StreamObserver<AuthenticateOuterClass.AuthenticateKeyResponse> responseObserver) {
         LOG.info("authenticateKey() called.");
-        Path configZipFile = Path.of("src/test/resources/cert/cloud-credentials.zip");
-        ConfigZipExtractor ex = new ConfigZipExtractor(configZipFile);
-        try {
-            AuthenticateOuterClass.AuthenticateKeyResponse response = AuthenticateOuterClass.AuthenticateKeyResponse.newBuilder()
-                    .setCertificate(ex.getPublicKey())
-                    .setPrivateKey(ex.getPrivateKey())
-                    .setGrpcEndpoint(config.getHost() + ":" + config.getPort())
-                    .build();
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
-        } catch(IOException e) {
-            responseObserver.onError(e);
+        if(this.config == null) {
+            LOG.warn("call init() first.");
+            responseObserver.onError(new IllegalAccessException("call init() first"));
+            return;
         }
+        AuthenticateOuterClass.AuthenticateKeyResponse response = AuthenticateOuterClass.AuthenticateKeyResponse.newBuilder()
+                .setCertificate(classpathFileToString("/cert/client_cert.crt"))
+                .setPrivateKey(classpathFileToString("/cert/client_private_key.key"))
+                .setGrpcEndpoint(config.getHost() + ":" + config.getPort())
+                .build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 
     @Override
@@ -106,17 +103,12 @@ public class ConfigGrpcImpl extends AuthenticateGrpc.AuthenticateImplBase implem
 
     public void renewCertificate(AuthenticateOuterClass.RenewCertificateRequest request, StreamObserver<AuthenticateOuterClass.RenewCertificateResponse> responseObserver) {
         LOG.info("renewCertificate() called.");
-        Path configZipFile = Path.of("src/test/resources/cert/cloud-credentials.zip");
-        ConfigZipExtractor ex = new ConfigZipExtractor(configZipFile);
-        try {
-            AuthenticateOuterClass.RenewCertificateResponse response = AuthenticateOuterClass.RenewCertificateResponse.newBuilder()
-                    .setCertificate(ex.getPublicKey())
-                    .setPrivateKey(ex.getPrivateKey())
-                    .build();
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
-        } catch(IOException e) {
-            responseObserver.onError(e);
-        }
+
+        AuthenticateOuterClass.RenewCertificateResponse response = AuthenticateOuterClass.RenewCertificateResponse.newBuilder()
+                .setCertificate(classpathFileToString("/cert/client_cert.crt"))
+                .setPrivateKey(classpathFileToString("/cert/client_private_key.key"))
+                .build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 }

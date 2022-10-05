@@ -28,36 +28,34 @@
 
 package org.opennms.plugins.cloud.srv.tsaas;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.opennms.integration.api.v1.timeseries.AbstractStorageIntegrationTest;
-import org.opennms.integration.api.v1.timeseries.InMemoryStorage;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
-import org.opennms.plugins.cloud.testserver.GrpcTestServer;
-import org.opennms.plugins.cloud.testserver.GrpcTestServerInterceptor;
+import org.opennms.plugins.cloud.testserver.MockCloud;
+import org.opennms.tsaas.Tsaas;
 
 public class TsaasStorageTest extends AbstractStorageIntegrationTest {
 
+  @Rule
+  public final MockCloud cloud = MockCloud.builder()
+          .build();
+
   private TsaasStorage storage;
-  private GrpcTestServer server;
 
   @Before
   public void setUp() throws Exception {
-    GrpcConnectionConfig serverConfig = GrpcConnectionConfig.builder()
-            .port(0)
-            .build();
-
-    server = new GrpcTestServer(serverConfig, new GrpcTestServerInterceptor(), new InMemoryStorage());
-    server.startServer();
-
-    GrpcConnectionConfig clientConfig = server.getConfig();
+    GrpcConnectionConfig clientConfig = cloud.getClientConfigWithToken();
     TsaasConfig tsaasConfig = TsaasConfig.builder()
             .batchSize(1) // set to 1 so that samples are not held back in the queue
             .build();
-
     storage = new TsaasStorage(tsaasConfig);
     storage.initGrpc(clientConfig);
     super.setUp();
@@ -67,9 +65,6 @@ public class TsaasStorageTest extends AbstractStorageIntegrationTest {
   public void tearDown() throws InterruptedException {
     if (storage != null) {
       storage.destroy();
-    }
-    if(server !=null) {
-      server.stopServer();
     }
   }
 
@@ -83,5 +78,12 @@ public class TsaasStorageTest extends AbstractStorageIntegrationTest {
   @Override
   public void shouldDeleteMetrics() throws Exception {
     // we don't support delete...
+  }
+
+  @Test
+  public void shouldReturnHealthStatus() {
+    Tsaas.CheckHealthResponse health = this.storage.checkHealth();
+    assertNotNull(health);
+    assertEquals(Tsaas.CheckHealthResponse.ServingStatus.SERVING, health.getStatus());
   }
 }
