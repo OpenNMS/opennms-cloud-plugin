@@ -21,7 +21,8 @@ orbs:
 workflows:
   build-deploy:
     jobs:
-      - build
+      - build:
+          context: "OpenNMS Build"
       - tests:
           requires:
             - build
@@ -43,6 +44,7 @@ workflows:
             tags:
               only: /.*/
       - deploy-packages:
+          context: "OpenNMS Build"
           requires:
             - tests
             - build-debian
@@ -55,6 +57,7 @@ workflows:
                 - /release-.*/
 
 jobs:
+
   build:
     executor: build-executor
     steps:
@@ -77,11 +80,22 @@ jobs:
           paths:
             - .m2
             - project
+
+      - run:
+          name: Save test results
+          command: |
+            mkdir -p ~/junit/
+            find . -type f -regex ".*/target/failsafe-reports/.*xml" -exec cp {} ~/junit/ \;
+            find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/junit/ \;
+          when: always
+
       - sign-packages/install-rpm-dependencies:
           skip_if_forked_pr: true
+
       - sign-packages/setup-env:
           skip_if_forked_pr: true
           gnupg_home: ~/tmp/gpg
+
       - sign-packages/sign-rpms:
           skip_if_forked_pr: true
           gnupg_home: ~/tmp/gpg
