@@ -75,7 +75,7 @@
                         </goals>
                         <configuration>
                             <sourceFile>
-                                ${project.build.directory}/releases/${project.artifactId}-${project.version}/cloud/org.opennms.plugins.cloud.assembly.kar-${project.version}.kar
+                               ${project.build.directory}/releases/${project.artifactId}-${project.version}/opennms-cloud-plugin/kar-${project.version}.kar
                             </sourceFile>
                             <destinationFile>
                                 ${project.build.directory}/deb/usr/share/opennms/deploy/opennms-cloud-plugin.kar
@@ -112,7 +112,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.opennms.cloud</groupId>
+            <groupId>org.opennms.plugins.cloud</groupId>
             <artifactId>kar</artifactId>
             <version>${project.version}</version>
             <type>kar</type>

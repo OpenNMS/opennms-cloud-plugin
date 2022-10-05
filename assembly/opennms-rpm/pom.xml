@@ -107,7 +107,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.opennms.cloud</groupId>
+            <groupId>org.opennms.plugins.cloud</groupId>
             <artifactId>kar</artifactId>
             <version>${project.version}</version>
             <type>kar</type>
