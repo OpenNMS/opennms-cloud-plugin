@@ -11,7 +11,7 @@
         <bundle>mvn:org.opennms.tsaas.platform/tsaas-authenticate-grpc/${pasClientVersion}</bundle><!-- the grpc client to talk to PAS ( platform access service) -->
         <bundle>mvn:org.opennms.tsaas/tsaas-grpc/${tsaasClientVersion}</bundle><!-- the grpc client to talk to Tsaas -->
         <bundle>mvn:com.google.protobuf/protobuf-java/${protobufVersion}</bundle>
-        <bundle>mvn:org.opennms.plugins.cloud/cloud-plugin/${project.version}</bundle>
+        <bundle>mvn:org.opennms.plugins.cloud/plugin-common/${project.version}</bundle>
         <bundle>mvn:org.opennms.plugins.cloud.wrap/grpc/${project.version}</bundle>
         <bundle>mvn:org.opennms.plugins.cloud.wrap/jwt/${project.version}</bundle>
         <bundle>mvn:org.json/json/${jsonVersion}</bundle>
@@ -22,7 +22,7 @@
     <!-- to be installed into OpenNMS core -->
     <feature name="opennms-cloud-plugin-core" description="OpenNMS :: Plugins :: Cloud :: Core" version="${project.version}">
         <feature version="${project.version}">opennms-cloud-plugin-common</feature>
-        <bundle>mvn:org.opennms.plugins.cloud/cloud-plugin-fragment-core/${project.version}</bundle>
+        <bundle>mvn:org.opennms.plugins.cloud/plugin-core/${project.version}</bundle>
     </feature>
 
     <!-- to be installed into sentinel -->
