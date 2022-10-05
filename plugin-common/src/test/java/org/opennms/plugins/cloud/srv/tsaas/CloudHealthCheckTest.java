@@ -37,60 +37,31 @@ import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.FAILED;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.NOT_ATTEMPTED;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.opennms.integration.api.v1.health.Context;
 import org.opennms.integration.api.v1.health.Response;
 import org.opennms.integration.api.v1.health.Status;
-import org.opennms.integration.api.v1.timeseries.InMemoryStorage;
 import org.opennms.plugins.cloud.config.ConfigurationManager;
-import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
-import org.opennms.plugins.cloud.testserver.GrpcTestServer;
-import org.opennms.plugins.cloud.testserver.GrpcTestServerInterceptor;
 import org.opennms.tsaas.Tsaas;
 
 public class CloudHealthCheckTest {
-    private TsaasStorage storage;
-    private GrpcTestServer server;
 
     private ConfigurationManager cm;
 
     @Before
     public void setUp() throws Exception {
-        GrpcConnectionConfig serverConfig = GrpcConnectionConfig.builder()
-                .port(0)
-                .build();
-
-        server = new GrpcTestServer(serverConfig, new GrpcTestServerInterceptor(), new InMemoryStorage());
-        server.startServer();
-
-        GrpcConnectionConfig clientConfig = server.getConfig();
-
-        TsaasConfig tsaasConfig = TsaasConfig.builder()
-                .batchSize(1) // set to 1 so that samples are not held back in the queue
-                .build();
-
-        storage = new TsaasStorage(tsaasConfig);
-        storage.initGrpc(clientConfig);
         cm = mock(ConfigurationManager.class);
-    }
-
-    @After
-    public void tearDown() throws InterruptedException {
-        if (storage != null) {
-            storage.destroy();
-        }
-        if(server !=null) {
-            server.stopServer();
-        }
     }
 
     @Test
     public void shouldReturnStatusForTsaasSuccess() throws Exception {
         when(cm.getStatus()).thenReturn(CONFIGURED);
+        TsaasStorage storage = mock(TsaasStorage.class);
+        when(storage.checkHealth()).thenReturn(Tsaas.CheckHealthResponse.newBuilder()
+                .setStatus(Tsaas.CheckHealthResponse.ServingStatus.SERVING).build());
         assertEquals(Tsaas.CheckHealthResponse.ServingStatus.SERVING, storage.checkHealth().getStatus());
-        Response response = new CloudHealthCheck(cm, this.storage).perform(mock(Context.class));
+        Response response = new CloudHealthCheck(cm, storage).perform(mock(Context.class));
         assertEquals(Status.Success, response.getStatus());
         assertTrue(response.getMessage().contains(Tsaas.CheckHealthResponse.ServingStatus.SERVING.name()));
     }

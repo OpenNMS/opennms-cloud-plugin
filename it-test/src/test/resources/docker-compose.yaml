@@ -36,7 +36,12 @@ services:
     volumes:
       # we overlay the deploy folder with kar. It contains the plugin jars and dependencies:
       - ${USER_HOME}/.m2/repository/org/opennms/plugins/cloud/kar/1.0.0-SNAPSHOT:/usr/share/opennms/.m2/repository/org/opennms/plugins/cloud/kar/1.0.0-SNAPSHOT:ro
+      # add CloudMock server into horizon container: We will run our tests agains it.
+      # the path is a bit ugly but the jar is not yet in the local mvn repo.
+      - ../../../target:/usr/share/opennms/.m2/repository/org/opennms/plugins/cloud/it-test/1.0.0-SNAPSHOT:ro
     command: ["-s"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "8101:8101/tcp" # ssh port for karaf console
       - "8980:8980/tcp" # http port

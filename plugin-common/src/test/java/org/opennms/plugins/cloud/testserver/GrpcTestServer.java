@@ -30,7 +30,6 @@ package org.opennms.plugins.cloud.testserver;
 
 import static org.awaitility.Awaitility.await;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
@@ -66,52 +65,48 @@ public class GrpcTestServer {
     public GrpcTestServer(final GrpcConnectionConfig config,
                           final GrpcTestServerInterceptor serverInterceptor,
                           final TimeSeriesStorage storage) {
-        this.configGrpcService = new ConfigGrpcImpl(config);
+        this.configGrpcService = new ConfigGrpcImpl();
         this.timeSeriesService = new TsaasGrpcImpl(storage);
         this.config = config;
         this.serverInterceptor = serverInterceptor;
     }
 
     @PostConstruct
-    public void startServer() {
-        try {
-            NettyServerBuilder builder = NettyServerBuilder
-                    .forPort(config.getPort())
-                    .addService(configGrpcService)
-                    .addService(timeSeriesService)
-                    .decompressorRegistry(ZStdCodecRegisterUtil.createDecompressorRegistry())
-                    .compressorRegistry(ZStdCodecRegisterUtil.createCompressorRegistry())
-                    .intercept(serverInterceptor);
-            if(GrpcConnectionConfig.Security.TLS  == this.config.getSecurity()
-                    || GrpcConnectionConfig.Security.MTLS == this.config.getSecurity()) {
-                File keyCertChainFile = new File("src/test/resources/cert/server.crt"); // an X.509 certificate chain file in PEM format
-                File privateKeyFile = new File("src/test/resources/cert/server_pkcs8_key.pem");
-                builder.sslContext(
+    public void startServer() throws IOException {
+        NettyServerBuilder builder = NettyServerBuilder
+                .forPort(config.getPort())
+                .addService(configGrpcService)
+                .addService(timeSeriesService)
+                .decompressorRegistry(ZStdCodecRegisterUtil.createDecompressorRegistry())
+                .compressorRegistry(ZStdCodecRegisterUtil.createCompressorRegistry())
+                .intercept(serverInterceptor);
+        if (GrpcConnectionConfig.Security.TLS == this.config.getSecurity()
+                || GrpcConnectionConfig.Security.MTLS == this.config.getSecurity()) {
+            builder.sslContext(
                     GrpcSslContexts
-                        .forServer(keyCertChainFile, privateKeyFile)
-                        .trustManager(new File("src/test/resources/cert/servertruststore.pem"))
-                        .build());
-            }
-            server = builder
+                            .forServer(this.getClass().getResourceAsStream("/cert/server.crt"), // an X.509 certificate chain file in PEM format
+                                    this.getClass().getResourceAsStream("/cert/server_pkcs8_key.pem"))
+                            .trustManager(this.getClass().getResourceAsStream("/cert/servertruststore.pem"))
+                            .build());
+        }
+        server = builder
                 .build()
                 .start();
 
-            LOG.info("Grpc Server started, listening on {}", server.getPort());
-            if (server.getPort() != config.getPort()) {
-                LOG.info("saving port {} into config", server.getPort());
-                config = config.toBuilder().port(server.getPort()).build();
-            }
-            CompletableFuture.runAsync(() -> {
-                try {
-                    server.awaitTermination();
-                    this.timeSeriesService.shutdown();
-                } catch (InterruptedException ex) {
-                    LOG.error(ex.getMessage(), ex);
-                }
-            });
-        } catch (IOException ex) {
-            LOG.error(ex.getMessage(), ex);
+        LOG.info("Grpc Server started, listening on {}", server.getPort());
+        if (server.getPort() != config.getPort()) {
+            LOG.info("saving port {} into config", server.getPort());
+            config = config.toBuilder().port(server.getPort()).build();
         }
+        this.configGrpcService.init(config);
+        CompletableFuture.runAsync(() -> {
+            try {
+                server.awaitTermination();
+                this.timeSeriesService.shutdown();
+            } catch (InterruptedException ex) {
+                LOG.error(ex.getMessage(), ex);
+            }
+        });
     }
 
     @PreDestroy

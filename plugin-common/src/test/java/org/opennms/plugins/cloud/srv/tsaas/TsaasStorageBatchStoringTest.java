@@ -39,8 +39,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.opennms.integration.api.v1.timeseries.IntrinsicTagNames;
@@ -49,36 +48,14 @@ import org.opennms.integration.api.v1.timeseries.StorageException;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableMetric;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableSample;
-import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
-import org.opennms.plugins.cloud.testserver.GrpcTestServer;
-import org.opennms.plugins.cloud.testserver.GrpcTestServerInterceptor;
+import org.opennms.plugins.cloud.testserver.MockCloud;
 
 public class TsaasStorageBatchStoringTest {
 
-  private GrpcTestServer server;
-  private TimeSeriesStorage serverStorage;
-  private GrpcConnectionConfig clientConfig;
-
-  @Before
-  public void setUp() {
-    GrpcConnectionConfig serverConfig = GrpcConnectionConfig.builder()
-            .port(0)
-            .build();
-
-    serverStorage = Mockito.mock(TimeSeriesStorage.class);
-
-    server = new GrpcTestServer(serverConfig, new GrpcTestServerInterceptor(), serverStorage);
-    server.startServer();
-
-    clientConfig = server.getConfig();
-  }
-
-  @After
-  public void tearDown() {
-    if(server !=null) {
-      server.stopServer();
-    }
-  }
+  @Rule
+  public MockCloud cloud = MockCloud.builder()
+          .serverStorage(Mockito.mock(TimeSeriesStorage.class))
+          .build();
 
   @Test
   public void shouldSendStoreSamplesAfterWaitTime() throws StorageException, InterruptedException {
@@ -87,33 +64,33 @@ public class TsaasStorageBatchStoringTest {
             .maxBatchWaitTimeInMilliSeconds(500)
             .build();
     TsaasStorage plugin = new TsaasStorage(tsaasConfig);
-    plugin.initGrpc(clientConfig);
+    plugin.initGrpc(cloud.getClientConfigWithToken());
 
     // store 2 samples. The batch size is 10 => should only call server when 10 samples are reached or maxBatchWaitTime has passed:
     plugin.store(createSamples());
     plugin.store(createSamples());
-    verify(serverStorage, never()).store(any());
+    verify(cloud.getServerStorage(), never()).store(any());
 
     // let's wait until maxBatchWaitTime time has passed
     Thread.sleep(tsaasConfig.getMaxBatchWaitTimeInMilliSeconds() + 10);
     plugin.store(createSamples());
 
     // we expect 3 samples, one from each call:
-    verify(serverStorage, times(1)).store(argThat(l -> l.size() == 3));
-    clearInvocations(serverStorage);
+    verify(cloud.getServerStorage(), times(1)).store(argThat(l -> l.size() == 3));
+    clearInvocations(cloud.getServerStorage());
 
     // do a second run to see if a second batch is  sent:
     // store 2 samples. The batch size is 10 => should only call server when 10 samples are reached or maxBatchWaitTime has passed:
     plugin.store(createSamples());
     plugin.store(createSamples());
-    verify(serverStorage, never()).store(any());
+    verify(cloud.getServerStorage(), never()).store(any());
 
     // let's wait until maxBatchWaitTime time has passed
     Thread.sleep(tsaasConfig.getMaxBatchWaitTimeInMilliSeconds() + 10);
     plugin.store(createSamples());
 
     // we expect 3 samples, one from each call:
-    verify(serverStorage, times(1)).store(argThat(l -> l.size() == 3));
+    verify(cloud.getServerStorage(), times(1)).store(argThat(l -> l.size() == 3));
   }
 
   private List<Sample> createSamples () {

@@ -17,6 +17,7 @@
         <java.version>11</java.version>
         <jsonVersion>20220924</jsonVersion>
         <jwtVersion>4.0.0</jwtVersion>
+        <lombokVersion>1.18.24</lombokVersion>
         <zstd.version>1.5.0-2</zstd.version>
         <junit.version>4.13.2</junit.version>
         <karaf.version>4.3.6</karaf.version>
@@ -53,6 +54,12 @@
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
                 <version>${slf4j-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombokVersion}</version>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.awaitility</groupId>

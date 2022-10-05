@@ -45,7 +45,7 @@ public class GrpcTestServerInterceptor implements ServerInterceptor {
     public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> serverCall, Metadata metadata, ServerCallHandler<ReqT, RespT> serverCallHandler) {
         String clientID = metadata.get(TOKEN);
         Status status;
-        if (clientID == null) {
+        if (clientID == null &&  isTokenNeeded(serverCall.getMethodDescriptor().getFullMethodName())) {
             status = Status.UNAUTHENTICATED.withDescription("Client token is missing or invalid");
         } else {
             Context ctx = Context.current().withValue(CLIENT_ID, clientID);
@@ -55,5 +55,13 @@ public class GrpcTestServerInterceptor implements ServerInterceptor {
         return new ServerCall.Listener<ReqT>() {
             // noop
         };
+    }
+
+    private boolean isTokenNeeded(final String methodName) {
+        // the following calls don't need a token, all others do:
+        return ! ("org.opennms.dataplatform.access.Authenticate/AuthenticateKey".equals(methodName)
+                || "org.opennms.dataplatform.access.Authenticate/GetServices".equals(methodName)
+                || "org.opennms.dataplatform.access.Authenticate/GetAccessToken".equals(methodName)
+                || "org.opennms.dataplatform.access.Authenticate/RenewCertificate".equals(methodName));
     }
 }

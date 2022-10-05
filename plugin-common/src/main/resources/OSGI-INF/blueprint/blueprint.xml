@@ -34,6 +34,7 @@
             <cm:property name="pas.mtls.host" value="authenticate.access-test.staging.nonprod.dataservice.opennms.com"/>
             <cm:property name="pas.mtls.port" value="443"/>
             <cm:property name="pas.mtls.security" value ="MTLS" />
+            <cm:property name="grpc.truststore" value="" />
             <cm:property name="tsaas.batchSize" value="1000"/>
             <cm:property name="tsaas.maxBatchWaitTimeInMilliSeconds" value="5000" />
         </cm:default-properties>
@@ -44,6 +45,7 @@
         <argument value="${pas.tls.host}"/>
         <argument value="${pas.tls.port}"/>
         <argument value="${pas.tls.security}"/>
+        <argument value="${grpc.truststore}" />
     </bean>
 
     <!-- Config for all other calls to PAS -->
@@ -51,6 +53,7 @@
         <argument value="${pas.mtls.host}"/>
         <argument value="${pas.mtls.port}"/>
         <argument value="${pas.mtls.security}"/>
+        <argument value="${grpc.truststore}" />
     </bean>
 
     <bean id="tsaasConfig" class="org.opennms.plugins.cloud.srv.tsaas.TsaasConfig" >

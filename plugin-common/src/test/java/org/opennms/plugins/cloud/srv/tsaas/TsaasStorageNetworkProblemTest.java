@@ -32,89 +32,69 @@ import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 
 import org.junit.After;
-import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.mockito.Mockito;
 import org.opennms.integration.api.v1.timeseries.IntrinsicTagNames;
 import org.opennms.integration.api.v1.timeseries.Sample;
 import org.opennms.integration.api.v1.timeseries.StorageException;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableMetric;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableSample;
-import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
-import org.opennms.plugins.cloud.testserver.GrpcTestServer;
-import org.opennms.plugins.cloud.testserver.GrpcTestServerInterceptor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.opennms.plugins.cloud.testserver.MockCloud;
 
 public class TsaasStorageNetworkProblemTest {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TsaasStorageNetworkProblemTest.class);
-
-    private GrpcTestServer server;
-    private TimeSeriesStorage serverStorage;
-    private GrpcConnectionConfig clientConfig;
-
-    @Before
-    public void setUp() throws Exception {
-        GrpcConnectionConfig serverConfig = GrpcConnectionConfig.builder()
-                .port(0)
-                .build();
-
-        serverStorage = Mockito.mock(TimeSeriesStorage.class);
-        server = new GrpcTestServer(serverConfig, new GrpcTestServerInterceptor(), serverStorage);
-        server.startServer();
-
-        clientConfig = server.getConfig();
-    }
-
-    @After
-    public void tearDown() {
-        if (server != null) {
-            server.stopServer();
-        }
-    }
+    @Rule
+    public MockCloud cloud = MockCloud.builder()
+            .serverStorage(mock(TimeSeriesStorage.class))
+            .build();
 
     @Test
-    public void shouldRecoverAfterServerFailure() throws StorageException, InterruptedException {
+    public void shouldRecoverAfterServerFailure() throws StorageException, InterruptedException, IOException {
         TsaasStorage plugin = new TsaasStorage(TsaasConfig.builder().batchSize(1).build());
-        plugin.initGrpc(clientConfig);
+        plugin.initGrpc(cloud.getClientConfigWithToken());
 
         plugin.store(createSamples());
-        verify(serverStorage, times(1)).store(any());
-        reset(serverStorage);
+        verify(cloud.getServerStorage(), times(1)).store(any());
+        reset(cloud.getServerStorage());
 
-        server.stopServer();
+        cloud.stop();
         assertThrows(StorageException.class, () -> plugin.store(createSamples()));
 
-        verify(serverStorage, never()).store(any());
+        verify(cloud.getServerStorage(), never()).store(any());
 
-        server.startServer();
+        cloud = MockCloud.builder()
+                .serverConfig(cloud.getClientConfigWithToken()) // to keep same port
+                .serverStorage(mock(TimeSeriesStorage.class))
+                .build();
+        cloud.start();
         plugin.getGrpc().managedChannel.resetConnectBackoff(); // make sure the channel is ready. Otherwise it has a short wait time
         plugin.store(createSamples());
-        verify(serverStorage, times(1)).store(any());
+        verify(cloud.getServerStorage(), times(1)).store(any());
     }
 
     @Test
     public void shouldRecoverAfterServerException() throws StorageException, InterruptedException {
         TsaasStorage plugin = new TsaasStorage(TsaasConfig.builder().batchSize(1).build());
-        plugin.initGrpc(clientConfig);
+        plugin.initGrpc(cloud.getClientConfigWithToken());
 
-        doThrow(new StorageException("hups")).when(serverStorage).store(any());
+        doThrow(new StorageException("hups")).when(cloud.getServerStorage()).store(any());
         plugin.store(createSamples()); // nothing should happen since this is a non recoverable exception
-        doNothing().when(serverStorage).store(any());
+        doNothing().when(cloud.getServerStorage()).store(any());
         plugin.store(createSamples());
-        verify(serverStorage, times(2)).store(any());
+        verify(cloud.getServerStorage(), times(2)).store(any());
     }
 
 
@@ -128,6 +108,11 @@ public class TsaasStorageNetworkProblemTest {
                                 .build())
                         .value(3.0)
                         .build());
+    }
+
+    @After
+    public void shutDown() {
+        cloud.stop();
     }
 
 }

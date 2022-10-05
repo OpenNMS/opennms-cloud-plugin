@@ -104,10 +104,10 @@ public class GrpcConnection<T extends AbstractBlockingStub<T>> implements AutoCl
             LOG.info("Using SSL provider {}, ", provider);
             SslContextBuilder context = GrpcSslContexts.configure(GrpcSslContexts.forClient(), provider);
             final String truststore = config.getClientTrustStore();
-            if (truststore == null) {
+            if (truststore == null || truststore.isBlank()) {
                 LOG.info("Will use jvm truststore.");
             } else {
-                LOG.info("Will use truststore from SecureCredentialsVault.");
+                LOG.info("Will use truststore from ConfigStore.");
                 context.trustManager(new ByteArrayInputStream(truststore.getBytes(StandardCharsets.UTF_8)));
             }
             if (GrpcConnectionConfig.Security.MTLS == config.getSecurity()) {
