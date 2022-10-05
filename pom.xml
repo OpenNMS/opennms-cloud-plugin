@@ -23,7 +23,7 @@
         <karaf.version>4.3.6</karaf.version>
         <log4j.version>2.18.0</log4j.version>
         <mockito.version>2.18.0</mockito.version>
-        <opennms.api.version>1.0.1</opennms.api.version>
+        <opennms.api.version>1.1.0</opennms.api.version>
         <osgi.version>6.0.0</osgi.version>
         <slf4j-api.version>1.7.32</slf4j-api.version>
         <protobufVersion>3.19.4</protobufVersion>
