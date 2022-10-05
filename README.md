@@ -8,8 +8,6 @@ Initially it will provide storage for time series data (tsaas).
 ### OpenNMS System
 The cloud plugin requires an [OpenNMS installation](https://docs.opennms.com/horizon/latest/deployment/core/getting-started.html).
 
-Before installing stop your OpenNMS instance.
-
 ### System Id
 The default system id of older OpenNMS installations is '00000000-0000-0000-0000-000000000000'.
 It is advisable to change it to a true UUID.
@@ -29,13 +27,18 @@ Stop OpenNMS.
 The plugin is as `deb` and `rpm` archives available.
 Install with your favorite package manager:
 
-`apt-get install opennms-cloud-plugin`
+`apt-get install opennms-cloud-plugin-core`
+
+or
+
+`apt-get install opennms-cloud-plugin-sentinel`
+
 ### Enabling Timeseries Integration Layer (TSS)
 TSS needs to be activated in order to use the plugin for sending time series data.
-Therefor set `org.opennms.timeseries.strategy=integration` in `[opennms.home]/etc/opennms.properties`
+Therefore set `org.opennms.timeseries.strategy=integration` in `[opennms.home]/etc/opennms.properties`
 For more details on TSS and its configuration see [here](https://docs.opennms.com/horizon/latest/deployment/time-series-storage/timeseries/ts-integration-layer.html).
 
-Now OpenNMS can be started again.
+Start OpenNMS.
 
 ### Initialization
 Before the Cloud Plugin can be used with the OpenNMS Cloud it needs to be initialized.
@@ -89,7 +92,10 @@ feature:list | grep opennms-cloud-plugin
 we expect it to say: _Started_
 
 ## Import Certificates
-TODO: Patrick: rewrite after we fixed cert import
+CURRENTLY BROKEN.
+
+TODO: Patrick: rewrite after we fixed cert import.
+
 The initializing can happen via a zip file as an alternative to using PAS.
 
 Move the cloud credentials file to: `[opennms.home]/etc/cloud-credentials.zip`.
@@ -114,4 +120,5 @@ config:update
 * The Cloud Plugin contacts PAS (Platform Access Service) to obtain certificates for MTLS.
   From now on all communication is MTLS secured.
 * The Cloud Plugin retrieves all enabled services from PAS.
+* A JWT token is received from PAS.
 * All enabled services are configured and enabled in OpenNMS.
