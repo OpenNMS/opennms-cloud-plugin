@@ -61,6 +61,13 @@ jobs:
   build:
     executor: build-executor
     steps:
+      - sign-packages/install-rpm-dependencies:
+          skip_if_forked_pr: true
+
+      - sign-packages/setup-env:
+          skip_if_forked_pr: true
+          gnupg_home: ~/tmp/gpg
+
       - checkout
       - restore_cache:
           keys:
@@ -88,13 +95,6 @@ jobs:
             find . -type f -regex ".*/target/failsafe-reports/.*xml" -exec cp {} ~/junit/ \;
             find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/junit/ \;
           when: always
-
-      - sign-packages/install-rpm-dependencies:
-          skip_if_forked_pr: true
-
-      - sign-packages/setup-env:
-          skip_if_forked_pr: true
-          gnupg_home: ~/tmp/gpg
 
       - sign-packages/sign-rpms:
           skip_if_forked_pr: true
