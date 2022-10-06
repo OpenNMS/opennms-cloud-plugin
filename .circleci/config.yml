@@ -41,7 +41,7 @@ workflows:
           context: "OpenNMS Build"
           requires:
             - build
-              #            - tests
+            - tests
           filters:
             tags:
               only: /.*/
