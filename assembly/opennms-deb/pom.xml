@@ -68,7 +68,7 @@
                 <version>1.0.1</version>
                 <executions>
                     <execution>
-                        <id>copy-deb-resources</id>
+                        <id>copy-kar</id>
                         <phase>package</phase>
                         <goals>
                             <goal>rename</goal>
@@ -80,6 +80,17 @@
                             <destinationFile>
                                 ${project.build.directory}/deb/usr/share/opennms/deploy/opennms-cloud-plugin.kar
                             </destinationFile>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-deb-resources</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <sourceFile>../common-resources/etc/examples/opennms.properties.d/timeseries.properties</sourceFile>
+                            <destinationFile>${project.build.directory}/deb/usr/share/opennms/etc/examples/opennms.properties.d/timeseries.properties</destinationFile>
                         </configuration>
                     </execution>
                 </executions>

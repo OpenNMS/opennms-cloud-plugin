@@ -68,7 +68,7 @@
                 <version>1.0.1</version>
                 <executions>
                     <execution>
-                        <id>copy-deb-resources</id>
+                        <id>copy-kar</id>
                         <phase>package</phase>
                         <goals>
                             <goal>rename</goal>
@@ -78,7 +78,7 @@
                                ${project.build.directory}/releases/${project.artifactId}-${project.version}/opennms-cloud-plugin/org.opennms.plugins.cloud.assembly.kar-${project.version}.kar
                             </sourceFile>
                             <destinationFile>
-                                ${project.build.directory}/deb/usr/share/opennms/deploy/opennms-cloud-plugin.kar
+                                ${project.build.directory}/deb/usr/share/sentinel/deploy/opennms-cloud-plugin.kar
                             </destinationFile>
                         </configuration>
                     </execution>

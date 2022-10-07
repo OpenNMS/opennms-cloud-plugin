@@ -55,6 +55,15 @@
                                     </includes>
                                 </dependency>
                             </mapping>
+                            <mapping>
+                                <directory>/opt/opennms/etc/examples/opennms.properties.d</directory>
+                                <directoryIncluded>false</directoryIncluded>
+                                <sources>
+                                    <source>
+                                        <location>../common-resources/etc/examples/opennms.properties.d/timeseries.properties</location>
+                                    </source>
+                                </sources>
+                            </mapping>
                         </mappings>
                     </configuration>
                 </plugin>
