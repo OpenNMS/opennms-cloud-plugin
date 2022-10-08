@@ -59,11 +59,9 @@ public class TestserverMain {
             try {
                 cloud.start();
             } catch (IOException e) {
-                System.out.printf("MockCloud Server could not start on port %S%n", MOCK_CLOUD_PORT);
                 log.error("MockCloud Server could not start on port {}", MOCK_CLOUD_PORT, e);
                 System.exit(1); // not more we can do
             }
-            System.out.printf("MockCloud Server started on port %s%n", MOCK_CLOUD_PORT);
             log.info("MockCloud Server started on port {}", MOCK_CLOUD_PORT);
             Thread.sleep(Long.MAX_VALUE); // wait till the end of time .
         }
