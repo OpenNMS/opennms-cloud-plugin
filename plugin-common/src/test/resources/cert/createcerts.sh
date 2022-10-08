@@ -1,7 +1,7 @@
 # This script recreates all needed certificates for the mtls test.
 
 # use "password" as passphrase
-# use localhost as common name (CN)
+# use "localhost" as common name (CN) or "horizon" in case of IT test
 # challenge password: leave empty
 # all other questions: use default
 
@@ -39,7 +39,7 @@ openssl req -new -key client.key -out client.csr
 openssl x509 -req -days 3650 -in client.csr -CA ca.crt -CAkey ca.key -set_serial 01 -out client.crt
 
 # Convert client key to pkcs8
-openssl pkcs8 -topk8 -nocrypt -in client.key -out client_pkcs8_key.pem
+openssl pkcs8 -topk8 -nocrypt -in client.key -out client_private_key.key
 
 # Create server trust store with public client cert:
 keytool -import -trustcacerts -file ca.crt -keypass password -storepass password -keystore servertruststore.p12 -alias localhost

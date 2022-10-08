@@ -200,7 +200,7 @@ public class ConfigurationManager {
             this.currentStatus = AUTHENTCATED;
         } catch (Exception e) {
             this.currentStatus = ConfigStatus.FAILED;
-            LOG.error("Configure failed. Used config:\n{}", pasConfigTls, e);
+            LOG.error("Initialization failed. Used config:\n{}", pasConfigTls, e);
             throw e;
         }
     }

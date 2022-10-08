@@ -57,11 +57,15 @@ public class MockCloud extends ExternalResource implements AutoCloseable {
     @Getter
     private GrpcConnectionConfig clientConfig;
 
+    private final String certPrefix;
+
     @Builder
     public MockCloud(final GrpcConnectionConfig serverConfig,
-                     final TimeSeriesStorage serverStorage) {
+                     final TimeSeriesStorage serverStorage,
+                     final String certPrefix) {
         this.serverConfig = serverConfig;
         this.serverStorage = Objects.requireNonNull(serverStorage);
+        this.certPrefix = Objects.requireNonNull(certPrefix);
     }
 
     public static GrpcConnectionConfig.GrpcConnectionConfigBuilder defaultServerConfig() {
@@ -72,11 +76,11 @@ public class MockCloud extends ExternalResource implements AutoCloseable {
 
     public void start() throws IOException {
         server = new GrpcTestServer(serverConfig, new GrpcTestServerInterceptor(), serverStorage);
-        server.startServer();
+        server.startServer(certPrefix);
         clientConfig = server
                 .getConfig()
                 .toBuilder()
-                .clientTrustStore(classpathFileToString("/cert/clienttruststore.pem"))
+                .clientTrustStore(classpathFileToString(certPrefix + "/clienttruststore.pem"))
                 .build();
     }
 
@@ -113,5 +117,6 @@ public class MockCloud extends ExternalResource implements AutoCloseable {
     public static class MockCloudBuilder {
         private GrpcConnectionConfig serverConfig = defaultServerConfig().build(); // default value
         private TimeSeriesStorage serverStorage = new InMemoryStorage(); //default value
+        private String certPrefix = "/cert"; // default value
     }
 }
