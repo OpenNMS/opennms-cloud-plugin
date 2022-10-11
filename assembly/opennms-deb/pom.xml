@@ -37,6 +37,7 @@
                             <packageDependency>opennms-server (&gt;= 30.0.0)</packageDependency>
                         </packageDependencies>
                         <excludeAllArtifacts>true</excludeAllArtifacts>
+                        <useDefaultFixPermissions>true</useDefaultFixPermissions>
                     </configuration>
                 </plugin>
             </plugins>
@@ -89,8 +90,16 @@
                             <goal>copy</goal>
                         </goals>
                         <configuration>
-                            <sourceFile>../common-resources/etc/examples/opennms.properties.d/timeseries.properties</sourceFile>
-                            <destinationFile>${project.build.directory}/deb/usr/share/opennms/etc/examples/opennms.properties.d/timeseries.properties</destinationFile>
+                            <fileSets>
+                                <file>
+                                    <sourceFile>../common-resources/etc/examples/opennms.properties.d/timeseries.properties</sourceFile>
+                                    <destinationFile>${project.build.directory}/deb/usr/share/opennms/etc/examples/opennms.properties.d/timeseries.properties</destinationFile>
+                                </file>
+                                <file>
+                                    <sourceFile>../common-resources/scripts/postinst.opennms.debian.sh</sourceFile>
+                                    <destinationFile>${project.build.directory}/DEBIAN/post</destinationFile>
+                                </file>
+                            </fileSets>
                         </configuration>
                     </execution>
                 </executions>
