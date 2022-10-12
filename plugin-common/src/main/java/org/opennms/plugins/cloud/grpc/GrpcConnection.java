@@ -69,11 +69,8 @@ public class GrpcConnection<T extends AbstractBlockingStub<T>> implements AutoCl
 
     public GrpcConnection(final GrpcConnectionConfig config, final Function<ManagedChannel, T> stubCreator) {
         final NettyChannelBuilder builder = NettyChannelBuilder.forAddress(config.getHost(), config.getPort());
-        if (GrpcConnectionConfig.Security.PLAIN_TEXT == config.getSecurity()) {
-            builder.usePlaintext();
-        } else {
-            builder.sslContext(createSslContext(config));
-        }
+        builder.sslContext(createSslContext(config));
+
         // setup message size & keepalive time DC-282
         builder.maxInboundMessageSize(MAX_MESSAGE_SIZE).maxInboundMetadataSize(MAX_MESSAGE_SIZE)
                 .keepAliveTime(10, TimeUnit.SECONDS)
