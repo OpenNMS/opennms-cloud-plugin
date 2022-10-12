@@ -26,7 +26,7 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.tsaas;
+package org.opennms.plugins.cloud.ittest;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -36,6 +36,7 @@ import java.io.PrintStream;
 import java.net.InetSocketAddress;
 import java.util.Objects;
 import java.util.function.Function;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

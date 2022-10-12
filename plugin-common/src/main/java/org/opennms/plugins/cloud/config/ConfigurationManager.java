@@ -28,21 +28,16 @@
 
 package org.opennms.plugins.cloud.config;
 
-import static org.opennms.plugins.cloud.config.ConfigStore.Key.tokenvalue;
 import static org.opennms.plugins.cloud.config.ConfigStore.Key.truststore;
 import static org.opennms.plugins.cloud.config.ConfigStore.TOKEN_KEY;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.AUTHENTCATED;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.CONFIGURED;
-import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.FAILED;
 import static org.opennms.plugins.cloud.config.PrerequisiteChecker.checkAndLogContainer;
 import static org.opennms.plugins.cloud.config.PrerequisiteChecker.checkAndLogSystemId;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.security.cert.CertificateException;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -116,50 +111,11 @@ public class ConfigurationManager {
         this.grpcServices = Objects.requireNonNull(grpcServices);
         this.runtimeInfo = Objects.requireNonNull(runtimeInfo);
 
-        boolean importedFromZip = importCloudCredentialsIfPresent();
-        if (!importedFromZip
-                // the authentication has been done previously => lets configure and start services
-                && (AUTHENTCATED.name().equals(this.config.getOrNull(Key.configstatus))
-                || CONFIGURED.name().equals(this.config.getOrNull(Key.configstatus)))) {
+        // the authentication has been done previously => lets configure and start services
+        if (AUTHENTCATED.name().equals(this.config.getOrNull(Key.configstatus))
+            || CONFIGURED.name().equals(this.config.getOrNull(Key.configstatus))) {
             configure();
         }
-    }
-
-    /**
-     * We keep this shortcut currently for testing purposes.
-     */
-    boolean importCloudCredentialsIfPresent() {
-        boolean importedFromZipFile = false;
-        Path cloudCredentialsFile = Path.of(System.getProperty("opennms.home") + "/etc/cloud-credentials.zip");
-        if (Files.exists(cloudCredentialsFile)) {
-            try {
-                CertificateImporter importer = new CertificateImporter(
-                        cloudCredentialsFile.toString(),
-                        config);
-                importer.doIt();
-
-                GrpcConnectionConfig cloudGatewayConfig = readCloudGatewayConfig().toBuilder()
-                        .tokenKey(TOKEN_KEY)
-                        .tokenValue(config.getOrNull(tokenvalue))
-                        .security(GrpcConnectionConfig.Security.MTLS)
-                        .build();
-
-                initGrpcServices(cloudGatewayConfig); // give all grpc services the new config
-                LOG.info("All services configured with grpc config.");
-
-                checkConnection();
-
-                registerServices(Collections.singleton(RegistrationManager.Service.TSAAS)); // for now we enable only TSAAS via zip file.
-                LOG.info("Active services registered with OpenNMS.");
-
-                importedFromZipFile = true;
-                this.currentStatus = CONFIGURED;
-            } catch (Exception e) {
-                this.currentStatus = FAILED;
-                LOG.warn("Could not import {}.", cloudCredentialsFile, e);
-            }
-        }
-        return importedFromZipFile;
     }
 
     void checkConnection() {

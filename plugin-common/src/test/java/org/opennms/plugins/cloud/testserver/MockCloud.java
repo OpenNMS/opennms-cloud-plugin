@@ -75,7 +75,7 @@ public class MockCloud extends ExternalResource implements AutoCloseable {
     }
 
     public void start() throws IOException {
-        server = new GrpcTestServer(serverConfig, new GrpcTestServerInterceptor(), serverStorage);
+        server = new GrpcTestServer(serverConfig, serverStorage);
         server.startServer(certPrefix);
         clientConfig = server
                 .getConfig()

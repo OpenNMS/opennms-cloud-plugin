@@ -1,4 +1,6 @@
-# OpenNMS Cloud Plugin [![CircleCI](https://circleci.com/gh/OpenNMS/opennms-cloud-plugin.svg?style=svg)](https://circleci.com/gh/OpenNMS/opennms-cloud-plugin)
+# OpenNMS Cloud Plugin
+[![CircleCI](https://circleci.com/gh/OpenNMS/opennms-cloud-plugin.svg?style=svg)](https://circleci.com/gh/OpenNMS/opennms-cloud-plugin)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=OpenNMS_opennms-cloud-plugin&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=OpenNMS_opennms-cloud-plugin)
 
 The OpenNMS Cloud Plugin enables OpenNMS to store data in the cloud.
 Initially it will provide storage for time series data (tsaas).
@@ -91,15 +93,6 @@ feature:list | grep opennms-cloud-plugin
 ```
 we expect it to say: _Started_
 
-## Import Certificates
-CURRENTLY BROKEN.
-
-TODO: Patrick: rewrite after we fixed cert import.
-
-The initializing can happen via a zip file as an alternative to using PAS.
-
-Move the cloud credentials file to: `[opennms.home]/etc/cloud-credentials.zip`.
-When the plugin is started it will import the cloud credentials automatically and delete the file after successful import.
 
 ## Configuration
 ### Configuration Properties
@@ -108,17 +101,43 @@ But for development purposes it is possible to change properties via Karaf shell
 
 ```
 config:edit org.opennms.plugins.cloud
-property-set pas.host access-test.staging.nonprod.dataservice.opennms.com
-property-set pas.port 443
-property-set pas.security TLS
-property-set tsaas.batchSize 1000
+```
+TLS configuration to PAS.
+Used for the init process (get client certificates):
+```
+property-set pas.tls.host access-test.staging.nonprod.dataservice.opennms.com 
+property-set pas.tls.port 443
+property-set pas.tls.security TLS
+```
+
+MTLS configuration to PAS.
+Used for the configuration process (get enabled services, get access token):
+```
+property-set pas.mtls.host authenticate.access-test.staging.nonprod.dataservice.opennms.com 
+property-set pas.mtls.port 443 
+property-set pas.mtls.security MTLS
+```
+
+If using a self signed cert you can set the truststore.
+This is the actual trust store as a string, not a file path.
+Example: https://github.com/OpenNMS/opennms-cloud-plugin/blob/jira/DC-342/it-test/src/test/java/org/opennms/plugins/cloud/tsaas/TsaasStorageIT.java#L142
+```
+property-set grpc.truststore
+```
+
+Specific settings for TSaaS:
+```
+property-set tsaas.batchSize 1000 
 property-set tsaas.maxBatchWaitTimeInMilliSeconds 5000
+```
+
+```
 config:update
 ```
 
 ### Initialization Sequence
-* The Cloud Plugin contacts PAS (Platform Access Service) to obtain certificates for MTLS.
-  From now on all communication is MTLS secured.
-* The Cloud Plugin retrieves all enabled services from PAS.
-* A JWT token is received from PAS.
-* All enabled services are configured and enabled in OpenNMS.
+1. The Cloud Plugin contacts PAS (Platform Access Service) to obtain certificates for MTLS.
+   From now on all communication is MTLS secured.
+2. The Cloud Plugin retrieves all enabled services from PAS.
+3. A JWT token is received from PAS.
+4. All enabled services are configured and enabled in OpenNMS.

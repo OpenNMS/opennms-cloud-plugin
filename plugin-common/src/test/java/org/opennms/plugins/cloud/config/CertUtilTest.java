@@ -29,9 +29,9 @@
 package org.opennms.plugins.cloud.config;
 
 import static org.junit.Assert.assertEquals;
+import static org.opennms.plugins.cloud.testserver.FileUtil.classpathFileToString;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.security.cert.CertificateException;
 import java.time.Instant;
 
@@ -41,10 +41,7 @@ public class CertUtilTest {
 
     @Test
     public void shouldReadExpiry() throws CertificateException, IOException {
-        Path configZipFile = Path.of("src/test/resources/cert/cloud-credentials.zip");
-        ConfigZipExtractor ex = new ConfigZipExtractor(configZipFile);
-        String publicCert = ex.getPublicKey();
-        Instant expiryDate = CertUtil.getExpiryDate(publicCert);
+        Instant expiryDate = CertUtil.getExpiryDate(classpathFileToString("/cert/client_cert.crt"));
         assertEquals(Instant.ofEpochSecond(1962745449), expiryDate);
     }
 
