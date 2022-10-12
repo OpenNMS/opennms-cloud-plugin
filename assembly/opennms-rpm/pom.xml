@@ -65,6 +65,9 @@
                                 </sources>
                             </mapping>
                         </mappings>
+                        <postinstallScriptlet>
+                            <scriptFile>../common-resources/scripts/postinst.opennms.rpm.sh</scriptFile>
+                        </postinstallScriptlet>
                     </configuration>
                 </plugin>
             </plugins>

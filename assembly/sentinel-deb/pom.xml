@@ -36,6 +36,8 @@
                         <packageDependencies>
                             <packageDependency>opennms-sentinel (&gt;= 30.0.0)</packageDependency>
                         </packageDependencies>
+                        <maintainerName>Freddy</maintainerName>
+                        <maintainerEmail>fchu@opennms.com</maintainerEmail>
                         <excludeAllArtifacts>true</excludeAllArtifacts>
                     </configuration>
                 </plugin>

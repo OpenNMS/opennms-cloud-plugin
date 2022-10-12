@@ -14,9 +14,9 @@
         <pluginManagement>
             <plugins>
                 <plugin>
-                    <groupId>net.sf.debian-maven</groupId>
+                    <groupId>com.github.fracpete</groupId>
                     <artifactId>debian-maven-plugin</artifactId>
-                    <version>1.0.6</version>
+                    <version>1.0.20</version>
                     <executions>
                         <execution>
                             <id>generate-deb</id>
@@ -36,6 +36,8 @@
                         <packageDependencies>
                             <packageDependency>opennms-server (&gt;= 30.0.0)</packageDependency>
                         </packageDependencies>
+                        <maintainerName>Freddy</maintainerName>
+                        <maintainerEmail>fchu@opennms.com</maintainerEmail>
                         <excludeAllArtifacts>true</excludeAllArtifacts>
                         <useDefaultFixPermissions>true</useDefaultFixPermissions>
                     </configuration>
@@ -96,8 +98,8 @@
                                     <destinationFile>${project.build.directory}/deb/usr/share/opennms/etc/examples/opennms.properties.d/timeseries.properties</destinationFile>
                                 </file>
                                 <file>
-                                    <sourceFile>../common-resources/scripts/postinst.opennms.debian.sh</sourceFile>
-                                    <destinationFile>${project.build.directory}/DEBIAN/post</destinationFile>
+                                    <sourceFile>../common-resources/scripts/postinst.opennms.deb.sh</sourceFile>
+                                    <destinationFile>${project.build.directory}/deb/DEBIAN/postinst</destinationFile>
                                 </file>
                             </fileSets>
                         </configuration>
@@ -122,7 +124,7 @@
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>net.sf.debian-maven</groupId>
+                        <groupId>com.github.fracpete</groupId>
                         <artifactId>debian-maven-plugin</artifactId>
                     </plugin>
                 </plugins>
