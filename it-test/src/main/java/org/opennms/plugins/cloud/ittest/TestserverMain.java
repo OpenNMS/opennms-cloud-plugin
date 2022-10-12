@@ -45,24 +45,25 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TestserverMain {
 
-  public static final int TEST_PORT = 9003;
+    public static final String MOCK_CLOUD_HOST = "horizon";
+    public static final int MOCK_CLOUD_PORT = 9003;
 
-  public static void main(String[] args) throws InterruptedException {
-    try(MockCloud cloud = MockCloud.builder()
-            .serverConfig(MockCloud.defaultServerConfig()
-                    .port(TEST_PORT)
-                    .build())
-            .build()) {
-      try {
-        cloud.start();
-      } catch (IOException e) {
-        System.out.printf("MockCloud Server could not start on port %S%n", TEST_PORT);
-        log.error("MockCloud Server could not start on port {}", TEST_PORT, e);
-        System.exit(1); // not more we can do
-      }
-      System.out.printf("MockCloud Server started on port %s%n", TEST_PORT);
-      log.info("MockCloud Server started on port {}", TEST_PORT);
-      Thread.sleep(Long.MAX_VALUE); // wait till the end of time .
+    public static void main(String[] args) throws InterruptedException {
+        try (MockCloud cloud = MockCloud.builder()
+                .serverConfig(MockCloud.defaultServerConfig()
+                        .host(MOCK_CLOUD_HOST) // we run the mock cloud directly in horizon
+                        .port(MOCK_CLOUD_PORT)
+                        .build())
+                .certPrefix("/cert/horizon")
+                .build()) {
+            try {
+                cloud.start();
+            } catch (IOException e) {
+                log.error("MockCloud Server could not start on port {}", MOCK_CLOUD_PORT, e);
+                System.exit(1); // not more we can do
+            }
+            log.info("MockCloud Server started on port {}", MOCK_CLOUD_PORT);
+            Thread.sleep(Long.MAX_VALUE); // wait till the end of time .
+        }
     }
-  }
 }

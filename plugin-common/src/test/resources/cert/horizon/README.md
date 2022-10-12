@@ -1,0 +1,1 @@
+Certificates in here are used in the integration test when the MockCloud is running in the container "horizon".

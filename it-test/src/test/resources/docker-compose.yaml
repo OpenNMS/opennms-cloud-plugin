@@ -34,19 +34,39 @@ services:
     environment:
       TZ: ${TIMEZONE:-America/New_York}
     volumes:
-      # we overlay the deploy folder with kar. It contains the plugin jars and dependencies:
+      # we overlay folder with kar into maven repo. It contains the plugin jars and dependencies:
       - ${USER_HOME}/.m2/repository/org/opennms/plugins/cloud/kar/1.0.0-SNAPSHOT:/usr/share/opennms/.m2/repository/org/opennms/plugins/cloud/kar/1.0.0-SNAPSHOT:ro
-      # add CloudMock server into horizon container: We will run our tests agains it.
+      # add CloudMock server into horizon container: We will run our tests against it.
       # the path is a bit ugly but the jar is not yet in the local mvn repo.
       - ../../../target:/usr/share/opennms/.m2/repository/org/opennms/plugins/cloud/it-test/1.0.0-SNAPSHOT:ro
     command: ["-s"]
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     ports:
       - "8101:8101/tcp" # ssh port for karaf console
-      - "8980:8980/tcp" # http port
     healthcheck:
       test: [ "CMD", "curl", "-f", "-I", "http://localhost:8980/opennms/login.jsp" ]
       interval: 1m
       timeout: 5s
+      retries: 3
+
+  sentinel:
+    image: ${DOCKER_REGISTRY:-docker.io}/${DOCKER_ORG:-opennms}/${MINION_OCI:-sentinel}:${ONMS_VERSION:-release-30.x}
+    hostname: sentinel
+    sysctls:
+      net.ipv4.ping_group_range: "0 429496729"
+    depends_on:
+      - database
+    environment:
+      TZ: ${TIMEZONE:-America/New_York}
+      JAVA_MIN_MEM: 512M
+      JAVA_MAX_MEM: 2048M
+    volumes:
+      # we overlay folder with kar into system repo. It contains the plugin jars and dependencies:
+      - ${USER_HOME}/.m2/repository/org/opennms/plugins/cloud/kar/1.0.0-SNAPSHOT:/usr/share/sentinel/system/org/opennms/plugins/cloud/kar/1.0.0-SNAPSHOT:ro
+    command: ["-f"]
+    ports:
+      - "8301:8301/tcp" # ssh port for karaf console
+    healthcheck:
+      test: "/health.sh"
+      interval: 30s
+      timeout: 20s
       retries: 3
