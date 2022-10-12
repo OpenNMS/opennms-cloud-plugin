@@ -29,9 +29,9 @@
 package org.opennms.plugins.cloud.config;
 
 import static org.junit.Assert.assertEquals;
+import static org.opennms.plugins.cloud.testserver.FileUtil.classpathFileToString;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -58,11 +58,10 @@ public class PasAccessTest {
 
     @Test
     public void shouldConfigure() throws IOException {
-        ConfigZipExtractor zip =  new ConfigZipExtractor(Path.of("src/test/resources/cert/cloud-credentials.zip"));
         final String serverHost = "myHost";
         final int serverPort = 12345;
-        final String privateKey = zip.getPrivateKey();
-        final String certificate = zip.getPublicKey();
+        final String privateKey = classpathFileToString("/cert/client_private_key.key");
+        final String certificate = classpathFileToString("/cert/client_cert.crt");
 
         AuthenticateGrpc.AuthenticateImplBase authService =
                 new AuthenticateGrpc.AuthenticateImplBase() {

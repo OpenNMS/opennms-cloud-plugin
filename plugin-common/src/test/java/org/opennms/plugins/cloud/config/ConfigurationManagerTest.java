@@ -32,6 +32,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -92,8 +93,8 @@ public class ConfigurationManagerTest {
                 Collections.singletonList(grpc));
         assertEquals(NOT_ATTEMPTED, cm.getStatus());
         cm.initConfiguration("something");
-        config.putProperty(truststore, classpathFileToString("/cert/clienttruststore.pem"));
         assertEquals(AUTHENTCATED, cm.getStatus());
+        config.putProperty(truststore, classpathFileToString("/cert/clienttruststore.pem"));
         cm.configure();
         assertEquals(CONFIGURED, cm.getStatus());
         verify(grpc, times(1)).initGrpc(any());
@@ -160,5 +161,34 @@ public class ConfigurationManagerTest {
                 Collections.singletonList(grpc));
         assertThrows(NullPointerException.class, cm::renewCerts); // this will fail because cm was never initialized and configured
         assertEquals(FAILED, cm.getStatus()); // make sure the status is correct
+    }
+
+    /** We ecpect the ConfigurationManager to start configuration() immediately after it was created if the status is
+     * already AUTHENTCATED or CONFIGURED. */
+    @Test
+    public void shouldCallConfigureIfAuthenticatedOrConfigured() {
+        // test prep: initialize already
+        TsaasStorage grpc = spy(new TsaasStorage(new TsaasConfig(1, 1)));
+        ConfigurationManager cm = new ConfigurationManager(config, clientConfig, clientConfig, mock(RegistrationManager.class),
+                info,
+                Collections.singletonList(grpc));
+        cm.initConfiguration("something");
+        assertEquals(AUTHENTCATED, cm.getStatus());
+        config.putProperty(truststore, classpathFileToString("/cert/clienttruststore.pem"));
+
+        // test part 1: create new config manager => should automatically call configure() because status = AUTHENTCATED
+        cm = new ConfigurationManager(config, clientConfig, clientConfig, mock(RegistrationManager.class),
+                info,
+                Collections.singletonList(grpc));
+        assertEquals(CONFIGURED, cm.getStatus());
+        verify(grpc, times(1)).initGrpc(any()); // this is done in configure()
+        clearInvocations(grpc);
+
+        // test part 2 : create new config manager => should automatically call configure() because status = CONFIGURED
+        cm = new ConfigurationManager(config, clientConfig, clientConfig, mock(RegistrationManager.class),
+                info,
+                Collections.singletonList(grpc));
+        assertEquals(CONFIGURED, cm.getStatus());
+        verify(grpc, times(1)).initGrpc(any()); // this is done in configure()
     }
 }

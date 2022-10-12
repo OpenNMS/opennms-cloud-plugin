@@ -25,12 +25,8 @@
  *     http://www.opennms.org/
  *     http://www.opennms.com/
  *******************************************************************************/
-package org.opennms.plugins.cloud.tsaas;
+package org.opennms.plugins.cloud.ittest;
 
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.ChannelShell;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.Session;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,9 +35,15 @@ import java.io.PrintStream;
 import java.net.InetSocketAddress;
 import java.util.Objects;
 import java.util.concurrent.Callable;
-import org.opennms.plugins.cloud.tsaas.jsch.SLF4JLogger;
+
+import org.opennms.plugins.cloud.ittest.jsch.SLF4JLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.ChannelShell;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.Session;
 
 /**
  * A simple SSH client wrapper used to run shell commands.

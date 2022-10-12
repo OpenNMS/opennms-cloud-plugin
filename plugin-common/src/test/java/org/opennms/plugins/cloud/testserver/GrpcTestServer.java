@@ -59,16 +59,13 @@ public class GrpcTestServer {
     private Server server;
     private final TsaasGrpcImpl timeSeriesService;
     private final ConfigGrpcImpl configGrpcService;
-    private final GrpcTestServerInterceptor serverInterceptor;
 
 
     public GrpcTestServer(final GrpcConnectionConfig config,
-                          final GrpcTestServerInterceptor serverInterceptor,
                           final TimeSeriesStorage storage) {
         this.configGrpcService = new ConfigGrpcImpl();
         this.timeSeriesService = new TsaasGrpcImpl(storage);
         this.config = config;
-        this.serverInterceptor = serverInterceptor;
     }
 
     @PostConstruct
@@ -79,7 +76,7 @@ public class GrpcTestServer {
                 .addService(timeSeriesService)
                 .decompressorRegistry(ZStdCodecRegisterUtil.createDecompressorRegistry())
                 .compressorRegistry(ZStdCodecRegisterUtil.createCompressorRegistry())
-                .intercept(serverInterceptor);
+                .intercept(new GrpcTestServerInterceptor());
         if (GrpcConnectionConfig.Security.TLS == this.config.getSecurity()
                 || GrpcConnectionConfig.Security.MTLS == this.config.getSecurity()) {
             builder.sslContext(

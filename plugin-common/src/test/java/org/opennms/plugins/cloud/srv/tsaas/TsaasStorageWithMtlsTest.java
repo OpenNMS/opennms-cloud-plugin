@@ -28,11 +28,8 @@
 
 package org.opennms.plugins.cloud.srv.tsaas;
 
-import static org.junit.Assert.assertTrue;
 import static org.opennms.plugins.cloud.testserver.FileUtil.classpathFileToString;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -43,7 +40,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.opennms.integration.api.v1.timeseries.AbstractStorageIntegrationTest;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
-import org.opennms.plugins.cloud.config.ConfigZipExtractor;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.testserver.MockCloud;
 
@@ -61,9 +57,6 @@ public class TsaasStorageWithMtlsTest extends AbstractStorageIntegrationTest {
   @Before
   public void setUp() throws Exception {
     GrpcConnectionConfig.GrpcConnectionConfigBuilder clientConfig = cloud.getClientConfigWithToken().toBuilder();
-    Path pathToZipFile = Path.of("src/test/resources/cert/cloud-credentials.zip");
-    assertTrue(Files.exists(pathToZipFile));
-    ConfigZipExtractor certs = new ConfigZipExtractor(pathToZipFile);
     Map<String, String> attributes = new HashMap<>();
     clientConfig.publicKey(classpathFileToString("/cert/client_cert.crt"));
     clientConfig.privateKey(classpathFileToString("/cert/client_private_key.key"));

@@ -25,7 +25,7 @@
  *     http://www.opennms.org/
  *     http://www.opennms.com/
  *******************************************************************************/
-package org.opennms.plugins.cloud.tsaas.jsch;
+package org.opennms.plugins.cloud.ittest.jsch;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,9 +1,9 @@
-package org.opennms.plugins.cloud.tsaas;
+package org.opennms.plugins.cloud.ittest;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.opennms.plugins.cloud.ittest.TestserverMain.MOCK_CLOUD_HOST;
-import static org.opennms.plugins.cloud.ittest.TestserverMain.MOCK_CLOUD_PORT;
+import static org.opennms.plugins.cloud.ittest.MockCloudMain.MOCK_CLOUD_HOST;
+import static org.opennms.plugins.cloud.ittest.MockCloudMain.MOCK_CLOUD_PORT;
 import static org.opennms.plugins.cloud.testserver.FileUtil.classpathFileToString;
 
 import java.io.File;
@@ -29,9 +29,9 @@ import org.testcontainers.utility.MountableFile;
  * => The Osgi wiring / dependencies are checked.
  * It does NOT test the functionality of the plugin itself.
  */
-public class TsaasStorageIT {
+public class EndToEndIT {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TsaasStorageIT.class);
+    private static final Logger LOG = LoggerFactory.getLogger(EndToEndIT.class);
 
     public static DockerComposeContainer<?> environment;
 
@@ -66,7 +66,7 @@ public class TsaasStorageIT {
         String stdout = environment
                 .getContainerByServiceName("horizon_1")
                 .orElseThrow(() -> new IllegalArgumentException("container horizon_1 not found"))
-                .execInContainer("sh", "-c", "java -cp /usr/share/opennms/.m2/repository/org/opennms/plugins/cloud/it-test/1.0.0-SNAPSHOT/it-test-1.0.0-SNAPSHOT-jar-with-dependencies.jar org.opennms.plugins.cloud.ittest.TestserverMain &")
+                .execInContainer("sh", "-c", "java -cp /usr/share/opennms/.m2/repository/org/opennms/plugins/cloud/it-test/1.0.0-SNAPSHOT/it-test-1.0.0-SNAPSHOT-jar-with-dependencies.jar org.opennms.plugins.cloud.ittest.MockCloudMain &")
                 .getStdout();
         assertNotNull(stdout);
         LOG.info(stdout);
@@ -82,12 +82,17 @@ public class TsaasStorageIT {
     }
 
     @Test
+    @SuppressWarnings("java:S2699") // no assertions because we are an integration test and test against karaf shell
     public void canInstallAndStartPlugin() {
         installAndStartPluginInOpenNms();
         installAndStartPluginInSentinel();
     }
 
     private void installAndStartPluginInOpenNms() {
+
+        // configure plugin to use MockCloud on horizon
+        String config = createConfig();
+        opennmsShell.runCommand(config);
 
         // install plugin for core
         opennmsShell.runCommand("kar:install --no-start mvn:org.opennms.plugins.cloud/kar/1.0.0-SNAPSHOT/kar");
@@ -96,10 +101,6 @@ public class TsaasStorageIT {
         // check if plugin has been started, if so we assume the installation worked well.
         opennmsShell.runCommand("feature:list | grep opennms-cloud-plugin-core", output -> output.contains("Started"));
 
-        // configure plugin to use MockCloud on localhost
-        String config = createConfig();
-        opennmsShell.runCommand(config);
-
         // init plugin: this gets the MTLS certs, the enabled services and tokens from PAS
         // all enabled services are configured and started.
         opennmsShell.runCommand("opennms-cloud:init myApiToken", output -> output.contains("Initialization of cloud plugin in OPENNMS was successful."));
@@ -107,16 +108,16 @@ public class TsaasStorageIT {
 
     private void installAndStartPluginInSentinel() {
 
+        // configure plugin to use MockCloud on horizon
+        String config = createConfig();
+        opennmsShell.runCommand(config);
+
         // install plugin for core
         sentinelShell.runCommand("kar:install --no-start mvn:org.opennms.plugins.cloud/kar/1.0.0-SNAPSHOT/kar");
         sentinelShell.runCommand("feature:install opennms-cloud-plugin-sentinel");
 
         // check if plugin has been started, if so we assume the installation worked well.
         sentinelShell.runCommand("feature:list | grep opennms-cloud-plugin-sentinel", output -> output.contains("Started"));
-
-        // configure plugin to use MockCloud on core
-        String config = createConfig();
-        sentinelShell.runCommand(config);
 
         // init plugin: this gets the MTLS certs, the enabled services and tokens from the KV store out of the database,
         // => thus no token is needed.

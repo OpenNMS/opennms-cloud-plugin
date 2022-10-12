@@ -21,7 +21,7 @@
           <archive>
             <manifest>
               <mainClass>
-                org.opennms.plugins.cloud.ittest.TestserverMain
+                org.opennms.plugins.cloud.ittest.MockCloudMain
               </mainClass>
             </manifest>
           </archive>

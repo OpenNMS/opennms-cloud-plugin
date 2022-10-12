@@ -43,7 +43,7 @@ public interface ConfigStore {
    * All enums must be lower case.
    * Otherwise scv won't save them correctly.
    */
-  @SuppressWarnings("java:S115") // we don't want to be warned about lower case
+  @SuppressWarnings("java:S115") // we don't want to be warned about lower case, upper case is not working for SCV
   enum Key {
     truststore, publickey, privatekey, tokenkey, tokenvalue, grpchost, grpcport,
     activeservices,
