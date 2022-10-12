@@ -90,16 +90,16 @@ public class EndToEndIT {
 
     private void installAndStartPluginInOpenNms() {
 
-        // configure plugin to use MockCloud on horizon
-        String config = createConfig();
-        opennmsShell.runCommand(config);
-
         // install plugin for core
         opennmsShell.runCommand("kar:install --no-start mvn:org.opennms.plugins.cloud/kar/1.0.0-SNAPSHOT/kar");
         opennmsShell.runCommand("feature:install opennms-cloud-plugin-core");
 
         // check if plugin has been started, if so we assume the installation worked well.
         opennmsShell.runCommand("feature:list | grep opennms-cloud-plugin-core", output -> output.contains("Started"));
+
+        // configure plugin to use MockCloud on localhost
+        String config = createConfig();
+        opennmsShell.runCommand(config);
 
         // init plugin: this gets the MTLS certs, the enabled services and tokens from PAS
         // all enabled services are configured and started.
@@ -108,16 +108,16 @@ public class EndToEndIT {
 
     private void installAndStartPluginInSentinel() {
 
-        // configure plugin to use MockCloud on horizon
-        String config = createConfig();
-        opennmsShell.runCommand(config);
-
         // install plugin for core
         sentinelShell.runCommand("kar:install --no-start mvn:org.opennms.plugins.cloud/kar/1.0.0-SNAPSHOT/kar");
         sentinelShell.runCommand("feature:install opennms-cloud-plugin-sentinel");
 
         // check if plugin has been started, if so we assume the installation worked well.
         sentinelShell.runCommand("feature:list | grep opennms-cloud-plugin-sentinel", output -> output.contains("Started"));
+
+        // configure plugin to use MockCloud on core
+        String config = createConfig();
+        sentinelShell.runCommand(config);
 
         // init plugin: this gets the MTLS certs, the enabled services and tokens from the KV store out of the database,
         // => thus no token is needed.
