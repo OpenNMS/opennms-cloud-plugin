@@ -10,7 +10,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <awaitilityVersion>4.0.3</awaitilityVersion>
+        <awaitilityVersion>4.2.0</awaitilityVersion>
         <hamcrest.version>1.3</hamcrest.version>
         <tsaasClientVersion>LATEST</tsaasClientVersion>
         <pasClientVersion>0.8.0</pasClientVersion><!-- PAS service -->
