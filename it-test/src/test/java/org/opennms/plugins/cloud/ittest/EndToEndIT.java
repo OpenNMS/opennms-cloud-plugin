@@ -109,7 +109,7 @@ public class EndToEndIT {
     private void installAndStartPluginInSentinel() {
 
         // install plugin for core
-        sentinelShell.runCommand("kar:install --no-start mvn:org.opennms.plugins.cloud/kar/1.0.0-SNAPSHOT/kar");
+        sentinelShell.runCommand("kar:install --no-start mvn:org.opennms.plugins.cloud.assembly/org.opennms.plugins.cloud.assembly.kar/1.0.0-SNAPSHOT/kar");
         sentinelShell.runCommand("feature:install opennms-cloud-plugin-sentinel");
 
         // check if plugin has been started, if so we assume the installation worked well.

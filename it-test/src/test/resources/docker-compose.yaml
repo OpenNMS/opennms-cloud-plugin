@@ -62,7 +62,7 @@ services:
       JAVA_MAX_MEM: 2048M
     volumes:
       # we overlay folder with kar into system repo. It contains the plugin jars and dependencies:
-      - ${USER_HOME}/.m2/repository/org/opennms/plugins/cloud/kar/1.0.0-SNAPSHOT:/usr/share/sentinel/system/org/opennms/plugins/cloud/kar/1.0.0-SNAPSHOT:ro
+      - ${USER_HOME}/.m2/repository/org/opennms/plugins/cloud/assembly/org.opennms.plugins.cloud.assembly.kar/1.0.0-SNAPSHOT/org.opennms.plugins.cloud.assembly.kar-1.0.0-SNAPSHOT.kar:/usr/share/opennms/.m2/repository/org/opennms/plugins/cloud/assembly/org.opennms.plugins.cloud.assembly.kar/1.0.0-SNAPSHOT/org.opennms.plugins.cloud.assembly.kar-1.0.0-SNAPSHOT.kar:ro
     command: ["-f"]
     ports:
       - "8301:8301/tcp" # ssh port for karaf console

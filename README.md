@@ -120,7 +120,7 @@ property-set pas.mtls.security MTLS
 
 If using a self signed cert you can set the truststore.
 This is the actual trust store as a string, not a file path.
-Example: https://github.com/OpenNMS/opennms-cloud-plugin/blob/jira/DC-342/it-test/src/test/java/org/opennms/plugins/cloud/tsaas/TsaasStorageIT.java#L142
+Example: https://github.com/OpenNMS/opennms-cloud-plugin/blob/jira/DC-342/it-test/src/test/java/org/opennms/plugins/cloud/tsaas/EndToEndIT.java#L143
 ```
 property-set grpc.truststore
 ```
