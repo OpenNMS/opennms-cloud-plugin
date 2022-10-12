@@ -11,13 +11,10 @@ if [ -n "${CIRCLE_TAG}" ]; then
 else
   case "${CIRCLE_BRANCH}" in
     main)
-      REPO="main"
+      REPO="common-testing"
       ;;
     release-*)
-      REPO="common-testing"
-      ;;
-    *DC-301*)
-      REPO="common-testing"
+      REPO="stable"
       ;;
     *)
       echo "This branch is not eligible for deployment: ${CIRCLE_BRANCH}"

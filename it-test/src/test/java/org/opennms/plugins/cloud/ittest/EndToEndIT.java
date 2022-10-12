@@ -91,7 +91,7 @@ public class EndToEndIT {
     private void installAndStartPluginInOpenNms() {
 
         // install plugin for core
-        opennmsShell.runCommand("kar:install --no-start mvn:org.opennms.plugins.cloud/kar/1.0.0-SNAPSHOT/kar");
+        opennmsShell.runCommand("kar:install --no-start mvn:org.opennms.plugins.cloud.assembly/org.opennms.plugins.cloud.assembly.kar/1.0.0-SNAPSHOT/kar");
         opennmsShell.runCommand("feature:install opennms-cloud-plugin-core");
 
         // check if plugin has been started, if so we assume the installation worked well.
