@@ -12,7 +12,6 @@ import lombok.Data;
 public class GrpcConnectionConfig {
 
     public enum Security {
-        PLAIN_TEXT,
         TLS,
         MTLS
     }
