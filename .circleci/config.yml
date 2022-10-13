@@ -44,7 +44,11 @@ workflows:
             - tests
           filters:
             tags:
-              only: /.*/
+              only: /^v.*/
+            branches:
+              only:
+                - main
+                - /release-.*/
       - deploy-packages:
           context: "OpenNMS Build"
           requires:
@@ -59,7 +63,6 @@ workflows:
                 - /release-.*/
 
 jobs:
-
   build:
     executor: build-executor
     steps:
