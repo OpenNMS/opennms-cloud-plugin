@@ -3,17 +3,26 @@ version: 2.1
 executors:
   build-executor:
     docker:
-      - image: cimg/openjdk:11.0
+      - image: opennms/build-env:11.0.14_9-3.8.4-b8249
         environment:
           MAVEN_OPTS: -Xmx1g
   system-test-executor:
     machine:
       image: ubuntu-2204:2022.07.1
+  build-debian-executor:
+    docker:
+      - image: cimg/openjdk:11.0
+        environment:
+          MAVEN_OPTS: -Xmx2g
+orbs:
+  cloudsmith: cloudsmith/cloudsmith@1.0.5
+  sign-packages: opennms/sign-packages@2.3.0
 
 workflows:
   build-deploy:
     jobs:
-      - build
+      - build:
+          context: "OpenNMS Build"
       - tests:
           requires:
             - build
@@ -28,11 +37,42 @@ workflows:
             branches:
               only:
                 - main
+      - build-debian:
+          context: "OpenNMS Build"
+          requires:
+            - build
+            - tests
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only:
+                - main
+                - /release-.*/
+      - deploy-packages:
+          context: "OpenNMS Build"
+          requires:
+            - tests
+            - build-debian
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only:
+                - main
+                - /release-.*/
 
 jobs:
   build:
     executor: build-executor
     steps:
+      - sign-packages/install-rpm-dependencies:
+          skip_if_forked_pr: true
+
+      - sign-packages/setup-env:
+          skip_if_forked_pr: true
+          gnupg_home: ~/tmp/gpg
+
       - checkout
       - restore_cache:
           keys:
@@ -42,7 +82,7 @@ jobs:
       - run:
           name: Compile source without tests
           command: |
-            mvn -DskipITs=true -DskipTests=true clean install
+            mvn -DskipITs=true -DskipTests=true -Dbuild.packages clean install
       - save_cache:
           paths:
             - ~/.m2
@@ -52,6 +92,12 @@ jobs:
           paths:
             - .m2
             - project
+
+      - sign-packages/sign-rpms:
+          skip_if_forked_pr: true
+          gnupg_home: ~/tmp/gpg
+          gnupg_key: opennms@opennms.org
+          packages: assembly/*-rpm/target/rpm/*-cloud-plugin/RPMS/noarch/*.rpm
 
   tests:
     executor: system-test-executor
@@ -94,3 +140,72 @@ jobs:
           command: |
             mvn -s .circleci/.circleci.settings.xml -DskipTests -Dmaven.verify.skip=true -Dmaven.install.skip=true deploy
 
+  build-debian:
+    executor: build-debian-executor
+
+    steps:
+      - attach_workspace:
+          at: ~/
+
+      - sign-packages/install-deb-dependencies:
+          skip_if_forked_pr: true
+          use_sudo: true
+      - sign-packages/setup-env:
+          skip_if_forked_pr: true
+          gnupg_home: ~/tmp/gpg
+
+      - restore_cache:
+          keys:
+            # Use a separate cache, since the the other build image runs as root
+            - v4-deb-dependencies-{{ checksum "pom.xml" }}
+            - v4-deb-dependencies-
+
+      - run:
+          name: Build Debian packages
+          command: |
+            mvn install --projects org.opennms.plugins.cloud.assembly:org.opennms.plugins.cloud.assembly.opennms.deb,org.opennms.plugins.cloud.assembly:org.opennms.plugins.cloud.assembly.sentinel.deb --also-make -DskipTests=true -Dbuild.packages
+
+      - run:
+          name: Remove old artifacts to keep workspace size down
+          command: .circleci/scripts/clean-dir.sh "$HOME/.m2/repository"
+
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: v4-deb-dependencies-{{ checksum "pom.xml" }}
+
+      - sign-packages/sign-debs:
+          skip_if_forked_pr: true
+          gnupg_home: ~/tmp/gpg
+          gnupg_key: opennms@opennms.org
+          packages: assembly/*-deb/target/*.deb
+
+      - run:
+          name: Gather artifacts
+          command: |
+            mkdir -p ~/dist/
+            cp assembly/opennms-deb/target/opennms-cloud-plugin_*.deb ~/dist/
+            cp assembly/sentinel-deb/target/sentinel-cloud-plugin_*.deb ~/dist/
+
+      - store_artifacts:
+          path: ~/dist
+          destination: dist
+
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/assembly/
+
+  deploy-packages:
+    executor: cloudsmith/default
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: ~/
+
+      - cloudsmith/ensure-api-key
+      - cloudsmith/install-cli
+
+      - run:
+          name: Push packages to CloudSmith
+          command: .circleci/scripts/publish-cloudsmith.sh

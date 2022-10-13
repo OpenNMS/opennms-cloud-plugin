@@ -1,16 +1,5 @@
 package org.opennms.plugins.cloud.ittest;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.opennms.plugins.cloud.ittest.MockCloudMain.MOCK_CLOUD_HOST;
-import static org.opennms.plugins.cloud.ittest.MockCloudMain.MOCK_CLOUD_PORT;
-import static org.opennms.plugins.cloud.testserver.FileUtil.classpathFileToString;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.time.Duration;
-
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -22,6 +11,14 @@ import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.MountableFile;
+
+import java.io.File;
+import java.net.InetSocketAddress;
+import java.time.Duration;
+
+import static org.opennms.plugins.cloud.ittest.MockCloudMain.MOCK_CLOUD_HOST;
+import static org.opennms.plugins.cloud.ittest.MockCloudMain.MOCK_CLOUD_PORT;
+import static org.opennms.plugins.cloud.testserver.FileUtil.classpathFileToString;
 
 /**
  * This test checks if the plugin can be successfully installed in OpenNMS:
@@ -39,7 +36,7 @@ public class EndToEndIT {
     private KarafShell sentinelShell;
 
     @BeforeClass
-    public static void beforeAll() throws IOException, InterruptedException {
+    public static void beforeAll() {
         environment = new DockerComposeContainer<>(new File("src/test/resources/docker-compose.yaml"))
                 .withEnv("USER_HOME", System.getProperty("user.home"))
                 .withTailChildContainers(true)
@@ -47,10 +44,11 @@ public class EndToEndIT {
                 .withLogConsumer("database_1", new Slf4jLogConsumer(LOG))
                 .withExposedService("horizon_1", 8980, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(240)))
                 .withExposedService("horizon_1", 8101) // Karaf Shell
-                // .withExposedService("horizon_1", MOCK_CLOUD_PORT) // MockCloud
                 .withLogConsumer("horizon_1", new Slf4jLogConsumer(LOG))
                 .withExposedService("sentinel_1", 8301, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(30))) // Karaf Shell
-                .withLogConsumer("sentinel_1", new Slf4jLogConsumer(LOG));
+                .withLogConsumer("sentinel_1", new Slf4jLogConsumer(LOG))
+                .withExposedService("cloudMock_1", MOCK_CLOUD_PORT, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(30)))
+                .withLogConsumer("cloudMock_1", new Slf4jLogConsumer(LOG));
         environment.start();
 
         // fix me: this should be done in docker-compose but I couldn't get it to work:
@@ -61,16 +59,6 @@ public class EndToEndIT {
 
         printContainerStartup("horizon_1");
         printContainerStartup("sentinel_1");
-
-        // run MockCloud server in OpenNMS container:
-        String stdout = environment
-                .getContainerByServiceName("horizon_1")
-                .orElseThrow(() -> new IllegalArgumentException("container horizon_1 not found"))
-                .execInContainer("sh", "-c", "java -cp /usr/share/opennms/.m2/repository/org/opennms/plugins/cloud/it-test/1.0.0-SNAPSHOT/it-test-1.0.0-SNAPSHOT-jar-with-dependencies.jar org.opennms.plugins.cloud.ittest.MockCloudMain &")
-                .getStdout();
-        assertNotNull(stdout);
-        LOG.info(stdout);
-        assertTrue(String.format("Could not find 'MockCloud Server started' in output:%n%s", stdout), stdout.contains("MockCloud Server started"));
     }
 
     @Before
@@ -91,7 +79,7 @@ public class EndToEndIT {
     private void installAndStartPluginInOpenNms() {
 
         // install plugin for core
-        opennmsShell.runCommand("kar:install --no-start mvn:org.opennms.plugins.cloud/kar/1.0.0-SNAPSHOT/kar");
+        opennmsShell.runCommand("kar:install --no-start mvn:org.opennms.plugins.cloud.assembly/org.opennms.plugins.cloud.assembly.kar/1.0.0-SNAPSHOT/kar");
         opennmsShell.runCommand("feature:install opennms-cloud-plugin-core");
 
         // check if plugin has been started, if so we assume the installation worked well.
@@ -109,7 +97,7 @@ public class EndToEndIT {
     private void installAndStartPluginInSentinel() {
 
         // install plugin for core
-        sentinelShell.runCommand("kar:install --no-start mvn:org.opennms.plugins.cloud/kar/1.0.0-SNAPSHOT/kar");
+        sentinelShell.runCommand("kar:install --no-start mvn:org.opennms.plugins.cloud.assembly/org.opennms.plugins.cloud.assembly.kar/1.0.0-SNAPSHOT/kar");
         sentinelShell.runCommand("feature:install opennms-cloud-plugin-sentinel");
 
         // check if plugin has been started, if so we assume the installation worked well.

@@ -45,7 +45,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MockCloudMain {
 
-    public static final String MOCK_CLOUD_HOST = "horizon";
+    public static final String MOCK_CLOUD_HOST = "cloudMock";
     public static final int MOCK_CLOUD_PORT = 9003;
 
     public static void main(String[] args) throws InterruptedException {
@@ -55,6 +55,9 @@ public class MockCloudMain {
                         .port(MOCK_CLOUD_PORT)
                         .build())
                 .certPrefix("/cert/horizon")
+                .keyCertChainFilename("")
+                .keyFilename("pas_server_pkcs8_key.pem")
+                .keyCertChainFilename("pas_server.crt")
                 .build()) {
             try {
                 cloud.start();
