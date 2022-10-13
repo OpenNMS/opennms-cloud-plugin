@@ -69,7 +69,9 @@ public class GrpcTestServer {
     }
 
     @PostConstruct
-    public void startServer(final String certPrefix) throws IOException {
+    public void startServer(final String certPrefix,
+                            final String keyCertChainFilename,
+                            final String keyFilename) throws IOException {
         NettyServerBuilder builder = NettyServerBuilder
                 .forPort(config.getPort())
                 .addService(configGrpcService)
@@ -81,8 +83,8 @@ public class GrpcTestServer {
                 || GrpcConnectionConfig.Security.MTLS == this.config.getSecurity()) {
             builder.sslContext(
                     GrpcSslContexts
-                            .forServer(this.getClass().getResourceAsStream(certPrefix + "/pas_server.crt"), // an X.509 certificate chain file in PEM format
-                                    this.getClass().getResourceAsStream(certPrefix + "/pas_server_pkcs8_key.pem"))
+                            .forServer(this.getClass().getResourceAsStream(certPrefix + "/" + keyCertChainFilename), // an X.509 certificate chain file in PEM format
+                                    this.getClass().getResourceAsStream(certPrefix + "/" + keyFilename))
                             .trustManager(this.getClass().getResourceAsStream(certPrefix + "/servertruststore.pem"))
                             .build());
         }
@@ -115,5 +117,7 @@ public class GrpcTestServer {
         LOG.info("Grpc Server stopped");
     }
 
-    public GrpcConnectionConfig getConfig() { return config; }
+    public GrpcConnectionConfig getConfig() {
+        return config;
+    }
 }

@@ -31,6 +31,7 @@ package org.opennms.plugins.cloud.testserver;
 import static org.opennms.plugins.cloud.testserver.FileUtil.classpathFileToString;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Objects;
 
 import org.junit.rules.ExternalResource;
@@ -59,13 +60,21 @@ public class MockCloud extends ExternalResource implements AutoCloseable {
 
     private final String certPrefix;
 
+    private final String keyCertChainFilename;
+
+    private final String keyFilename;
+
     @Builder
     public MockCloud(final GrpcConnectionConfig serverConfig,
                      final TimeSeriesStorage serverStorage,
-                     final String certPrefix) {
+                     final String certPrefix,
+                     final String keyCertChainFilename,
+                     final String keyFilename) {
         this.serverConfig = serverConfig;
         this.serverStorage = Objects.requireNonNull(serverStorage);
         this.certPrefix = Objects.requireNonNull(certPrefix);
+        this.keyCertChainFilename = Objects.requireNonNull(keyCertChainFilename);
+        this.keyFilename = Objects.requireNonNull(keyFilename);
     }
 
     public static GrpcConnectionConfig.GrpcConnectionConfigBuilder defaultServerConfig() {
@@ -76,7 +85,7 @@ public class MockCloud extends ExternalResource implements AutoCloseable {
 
     public void start() throws IOException {
         server = new GrpcTestServer(serverConfig, serverStorage);
-        server.startServer(certPrefix);
+        server.startServer(certPrefix, keyCertChainFilename, keyFilename);
         clientConfig = server
                 .getConfig()
                 .toBuilder()
@@ -113,10 +122,11 @@ public class MockCloud extends ExternalResource implements AutoCloseable {
         }
     }
 
-
     public static class MockCloudBuilder {
         private GrpcConnectionConfig serverConfig = defaultServerConfig().build(); // default value
         private TimeSeriesStorage serverStorage = new InMemoryStorage(); //default value
         private String certPrefix = "/cert"; // default value
+        private String keyFilename = "server_pkcs8_key.pem";
+        private String keyCertChainFilename = "server.crt";
     }
 }

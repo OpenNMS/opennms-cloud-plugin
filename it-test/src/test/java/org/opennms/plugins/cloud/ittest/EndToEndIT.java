@@ -1,16 +1,5 @@
 package org.opennms.plugins.cloud.ittest;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.opennms.plugins.cloud.ittest.MockCloudMain.MOCK_CLOUD_HOST;
-import static org.opennms.plugins.cloud.ittest.MockCloudMain.MOCK_CLOUD_PORT;
-import static org.opennms.plugins.cloud.testserver.FileUtil.classpathFileToString;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.time.Duration;
-
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -22,6 +11,14 @@ import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.MountableFile;
+
+import java.io.File;
+import java.net.InetSocketAddress;
+import java.time.Duration;
+
+import static org.opennms.plugins.cloud.ittest.MockCloudMain.MOCK_CLOUD_HOST;
+import static org.opennms.plugins.cloud.ittest.MockCloudMain.MOCK_CLOUD_PORT;
+import static org.opennms.plugins.cloud.testserver.FileUtil.classpathFileToString;
 
 /**
  * This test checks if the plugin can be successfully installed in OpenNMS:

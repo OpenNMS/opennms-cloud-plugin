@@ -55,6 +55,9 @@ public class MockCloudMain {
                         .port(MOCK_CLOUD_PORT)
                         .build())
                 .certPrefix("/cert/horizon")
+                .keyCertChainFilename("")
+                .keyFilename("pas_server_pkcs8_key.pem")
+                .keyCertChainFilename("pas_server.crt")
                 .build()) {
             try {
                 cloud.start();
