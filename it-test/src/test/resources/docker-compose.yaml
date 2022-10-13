@@ -26,6 +26,7 @@ services:
 
   cloudMock:
     image: "opennms/deploy-base:jre-2.0.6.b165"
+    hostname: cloudMock
     entrypoint: /bin/bash
     command: ["-c", "java -cp /usr/share/opennms/.m2/repository/org/opennms/plugins/cloud/it-test/1.0.0-SNAPSHOT/it-test-1.0.0-SNAPSHOT-jar-with-dependencies.jar org.opennms.plugins.cloud.ittest.MockCloudMain"]
     volumes:

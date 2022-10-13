@@ -50,7 +50,7 @@ public class EndToEndIT {
                 .withLogConsumer("horizon_1", new Slf4jLogConsumer(LOG))
                 .withExposedService("sentinel_1", 8301, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(30))) // Karaf Shell
                 .withLogConsumer("sentinel_1", new Slf4jLogConsumer(LOG))
-                .withExposedService("cloudMock_1", 9003, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(30)))
+                .withExposedService("cloudMock_1", MOCK_CLOUD_PORT, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(30)))
                 .withLogConsumer("cloudMock_1", new Slf4jLogConsumer(LOG));
         environment.start();
 
