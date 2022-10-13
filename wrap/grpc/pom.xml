@@ -90,6 +90,11 @@
       <artifactId>grpc-stub</artifactId>
       <version>${grpcVersion}</version>
     </dependency>
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+      <version>${protobufVersion}</version>
+    </dependency>
   </dependencies>
 
 </project>
