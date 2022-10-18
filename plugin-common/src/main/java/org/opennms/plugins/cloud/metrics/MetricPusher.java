@@ -109,6 +109,18 @@ public class MetricPusher {
         resourceBuilder.addNumericAttribute(gauge("StoreSamples999", "cloud-plugin-stats", () -> storage.getStoreSamplesTimer()
                 .getSnapshot().get999thPercentile()));
 
+        // Percentiles
+        resourceBuilder.addNumericAttribute(gauge("GetSeries75", "cloud-plugin-stats", () -> storage.getGetTimeseriesTimer()
+                .getSnapshot().get75thPercentile()));
+        resourceBuilder.addNumericAttribute(gauge("GetSeries95", "cloud-plugin-stats", () -> storage.getGetTimeseriesTimer()
+                .getSnapshot().get95thPercentile()));
+        resourceBuilder.addNumericAttribute(gauge("GetSeries98", "cloud-plugin-stats", () -> storage.getGetTimeseriesTimer()
+                .getSnapshot().get98thPercentile()));
+        resourceBuilder.addNumericAttribute(gauge("GetSeries99", "cloud-plugin-stats", () -> storage.getGetTimeseriesTimer()
+                .getSnapshot().get99thPercentile()));
+        resourceBuilder.addNumericAttribute(gauge("GetSeries999", "cloud-plugin-stats", () -> storage.getGetTimeseriesTimer()
+                .getSnapshot().get999thPercentile()));
+
         csetBuilder.addCollectionSetResource(resourceBuilder.build());
 
         collectionSetPersistenceService.persist(node.getId(), getFirstInetAddress(node), csetBuilder.build());
@@ -133,7 +145,7 @@ public class MetricPusher {
                 .setName(name)
                 .setGroup(group)
                 .setType(NumericAttribute.Type.GAUGE)
-                .setValue(value.get())
+                .setValue((double)TimeUnit.MILLISECONDS.convert(value.get().longValue(), TimeUnit.NANOSECONDS))
                 .build();
     }
 
