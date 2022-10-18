@@ -1,0 +1,7 @@
+<resource-types xmlns="http://xmlns.opennms.org/xsd/config/datacollection">
+    <resourceType name="cloudPlugin" label="Cloud Plugin"
+                  resourceLabel="${index}">
+        <persistenceSelectorStrategy class="org.opennms.netmgt.collection.support.PersistAllSelectorStrategy"/>
+        <storageStrategy class="org.opennms.netmgt.collection.support.IndexStorageStrategy"/>
+    </resourceType>
+</resource-types>

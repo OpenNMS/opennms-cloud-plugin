@@ -24,6 +24,9 @@
     <service ref="configStore" interface="org.opennms.plugins.cloud.config.ConfigStore" />
 
     <reference id="runtimeInfo" interface="org.opennms.integration.api.v1.runtime.RuntimeInfo" availability="mandatory"/>
+    <reference id="nodeDao" interface="org.opennms.integration.api.v1.dao.NodeDao" availability="mandatory"/>
+    <reference id="collectionSetPersistenceService" interface="org.opennms.integration.api.v1.collectors.CollectionSetPersistenceService" availability="mandatory"/>
+
     <!-- Configuration stored in $OPENNMS_HOME/etc/org.opennms.plugins.cloud.cfg file -->
     <cm:property-placeholder id="tsaas-pocPluginProperties" persistent-id="org.opennms.plugins.cloud"
                              update-strategy="reload">
@@ -105,6 +108,21 @@
     </bean>
     <service ref="registrationManager" interface="org.opennms.plugins.cloud.srv.RegistrationManager" />
 
+    <!-- METRICS -->
+    <bean id="metricRegistry" class="com.codahale.metrics.MetricRegistry"/>
+    <service ref="metricRegistry" interface="com.codahale.metrics.MetricSet">
+        <service-properties>
+            <entry key="name" value="org.opennms.plugins.cloud" />
+            <entry key="description" value="Cloud Plugin Metrics" />
+        </service-properties>
+    </service>
+    <service interface="org.opennms.integration.api.v1.config.datacollection.ResourceTypesExtension">
+        <bean class="org.opennms.plugins.cloud.metrics.ResourceTypesExtension"/>
+    </service>
+    <service interface="org.opennms.integration.api.v1.config.datacollection.graphs.GraphPropertiesExtension">
+        <bean class="org.opennms.plugins.cloud.metrics.GraphPropertiesExtension"/>
+    </service>
+
     <!-- SERVICE: FAAS -->
     <bean id="faas" class="org.opennms.plugins.cloud.srv.faas.Faas" >
     </bean>
@@ -114,4 +132,13 @@
         <argument ref="tsaasConfig"/>
     </bean>
     <service ref="timeSeriesStorage" interface="org.opennms.plugins.cloud.srv.tsaas.TsaasStorage" />
+
+    <!-- Self monitor -->
+    <bean id="metricPusher" class="org.opennms.plugins.cloud.metrics.MetricPusher" init-method="init" destroy-method="destroy">
+        <argument ref="timeSeriesStorage"/>
+        <argument ref="runtimeInfo"/>
+        <argument ref="nodeDao"/>
+        <argument ref="collectionSetPersistenceService"/>
+    </bean>
+
 </blueprint>

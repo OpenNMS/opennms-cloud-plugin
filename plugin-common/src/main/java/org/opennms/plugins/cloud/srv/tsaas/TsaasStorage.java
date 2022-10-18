@@ -57,6 +57,10 @@ import org.opennms.tsaas.Tsaas;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.Metered;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Sampling;
 import com.google.common.annotations.VisibleForTesting;
 
 import lombok.Getter;
@@ -75,10 +79,21 @@ public class TsaasStorage implements TimeSeriesStorage, GrpcService {
     @VisibleForTesting
     private GrpcConnection<TimeseriesGrpc.TimeseriesBlockingStub> grpc;
 
-    public TsaasStorage(TsaasConfig config) {
+    private final Meter samplesStoredMeter;
+    private final com.codahale.metrics.Timer storeSamplesTimer;
+    private final com.codahale.metrics.Timer getTimeseriesTimer;
+
+    public TsaasStorage(TsaasConfig config, MetricRegistry metrics) {
         this.config = Objects.requireNonNull(config);
         queue = new ConcurrentLinkedDeque<>();
         lastBatchSentTs = Instant.now();
+        samplesStoredMeter = metrics.meter("total-samples-stored");
+        storeSamplesTimer = metrics.timer("rpc-store-samples");
+        getTimeseriesTimer = metrics.timer("rpc-get-timeseries");
+    }
+
+    public TsaasStorage(TsaasConfig config) {
+        this(config, new MetricRegistry());
     }
 
     @Override
@@ -111,9 +126,13 @@ public class TsaasStorage implements TimeSeriesStorage, GrpcService {
             }
             // Make call (only if we have anything to send):
             if (builder.getSamplesCount() > 0) {
-                executeRpcCall(() -> this.grpc.get().store(builder.build()));
+                try(final com.codahale.metrics.Timer.Context context = storeSamplesTimer.time()) {
+                    executeRpcCall(() -> this.grpc.get().store(builder.build()));
+                }
                 lastBatchSentTs = Instant.now();
             }
+
+            samplesStoredMeter.mark(samples.size());
         }
     }
 
@@ -149,11 +168,13 @@ public class TsaasStorage implements TimeSeriesStorage, GrpcService {
                 .setAggregation(Tsaas.Aggregation.valueOf(request.getAggregation().name()))
                 .build();
         LOG.trace("Getting time series for request: {}", fetchRequest);
-        return executeRpcCall(
-                () -> this.grpc.get().getTimeseriesData(fetchRequest),
-                GrpcObjectMapper::toSamples,
-                Collections::emptyList
-        );
+        try(final com.codahale.metrics.Timer.Context context = getTimeseriesTimer.time()) {
+            return executeRpcCall(
+                    () -> this.grpc.get().getTimeseriesData(fetchRequest),
+                    GrpcObjectMapper::toSamples,
+                    Collections::emptyList
+            );
+        }
     }
 
     @Override
@@ -174,4 +195,17 @@ public class TsaasStorage implements TimeSeriesStorage, GrpcService {
     public void destroy() {
         CloseUtil.close(this.grpc);
     }
+
+    public Metered getSamplesStoredMeter() {
+        return samplesStoredMeter;
+    }
+
+    public Sampling getStoreSamplesTimer() {
+        return storeSamplesTimer;
+    }
+
+    public Sampling getGetTimeseriesTimer() {
+        return getTimeseriesTimer;
+    }
+
 }
