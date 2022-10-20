@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 import org.opennms.integration.api.v1.timeseries.Aggregation;
 import org.opennms.integration.api.v1.timeseries.DataPoint;
 import org.opennms.integration.api.v1.timeseries.IntrinsicTagNames;
-import org.opennms.integration.api.v1.timeseries.MetaTagNames;
 import org.opennms.integration.api.v1.timeseries.Metric;
 import org.opennms.integration.api.v1.timeseries.Sample;
 import org.opennms.integration.api.v1.timeseries.Tag;
@@ -93,10 +92,12 @@ public class GrpcObjectMapper {
 
     // Checks if a metric contains all required tags for OpenNMS
     public static boolean isValid(final Metric metric) {
-        if (metric.getFirstTagByKey(MetaTagNames.mtype) == null) {
-            LOG.warn("tag mtype is missing in metric, will ignore it: {}", metric);
-            return false;
-        }
+//        if (metric.getMetaTags().stream()
+//                .map(Tag::getKey)
+//                .noneMatch(s -> s.endsWith(MetaTagNames.mtype))) {
+//            LOG.warn("tag mtype is missing in metric, will ignore it: {}", metric);
+//            return false;
+//        }
         if (metric.getFirstTagByKey(IntrinsicTagNames.resourceId) == null ) {
             LOG.warn("tag resourceId is missing in metric, will ignore it: {}", metric);
             return false;
