@@ -69,7 +69,6 @@
                 <version>${awaitilityVersion}</version>
                 <scope>test</scope>
             </dependency>
-
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
@@ -268,6 +267,79 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>checkstyle</id>
+            <activation>
+                <property>
+                    <name>!disable.checkstyle</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-checkstyle-plugin</artifactId>
+                        <version>2.17</version>
+                        <dependencies>
+                            <dependency>
+                                <groupId>com.puppycrawl.tools</groupId>
+                                <artifactId>checkstyle</artifactId>
+                                <version>7.6</version>
+                            </dependency>
+                            <dependency>
+                                <groupId>org.opennms.plugins.cloud</groupId>
+                                <artifactId>checkstyle</artifactId>
+                                <version>${project.version}</version>
+                            </dependency>
+                            <dependency>
+                                <groupId>com.github.sevntu-checkstyle</groupId>
+                                <artifactId>sevntu-checkstyle-maven-plugin</artifactId>
+                                <version>1.35.0</version>
+                            </dependency>
+                        </dependencies>
+                        <configuration>
+                            <configLocation>nms_checks.xml</configLocation>
+                            <suppressionsLocation>checkstyle-suppressions.xml</suppressionsLocation>
+                            <!-- <sourceDirectory> is needed so that checkstyle ignores the
+                                 generated sources directory -->
+                            <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
+                            <includeResources>true</includeResources>
+                            <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                            <includeTestResources>true</includeTestResources>
+                            <failsOnError>false</failsOnError>
+                            <consoleOutput>true</consoleOutput>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>check-license</id>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                                <phase>process-sources</phase>
+                                <configuration>
+                                    <configLocation>check-license.xml</configLocation>
+                                    <suppressionsLocation>license-suppressions.xml</suppressionsLocation>
+                                    <headerLocation>AGPL-LICENSE.regexp.txt</headerLocation>
+                                    <includeResources>false</includeResources>
+                                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                                    <includeTestResources>false</includeTestResources>
+                                    <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
+                                    <failsOnError>false</failsOnError>
+                                    <consoleOutput>true</consoleOutput>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>check-style</id>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                                <phase>process-sources</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
     <repositories>
@@ -297,6 +369,7 @@
     </repositories>
 
     <modules>
+        <module>checkstyle</module>
         <module>assembly</module>
         <module>plugin-common</module>
         <module>plugin-core</module>
