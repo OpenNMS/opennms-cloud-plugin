@@ -81,11 +81,13 @@ public class SvcConfigStoreTest {
         public Set<String> getAliases() {
             return Collections.singleton(STORE_PREFIX);
         }
+
         @Override
         public Credentials getCredentials(String alias) {
             assertEquals(STORE_PREFIX, alias);
             return this.credentials;
         }
+
         @Override
         public void setCredentials(String alias, Credentials credentials) {
             this.credentials = credentials;

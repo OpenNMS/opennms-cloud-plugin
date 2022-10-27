@@ -25,6 +25,7 @@
  *     http://www.opennms.org/
  *     http://www.opennms.com/
  *******************************************************************************/
+
 package org.opennms.plugins.cloud.ittest;
 
 import java.io.ByteArrayOutputStream;
@@ -36,7 +37,7 @@ import java.net.InetSocketAddress;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 
-import org.opennms.plugins.cloud.ittest.jsch.SLF4JLogger;
+import org.opennms.plugins.cloud.ittest.jsch.Slf4jLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,12 +53,13 @@ public class SshClient implements AutoCloseable {
 
     private static final Logger LOG = LoggerFactory.getLogger(SshClient.class);
 
-    private static final com.jcraft.jsch.Logger jschLogger = new SLF4JLogger();
+    private static final com.jcraft.jsch.Logger jschLogger = new Slf4jLogger();
+
     {
         JSch.setLogger(jschLogger);
     }
 
-    public static final int DEFAULT_TIMEOUT_MS = 5*1000;
+    public static final int DEFAULT_TIMEOUT_MS = 5 * 1000;
 
     private final JSch jsch = new JSch();
     private Session session;
@@ -93,7 +95,7 @@ public class SshClient implements AutoCloseable {
         session.connect();
 
         channel = session.openChannel("shell");
-        ((ChannelShell)channel).setPtySize(500, 100, 1920, 1080);
+        ((ChannelShell) channel).setPtySize(500, 100, 1920, 1080);
         stdout = channel.getInputStream();
         stderr = channel.getExtInputStream();
         channel.connect(timeout);
@@ -195,11 +197,11 @@ public class SshClient implements AutoCloseable {
         }
 
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        final int BUF_LEN = 1024;
-        final byte[] buffer = new byte[BUF_LEN];
+        final int bufLen = 1024;
+        final byte[] buffer = new byte[bufLen];
         int avail = 0;
         while ((avail = is.available()) > 0) {
-            int length = is.read(buffer, 0, Math.min(BUF_LEN, avail));
+            int length = is.read(buffer, 0, Math.min(bufLen, avail));
             baos.write(buffer, 0, length);
         }
         return baos.toString("UTF-8");
@@ -220,7 +222,7 @@ public class SshClient implements AutoCloseable {
             public Boolean call() throws Exception {
                 LOG.info("Attempting to SSH to {}@{}:{}", username, addr.getHostString(), addr.getPort());
                 try (
-                    final SshClient client = new SshClient(addr, username, password);
+                        final SshClient client = new SshClient(addr, username, password);
                 ) {
                     client.setTimeout(1000);
                     client.openShell();
@@ -234,8 +236,13 @@ public class SshClient implements AutoCloseable {
     }
 
     public static class Streams {
+
         public final PrintStream stdin;
-        public final StreamGobbler stdout, stderr;
+
+        public final StreamGobbler stdout;
+
+        public final StreamGobbler stderr;
+
         public Streams(PrintStream stdin, StreamGobbler stdout, StreamGobbler stderr) {
             this.stdin = stdin;
             this.stdout = stdout;

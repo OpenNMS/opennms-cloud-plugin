@@ -52,57 +52,57 @@ import org.opennms.plugins.cloud.testserver.MockCloud;
 
 public class TsaasStorageBatchStoringTest {
 
-  @Rule
-  public MockCloud cloud = MockCloud.builder()
-          .serverStorage(Mockito.mock(TimeSeriesStorage.class))
-          .build();
-
-  @Test
-  public void shouldSendStoreSamplesAfterWaitTime() throws StorageException, InterruptedException {
-    TsaasConfig tsaasConfig = TsaasConfig.builder()
-            .batchSize(10)
-            .maxBatchWaitTimeInMilliSeconds(500)
+    @Rule
+    public MockCloud cloud = MockCloud.builder()
+            .serverStorage(Mockito.mock(TimeSeriesStorage.class))
             .build();
-    TsaasStorage plugin = new TsaasStorage(tsaasConfig);
-    plugin.initGrpc(cloud.getClientConfigWithToken());
 
-    // store 2 samples. The batch size is 10 => should only call server when 10 samples are reached or maxBatchWaitTime has passed:
-    plugin.store(createSamples());
-    plugin.store(createSamples());
-    verify(cloud.getServerStorage(), never()).store(any());
+    @Test
+    public void shouldSendStoreSamplesAfterWaitTime() throws StorageException, InterruptedException {
+        TsaasConfig tsaasConfig = TsaasConfig.builder()
+                .batchSize(10)
+                .maxBatchWaitTimeInMilliSeconds(500)
+                .build();
+        TsaasStorage plugin = new TsaasStorage(tsaasConfig);
+        plugin.initGrpc(cloud.getClientConfigWithToken());
 
-    // let's wait until maxBatchWaitTime time has passed
-    Thread.sleep(tsaasConfig.getMaxBatchWaitTimeInMilliSeconds() + 10);
-    plugin.store(createSamples());
+        // store 2 samples. The batch size is 10 => should only call server when 10 samples are reached or maxBatchWaitTime has passed:
+        plugin.store(createSamples());
+        plugin.store(createSamples());
+        verify(cloud.getServerStorage(), never()).store(any());
 
-    // we expect 3 samples, one from each call:
-    verify(cloud.getServerStorage(), times(1)).store(argThat(l -> l.size() == 3));
-    clearInvocations(cloud.getServerStorage());
+        // let's wait until maxBatchWaitTime time has passed
+        Thread.sleep(tsaasConfig.getMaxBatchWaitTimeInMilliSeconds() + 10);
+        plugin.store(createSamples());
 
-    // do a second run to see if a second batch is  sent:
-    // store 2 samples. The batch size is 10 => should only call server when 10 samples are reached or maxBatchWaitTime has passed:
-    plugin.store(createSamples());
-    plugin.store(createSamples());
-    verify(cloud.getServerStorage(), never()).store(any());
+        // we expect 3 samples, one from each call:
+        verify(cloud.getServerStorage(), times(1)).store(argThat(l -> l.size() == 3));
+        clearInvocations(cloud.getServerStorage());
 
-    // let's wait until maxBatchWaitTime time has passed
-    Thread.sleep(tsaasConfig.getMaxBatchWaitTimeInMilliSeconds() + 10);
-    plugin.store(createSamples());
+        // do a second run to see if a second batch is  sent:
+        // store 2 samples. The batch size is 10 => should only call server when 10 samples are reached or maxBatchWaitTime has passed:
+        plugin.store(createSamples());
+        plugin.store(createSamples());
+        verify(cloud.getServerStorage(), never()).store(any());
 
-    // we expect 3 samples, one from each call:
-    verify(cloud.getServerStorage(), times(1)).store(argThat(l -> l.size() == 3));
-  }
+        // let's wait until maxBatchWaitTime time has passed
+        Thread.sleep(tsaasConfig.getMaxBatchWaitTimeInMilliSeconds() + 10);
+        plugin.store(createSamples());
 
-  private List<Sample> createSamples () {
-    return Collections.singletonList(
-        ImmutableSample.builder()
-            .time(Instant.now())
-            .metric(ImmutableMetric.builder()
-                .intrinsicTag(IntrinsicTagNames.resourceId, "a")
-                .intrinsicTag(IntrinsicTagNames.name, "b")
-                .build())
-            .value(3.0)
-            .build());
-  }
+        // we expect 3 samples, one from each call:
+        verify(cloud.getServerStorage(), times(1)).store(argThat(l -> l.size() == 3));
+    }
+
+    private List<Sample> createSamples() {
+        return Collections.singletonList(
+                ImmutableSample.builder()
+                        .time(Instant.now())
+                        .metric(ImmutableMetric.builder()
+                                .intrinsicTag(IntrinsicTagNames.resourceId, "a")
+                                .intrinsicTag(IntrinsicTagNames.name, "b")
+                                .build())
+                        .value(3.0)
+                        .build());
+    }
 
 }

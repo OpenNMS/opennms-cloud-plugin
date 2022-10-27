@@ -54,9 +54,9 @@ import org.testcontainers.utility.MountableFile;
  * => The Osgi wiring / dependencies are checked.
  * It does NOT test the functionality of the plugin itself.
  */
-public class EndToEndIT {
+public class EndToEndIt {
 
-    private static final Logger LOG = LoggerFactory.getLogger(EndToEndIT.class);
+    private static final Logger LOG = LoggerFactory.getLogger(EndToEndIt.class);
 
     public static DockerComposeContainer<?> environment;
 
@@ -143,15 +143,15 @@ public class EndToEndIT {
 
     private String createConfig() {
         return String.format(
-                "config:edit org.opennms.plugins.cloud%n" +
-                        "property-set pas.tls.host %s%n" +
-                        "property-set pas.tls.port %s%n" +
-                        "property-set pas.tls.security TLS%n" +
-                        "property-set pas.mtls.host %s%n" +
-                        "property-set pas.mtls.port %s%n" +
-                        "property-set pas.mtls.security MTLS%n" +
-                        "property-set grpc.truststore \"%s\"%n" +
-                        "config:update",
+                "config:edit org.opennms.plugins.cloud%n"
+                        + "property-set pas.tls.host %s%n"
+                        + "property-set pas.tls.port %s%n"
+                        + "property-set pas.tls.security TLS%n"
+                        + "property-set pas.mtls.host %s%n"
+                        + "property-set pas.mtls.port %s%n"
+                        + "property-set pas.mtls.security MTLS%n"
+                        + "property-set grpc.truststore \"%s\"%n"
+                        + "config:update",
                 MOCK_CLOUD_HOST,
                 MOCK_CLOUD_PORT,
                 MOCK_CLOUD_HOST,

@@ -25,6 +25,7 @@
  *     http://www.opennms.org/
  *     http://www.opennms.com/
  *******************************************************************************/
+
 package org.opennms.plugins.cloud.ittest.jsch;
 
 import org.slf4j.Logger;
@@ -33,7 +34,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Copied from http://logogin.blogspot.com/2013/04/slf4j-bridge-for-jsch.html on March 12th 2016
  */
-public class SLF4JLogger implements com.jcraft.jsch.Logger {
+public class Slf4jLogger implements com.jcraft.jsch.Logger {
 
     private static final Logger slf4jLogger = LoggerFactory.getLogger("com.jcraft.jsch");
 

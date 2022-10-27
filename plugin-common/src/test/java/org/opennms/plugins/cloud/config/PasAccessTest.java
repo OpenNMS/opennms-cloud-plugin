@@ -106,7 +106,7 @@ public class PasAccessTest {
                     }
                 };
 
-        Server server = grpcCleanup.register(
+        final Server server = grpcCleanup.register(
                 InProcessServerBuilder.forName(PasAccessTest.class.getSimpleName())
                         .directExecutor()
                         .addService(authService)

@@ -67,8 +67,7 @@ public class TsaasGrpcImpl extends TimeseriesGrpc.TimeseriesImplBase implements 
     @Override
     public void store(org.opennms.tsaas.Tsaas.Samples request,
                       io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
-        String clientID = GrpcTestServerInterceptor.CLIENT_ID.get();
-        LOG.debug("Store endpoint received {} samples with clientID {}", request.getSamplesCount(), clientID);
+        LOG.debug("Store endpoint received {} samples with clientID {}", request.getSamplesCount(), GrpcTestServerInterceptor.CLIENT_ID.get());
         List<Sample> samples = request
                 .getSamplesList()
                 .stream()

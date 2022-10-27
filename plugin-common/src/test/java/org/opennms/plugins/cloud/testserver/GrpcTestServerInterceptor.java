@@ -43,12 +43,12 @@ public class GrpcTestServerInterceptor implements ServerInterceptor {
 
     @Override
     public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> serverCall, Metadata metadata, ServerCallHandler<ReqT, RespT> serverCallHandler) {
-        String clientID = metadata.get(TOKEN);
+        String clientId = metadata.get(TOKEN);
         Status status;
-        if (clientID == null &&  isTokenNeeded(serverCall.getMethodDescriptor().getFullMethodName())) {
+        if (clientId == null &&  isTokenNeeded(serverCall.getMethodDescriptor().getFullMethodName())) {
             status = Status.UNAUTHENTICATED.withDescription("Client token is missing or invalid");
         } else {
-            Context ctx = Context.current().withValue(CLIENT_ID, clientID);
+            Context ctx = Context.current().withValue(CLIENT_ID, clientId);
             return Contexts.interceptCall(ctx, serverCall, metadata, serverCallHandler);
         }
         serverCall.close(status, metadata);
