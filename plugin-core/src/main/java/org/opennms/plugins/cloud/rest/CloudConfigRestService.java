@@ -44,6 +44,6 @@ public interface CloudConfigRestService {
 
     @GET
     @Path("/status")
-    @Produces(value={MediaType.APPLICATION_JSON})
+    @Produces(value = {MediaType.APPLICATION_JSON})
     Response getStatus();
 }

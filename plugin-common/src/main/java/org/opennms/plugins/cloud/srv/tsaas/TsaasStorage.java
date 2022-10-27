@@ -98,8 +98,8 @@ public class TsaasStorage implements TimeSeriesStorage, GrpcService {
                 .forEach(this.queue::add);
 
         // send batched messages while the queue is fuller than batch size
-        while (this.queue.size() >= this.config.getBatchSize() ||
-                !this.queue.isEmpty() && this.lastBatchSentTs.plusMillis(config.getMaxBatchWaitTimeInMilliSeconds()).isBefore(Instant.now())) {
+        while (this.queue.size() >= this.config.getBatchSize()
+                || !this.queue.isEmpty() && this.lastBatchSentTs.plusMillis(config.getMaxBatchWaitTimeInMilliSeconds()).isBefore(Instant.now())) {
             Tsaas.Samples.Builder builder = Tsaas.Samples.newBuilder();
             for (int i = 0; i < this.config.getBatchSize(); i++) {
                 Tsaas.Sample next = this.queue.poll();

@@ -57,7 +57,7 @@ class PasAccess {
                 .build();
         AuthenticateOuterClass.AuthenticateKeyResponse response = grpc.get().authenticateKey(keyRequest);
         Map<Key, String> attributes = new EnumMap<>(Key.class);
-        if(response.getGrpcEndpoint().contains(":")) {
+        if (response.getGrpcEndpoint().contains(":")) {
             String[] split = response.getGrpcEndpoint().split(":");
             attributes.put(Key.grpchost, split[0]);
             attributes.put(ConfigStore.Key.grpcport, split[1]);

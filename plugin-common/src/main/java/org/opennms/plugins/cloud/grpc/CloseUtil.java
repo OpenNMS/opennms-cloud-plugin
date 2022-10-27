@@ -42,7 +42,7 @@ public class CloseUtil implements AutoCloseable {
     final List<AutoCloseable> closeables = new ArrayList<>();
 
     public CloseUtil add(AutoCloseable closeable) {
-        if(closeable != null) {
+        if (closeable != null) {
             closeables.add(closeable);
         }
         return this;

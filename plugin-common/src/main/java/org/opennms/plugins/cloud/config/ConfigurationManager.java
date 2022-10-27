@@ -113,7 +113,7 @@ public class ConfigurationManager {
 
         // the authentication has been done previously => lets configure and start services
         if (AUTHENTCATED.name().equals(this.config.getOrNull(Key.configstatus))
-            || CONFIGURED.name().equals(this.config.getOrNull(Key.configstatus))) {
+                || CONFIGURED.name().equals(this.config.getOrNull(Key.configstatus))) {
             configure();
         }
     }
@@ -147,8 +147,8 @@ public class ConfigurationManager {
             final PasAccess pasWithTls = new PasAccess(grpcWithTls);
             Map<ConfigStore.Key, String> cloudCredentials = pasWithTls.getCredentialsFromAccessService(key, runtimeInfo.getSystemId());
             LOG.info("Cloud configuration received from PAS (Platform Access Service).");
-            if (pasConfigTls.getClientTrustStore() !=null && !pasConfigTls.getClientTrustStore().isBlank()) {
-               cloudCredentials.put(truststore, pasConfigTls.getClientTrustStore()); // pass the trust store to cloud credentials
+            if (pasConfigTls.getClientTrustStore() != null && !pasConfigTls.getClientTrustStore().isBlank()) {
+                cloudCredentials.put(truststore, pasConfigTls.getClientTrustStore()); // pass the trust store to cloud credentials
             }
             cloudCredentials.put(Key.configstatus, AUTHENTCATED.name());
             config.putProperties(cloudCredentials);

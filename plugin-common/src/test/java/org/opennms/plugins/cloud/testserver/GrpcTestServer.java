@@ -38,7 +38,7 @@ import javax.annotation.PreDestroy;
 
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
-import org.opennms.plugins.cloud.srv.tsaas.grpc.comp.ZStdCodecRegisterUtil;
+import org.opennms.plugins.cloud.srv.tsaas.grpc.comp.ZstdCodecRegisterUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,8 +76,8 @@ public class GrpcTestServer {
                 .forPort(config.getPort())
                 .addService(configGrpcService)
                 .addService(timeSeriesService)
-                .decompressorRegistry(ZStdCodecRegisterUtil.createDecompressorRegistry())
-                .compressorRegistry(ZStdCodecRegisterUtil.createCompressorRegistry())
+                .decompressorRegistry(ZstdCodecRegisterUtil.createDecompressorRegistry())
+                .compressorRegistry(ZstdCodecRegisterUtil.createCompressorRegistry())
                 .intercept(new GrpcTestServerInterceptor());
         if (GrpcConnectionConfig.Security.TLS == this.config.getSecurity()
                 || GrpcConnectionConfig.Security.MTLS == this.config.getSecurity()) {

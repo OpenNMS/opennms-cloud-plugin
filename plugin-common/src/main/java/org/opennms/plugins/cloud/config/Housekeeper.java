@@ -98,7 +98,7 @@ public class Housekeeper {
 
     public void init() {
         if (OPENNMS.equals(this.runtimeInfo.getContainer())) {
-            initForOpenNMS();
+            initForOpenNms();
         } else if (SENTINEL.equals(this.runtimeInfo.getContainer())) {
             initForSentinel();
         } else {
@@ -108,7 +108,7 @@ public class Housekeeper {
 
     }
 
-    private void initForOpenNMS() {
+    private void initForOpenNms() {
         executor.scheduleAtFixedRate(() -> wrap(this::renewToken), 1, intervalInSecondsForToken, TimeUnit.SECONDS);
         executor.scheduleAtFixedRate(() -> wrap(this::renewCerts), 1, intervalInSecondsForCert, TimeUnit.SECONDS);
     }
@@ -139,6 +139,7 @@ public class Housekeeper {
             this.configurationManager.configure();
         }
     }
+
     /**
      * If the configurationManager was not initialized we can't renew anything.
      * Initialization needs to be done first via Karaf or via web ui.
@@ -147,6 +148,7 @@ public class Housekeeper {
         return AUTHENTCATED.name().equals(this.config.getOrNull(configstatus))
                 ||     CONFIGURED.name().equals(this.config.getOrNull(configstatus));
     }
+
     public void syncConfig() {
         GrpcConnectionConfig newConfig = createConfig();
         if (!Objects.equals(this.currentConfig, newConfig)) {

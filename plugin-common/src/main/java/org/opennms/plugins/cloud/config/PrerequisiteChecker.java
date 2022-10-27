@@ -50,9 +50,9 @@ public class PrerequisiteChecker {
     }
 
     static boolean isSystemIdOk(final String systemId) {
-        return systemId != null &&
-                systemId.length() >= 36 &&
-                !systemId.matches("[0-]*");
+        return systemId != null
+                && systemId.length() >= 36
+                && !systemId.matches("[0-]*");
     }
 
     public static void checkAndLogContainer(final RuntimeInfo info) {

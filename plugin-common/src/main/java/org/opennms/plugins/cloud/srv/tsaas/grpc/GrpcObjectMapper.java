@@ -125,11 +125,11 @@ public class GrpcObjectMapper {
             LOG.warn("tag mtype is missing in metric, will ignore it: {}", metric);
             return false;
         }
-        if (metric.getFirstTagByKey(IntrinsicTagNames.resourceId) == null ) {
+        if (metric.getFirstTagByKey(IntrinsicTagNames.resourceId) == null) {
             LOG.warn("tag resourceId is missing in metric, will ignore it: {}", metric);
             return false;
         }
-        if (metric.getFirstTagByKey(IntrinsicTagNames.name) == null ) {
+        if (metric.getFirstTagByKey(IntrinsicTagNames.name) == null) {
             LOG.warn("tag name is missing in metric, will ignore it: {}", metric);
             return false;
         }
@@ -185,7 +185,7 @@ public class GrpcObjectMapper {
 
     public static List<Sample> toSamples(Tsaas.TimeseriesData timeseriesData) {
         Metric metric = toMetric(timeseriesData.getMetric());
-        if(!isValid(metric)) {// we want only valid Metrics otherwise there will be a problem in OpenNMS)
+        if (!isValid(metric)) { // we want only valid Metrics otherwise there will be a problem in OpenNMS)
             return Collections.emptyList();
         }
         return timeseriesData
@@ -226,7 +226,7 @@ public class GrpcObjectMapper {
     private static Aggregation toAggregation(Tsaas.Aggregation aggregation) {
         if (aggregation == Tsaas.Aggregation.AVERAGE) {
             return Aggregation.AVERAGE;
-        } else if (aggregation == MAX){
+        } else if (aggregation == MAX) {
             return Aggregation.MAX;
         } else if (aggregation == MIN) {
             return Aggregation.MIN;

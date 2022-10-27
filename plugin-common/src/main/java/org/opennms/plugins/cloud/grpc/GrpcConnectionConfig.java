@@ -43,6 +43,7 @@ public class GrpcConnectionConfig {
         TLS,
         MTLS
     }
+
     private final String host;
     private final int port;
     private final String tokenKey;

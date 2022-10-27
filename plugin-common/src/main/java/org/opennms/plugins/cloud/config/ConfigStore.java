@@ -36,27 +36,30 @@ import java.util.Optional;
  * Makes the accessing properties easier.
  */
 public interface ConfigStore {
-  String STORE_PREFIX = "plugin.cloud";
-  String TOKEN_KEY = "token";
+    String STORE_PREFIX = "plugin.cloud";
+    String TOKEN_KEY = "token";
 
-  /**
-   * All enums must be lower case.
-   * Otherwise scv won't save them correctly.
-   */
-  @SuppressWarnings("java:S115") // we don't want to be warned about lower case, upper case is not working for SCV
-  enum Key {
-    truststore, publickey, privatekey, tokenkey, tokenvalue, grpchost, grpcport,
-    activeservices,
-    /** Defines if plugin was already configured via ConfigurationManager.
-     * See ConfigurationManager.ConfigStatus */
-    configstatus
-  }
+    /**
+     * All enums must be lower case.
+     * Otherwise scv won't save them correctly.
+     */
+    @SuppressWarnings("java:S115") // we don't want to be warned about lower case, upper case is not working for SCV
+    enum Key {
+        truststore, publickey, privatekey, tokenkey, tokenvalue, grpchost, grpcport,
+        activeservices,
+        /**
+         * Defines if plugin was already configured via ConfigurationManager.
+         * See ConfigurationManager.ConfigStatus
+         */
+        configstatus
+    }
 
-  String getOrNull(Key type);
+    String getOrNull(Key type);
 
-  Optional<String> get(Key type);
+    Optional<String> get(Key type);
 
-  void putProperty(final Key key, String value);
-  void putProperties(final Map<Key, String> properties);
+    void putProperty(final Key key, String value);
+
+    void putProperties(final Map<Key, String> properties);
 
 }

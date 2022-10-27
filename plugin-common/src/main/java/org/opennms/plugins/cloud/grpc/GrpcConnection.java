@@ -36,7 +36,7 @@ import java.util.function.Function;
 
 import javax.net.ssl.SSLException;
 
-import org.opennms.plugins.cloud.srv.tsaas.grpc.comp.ZStdCodecRegisterUtil;
+import org.opennms.plugins.cloud.srv.tsaas.grpc.comp.ZstdCodecRegisterUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,11 +77,11 @@ public class GrpcConnection<T extends AbstractBlockingStub<T>> implements AutoCl
                 .keepAliveTimeout(5, TimeUnit.SECONDS)
                 .keepAliveWithoutCalls(true);
         managedChannel = builder
-                .compressorRegistry(ZStdCodecRegisterUtil.createCompressorRegistry())
-                .decompressorRegistry(ZStdCodecRegisterUtil.createDecompressorRegistry())
+                .compressorRegistry(ZstdCodecRegisterUtil.createCompressorRegistry())
+                .decompressorRegistry(ZstdCodecRegisterUtil.createDecompressorRegistry())
                 .build();
         clientStub = stubCreator.apply(managedChannel)
-                .withCompression("gzip") // ZStdGrpcCodec.ZSTD
+                .withCompression("gzip") // ZstdGrpcCodec.ZSTD
                 .withInterceptors(new TokenAddingInterceptor(config.getTokenKey(), config.getTokenValue()));
     }
 

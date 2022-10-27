@@ -45,46 +45,46 @@ import org.opennms.plugins.cloud.testserver.MockCloud;
 
 public class TsaasStorageWithMtlsTest extends AbstractStorageIntegrationTest {
 
-  private TsaasStorage storage;
-  @Rule
-  public final MockCloud cloud = MockCloud.builder()
-          .serverConfig(MockCloud
-                  .defaultServerConfig()
-                  .security(GrpcConnectionConfig.Security.MTLS)
-                  .build())
-          .build();
+    private TsaasStorage storage;
+    @Rule
+    public final MockCloud cloud = MockCloud.builder()
+            .serverConfig(MockCloud
+                    .defaultServerConfig()
+                    .security(GrpcConnectionConfig.Security.MTLS)
+                    .build())
+            .build();
 
-  @Before
-  public void setUp() throws Exception {
-    GrpcConnectionConfig.GrpcConnectionConfigBuilder clientConfig = cloud.getClientConfigWithToken().toBuilder();
-    Map<String, String> attributes = new HashMap<>();
-    clientConfig.publicKey(classpathFileToString("/cert/client_cert.crt"));
-    clientConfig.privateKey(classpathFileToString("/cert/client_private_key.key"));
-    // we have self signed certs, so we do need to provide a trust store with our ca:
-    clientConfig.clientTrustStore(classpathFileToString("/cert/clienttruststore.pem"));
+    @Before
+    public void setUp() throws Exception {
+        GrpcConnectionConfig.GrpcConnectionConfigBuilder clientConfig = cloud.getClientConfigWithToken().toBuilder();
+        Map<String, String> attributes = new HashMap<>();
+        clientConfig.publicKey(classpathFileToString("/cert/client_cert.crt"));
+        clientConfig.privateKey(classpathFileToString("/cert/client_private_key.key"));
+        // we have self signed certs, so we do need to provide a trust store with our ca:
+        clientConfig.clientTrustStore(classpathFileToString("/cert/clienttruststore.pem"));
 
-    TsaasConfig tsaasConfig = TsaasConfig.builder().batchSize(1).build(); // set to 1 so that samples are not held back in the queue
-    storage = new TsaasStorage(tsaasConfig);
-    storage.initGrpc(clientConfig.build());
-    super.setUp();
-  }
-
-  @After
-  public void tearDown() throws InterruptedException {
-    if (storage != null) {
-      storage.destroy();
+        TsaasConfig tsaasConfig = TsaasConfig.builder().batchSize(1).build(); // set to 1 so that samples are not held back in the queue
+        storage = new TsaasStorage(tsaasConfig);
+        storage.initGrpc(clientConfig.build());
+        super.setUp();
     }
-  }
 
-  @Override
-  protected TimeSeriesStorage createStorage() throws Exception {
-    return storage;
-  }
+    @After
+    public void tearDown() throws InterruptedException {
+        if (storage != null) {
+            storage.destroy();
+        }
+    }
 
-  @Test
-  @Ignore("we don't implement delete(), hence @Ignore")
-  @Override
-  public void shouldDeleteMetrics() throws Exception {
-    // we don't support delete...
-  }
+    @Override
+    protected TimeSeriesStorage createStorage() throws Exception {
+        return storage;
+    }
+
+    @Test
+    @Ignore("we don't implement delete(), hence @Ignore")
+    @Override
+    public void shouldDeleteMetrics() throws Exception {
+        // we don't support delete...
+    }
 }

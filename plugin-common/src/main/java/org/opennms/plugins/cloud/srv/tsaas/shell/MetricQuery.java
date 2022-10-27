@@ -44,7 +44,7 @@ import org.opennms.integration.api.v1.timeseries.TagMatcher;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableTagMatcher;
 import org.opennms.plugins.cloud.srv.tsaas.TsaasStorage;
 
-@Command(scope = "opennms-tsaas", name = "query-metrics", description = "Find metrics.", detailedDescription= "pairs")
+@Command(scope = "opennms-tsaas", name = "query-metrics", description = "Find metrics.", detailedDescription = "pairs")
 @Service
 @SuppressWarnings("java:S106") // System.out is used intentionally: we want to see it in the Karaf shell
 public class MetricQuery implements Action {
@@ -52,7 +52,7 @@ public class MetricQuery implements Action {
     @Reference
     TsaasStorage tss;
 
-    @Argument(multiValued=true)
+    @Argument(multiValued = true)
     List<String> arguments = new LinkedList<>();
 
     @Override

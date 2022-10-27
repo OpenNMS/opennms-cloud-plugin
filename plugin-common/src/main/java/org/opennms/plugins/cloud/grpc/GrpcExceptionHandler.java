@@ -53,53 +53,53 @@ import io.grpc.StatusRuntimeException;
  * - recoverable Exceptions: will be propgated to OpenNMS and
  * - non recoverable Exceptions: will be logged dropped
  * see also: https://www.grpc.io/docs/guides/error/
- * */
+ */
 public class GrpcExceptionHandler {
 
-  private static final Logger LOG = LoggerFactory.getLogger(GrpcExceptionHandler.class);
-  private static final Set<Code> RECOVERABLE_EXCEPTIONS = new HashSet<>(Arrays.asList(
-          DEADLINE_EXCEEDED,
-          UNAVAILABLE,
-          UNAUTHENTICATED,
-          RESOURCE_EXHAUSTED));
+    private static final Logger LOG = LoggerFactory.getLogger(GrpcExceptionHandler.class);
+    private static final Set<Code> RECOVERABLE_EXCEPTIONS = new HashSet<>(Arrays.asList(
+            DEADLINE_EXCEEDED,
+            UNAVAILABLE,
+            UNAUTHENTICATED,
+            RESOURCE_EXHAUSTED));
 
-  private GrpcExceptionHandler() {
-    // Utility class
-  }
-
-  public static <T, R> R executeRpcCall(Supplier<T> callToExecute, Function<T, R> mapper, Supplier<R> defaultFunction) throws StorageException {
-    try {
-      T result = callToExecute.get();
-      return mapper.apply(result);
-    } catch (StatusRuntimeException ex) {
-      Status.Code status = ex.getStatus().getCode();
-      if (OK == status) {
-        // should not happen but just to be safe...
-        return defaultFunction.get();
-      } else if (RECOVERABLE_EXCEPTIONS.contains(status)) {
-        // network errors => recoverable => propagate error so OpenNMS can try later again.
-        throw new StorageException(String.format("Network problem %s", status), ex);
-      } else {
-        // all other errors: we can't fix them => log and forget...
-        LOG.warn("An error happened during the RPC call: {}", status, ex);
-        return defaultFunction.get();
-      }
+    private GrpcExceptionHandler() {
+        // Utility class
     }
-  }
 
-  public static <T> void executeRpcCall(Supplier<T> callToExecute) throws StorageException {
-    try {
-      callToExecute.get();
-    } catch (StatusRuntimeException ex) {
-      Status.Code status = ex.getStatus().getCode();
-      if (OK == status) {
-        // should not happen but just to be safe...
-      } else if (RECOVERABLE_EXCEPTIONS.contains(status)) {
-        // network errors => recoverable => propagate error so OpenNMS can try later again.
-        throw new StorageException(String.format("Network problem %s", status), ex);
-      } else {
-        LOG.warn("An error happened during the RPC call: {}", status, ex);
-      }
+    public static <T, R> R executeRpcCall(Supplier<T> callToExecute, Function<T, R> mapper, Supplier<R> defaultFunction) throws StorageException {
+        try {
+            T result = callToExecute.get();
+            return mapper.apply(result);
+        } catch (StatusRuntimeException ex) {
+            Status.Code status = ex.getStatus().getCode();
+            if (OK == status) {
+                // should not happen but just to be safe...
+                return defaultFunction.get();
+            } else if (RECOVERABLE_EXCEPTIONS.contains(status)) {
+                // network errors => recoverable => propagate error so OpenNMS can try later again.
+                throw new StorageException(String.format("Network problem %s", status), ex);
+            } else {
+                // all other errors: we can't fix them => log and forget...
+                LOG.warn("An error happened during the RPC call: {}", status, ex);
+                return defaultFunction.get();
+            }
+        }
     }
-  }
+
+    public static <T> void executeRpcCall(Supplier<T> callToExecute) throws StorageException {
+        try {
+            callToExecute.get();
+        } catch (StatusRuntimeException ex) {
+            Status.Code status = ex.getStatus().getCode();
+            if (OK == status) {
+                // should not happen but just to be safe...
+            } else if (RECOVERABLE_EXCEPTIONS.contains(status)) {
+                // network errors => recoverable => propagate error so OpenNMS can try later again.
+                throw new StorageException(String.format("Network problem %s", status), ex);
+            } else {
+                LOG.warn("An error happened during the RPC call: {}", status, ex);
+            }
+        }
+    }
 }
