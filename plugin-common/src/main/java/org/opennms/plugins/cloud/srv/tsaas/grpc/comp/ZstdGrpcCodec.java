@@ -26,42 +26,33 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.grpc;
+package org.opennms.plugins.cloud.srv.tsaas.grpc.comp;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
-import lombok.extern.slf4j.Slf4j;
+import com.github.luben.zstd.ZstdInputStream;
+import com.github.luben.zstd.ZstdOutputStream;
 
-/**
- * Convenient way to collect closables and close them at once.
- * Handles Exceptions and null objects.
- */
-@Slf4j
-public class CloseUtil implements AutoCloseable {
-    final List<AutoCloseable> closeables = new ArrayList<>();
+import io.grpc.Codec;
 
-    public CloseUtil add(AutoCloseable closeable) {
-        if (closeable != null) {
-            closeables.add(closeable);
-        }
-        return this;
+public class ZstdGrpcCodec implements Codec {
+
+    public static final String ZSTD = "zstd";
+
+    @Override
+    public String getMessageEncoding() {
+        return ZSTD;
     }
 
     @Override
-    public void close() {
-        for (AutoCloseable closable : closeables) {
-            close(closable);
-        }
+    public InputStream decompress(final InputStream inputStream) throws IOException {
+        return new ZstdInputStream(inputStream);
     }
 
-    public static void close(final AutoCloseable closable) {
-        try {
-            if (closable != null) {
-                closable.close();
-            }
-        } catch (Exception e) {
-            log.warn("An exception occurred while trying to close", e);
-        }
+    @Override
+    public OutputStream compress(final OutputStream outputStream) throws IOException {
+        return new ZstdOutputStream(outputStream);
     }
 }

@@ -44,46 +44,46 @@ import org.opennms.tsaas.Tsaas;
 
 public class TsaasStorageTest extends AbstractStorageIntegrationTest {
 
-  @Rule
-  public final MockCloud cloud = MockCloud.builder()
-          .build();
-
-  private TsaasStorage storage;
-
-  @Before
-  public void setUp() throws Exception {
-    GrpcConnectionConfig clientConfig = cloud.getClientConfigWithToken();
-    TsaasConfig tsaasConfig = TsaasConfig.builder()
-            .batchSize(1) // set to 1 so that samples are not held back in the queue
+    @Rule
+    public final MockCloud cloud = MockCloud.builder()
             .build();
-    storage = new TsaasStorage(tsaasConfig);
-    storage.initGrpc(clientConfig);
-    super.setUp();
-  }
 
-  @After
-  public void tearDown() throws InterruptedException {
-    if (storage != null) {
-      storage.destroy();
+    private TsaasStorage storage;
+
+    @Before
+    public void setUp() throws Exception {
+        GrpcConnectionConfig clientConfig = cloud.getClientConfigWithToken();
+        TsaasConfig tsaasConfig = TsaasConfig.builder()
+                .batchSize(1) // set to 1 so that samples are not held back in the queue
+                .build();
+        storage = new TsaasStorage(tsaasConfig);
+        storage.initGrpc(clientConfig);
+        super.setUp();
     }
-  }
 
-  @Override
-  protected TimeSeriesStorage createStorage() throws Exception {
-    return storage;
-  }
+    @After
+    public void tearDown() throws InterruptedException {
+        if (storage != null) {
+            storage.destroy();
+        }
+    }
 
-  @Test
-  @Ignore("we don't implement delete(), hence @Ignore")
-  @Override
-  public void shouldDeleteMetrics() throws Exception {
-    // we don't support delete...
-  }
+    @Override
+    protected TimeSeriesStorage createStorage() throws Exception {
+        return storage;
+    }
 
-  @Test
-  public void shouldReturnHealthStatus() {
-    Tsaas.CheckHealthResponse health = this.storage.checkHealth();
-    assertNotNull(health);
-    assertEquals(Tsaas.CheckHealthResponse.ServingStatus.SERVING, health.getStatus());
-  }
+    @Test
+    @Ignore("we don't implement delete(), hence @Ignore")
+    @Override
+    public void shouldDeleteMetrics() throws Exception {
+        // we don't support delete...
+    }
+
+    @Test
+    public void shouldReturnHealthStatus() {
+        Tsaas.CheckHealthResponse health = this.storage.checkHealth();
+        assertNotNull(health);
+        assertEquals(Tsaas.CheckHealthResponse.ServingStatus.SERVING, health.getStatus());
+    }
 }

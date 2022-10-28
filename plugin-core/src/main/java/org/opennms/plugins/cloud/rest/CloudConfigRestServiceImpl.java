@@ -38,6 +38,7 @@ import org.opennms.plugins.cloud.config.ConfigurationManager;
 public class CloudConfigRestServiceImpl implements CloudConfigRestService {
 
     private final ConfigurationManager cm;
+
     public CloudConfigRestServiceImpl(final ConfigurationManager cm) {
         this.cm = Objects.requireNonNull(cm);
     }
@@ -67,7 +68,7 @@ public class CloudConfigRestServiceImpl implements CloudConfigRestService {
     public Response getStatus() {
         return Response
                 .status(Response.Status.OK)
-                .entity( new JSONObject()
+                .entity(new JSONObject()
                         .put("status", cm.getStatus().name())
                         .toString())
                 .build();

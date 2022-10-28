@@ -38,7 +38,7 @@ public class FileUtil {
         try (InputStream in = FileUtil.class.getResourceAsStream(fileInClasspath)) {
             Objects.requireNonNull(in, String.format("could not  read %s from classpath", fileInClasspath));
             return new String(in.readAllBytes(), StandardCharsets.UTF_8);
-        } catch(IOException e)  {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }

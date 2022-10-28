@@ -42,8 +42,8 @@ import org.opennms.integration.api.v1.runtime.RuntimeInfo;
 import org.opennms.plugins.cloud.config.ConfigurationManager;
 
 @Command(scope = "opennms-cloud", name = "init",
-        description = "Core: Contacts platform access service (PAS) and retrieves configuration\n" +
-                "Sentinel: Contacts Core and retrieves configuration")
+        description = "Core: Contacts platform access service (PAS) and retrieves configuration\n"
+                + "Sentinel: Contacts Core and retrieves configuration")
 
 
 @Service
@@ -72,7 +72,7 @@ public class InitCloud implements Action {
             return null;
         }
 
-        if(ConfigurationManager.ConfigStatus.CONFIGURED == status) {
+        if (ConfigurationManager.ConfigStatus.CONFIGURED == status) {
             System.out.printf("Initialization of cloud plugin in %s was successful.%n", this.runtimeInfo.getContainer());
         } else {
             System.out.printf("Initialization of cloud plugin in %s failed: %s. Check log (log:display) for details.%n", this.runtimeInfo.getContainer(), status);
@@ -82,7 +82,7 @@ public class InitCloud implements Action {
     }
 
     private ConfigurationManager.ConfigStatus initForCore() {
-        if(apiKey == null || apiKey.isBlank()) {
+        if (apiKey == null || apiKey.isBlank()) {
             System.out.println("please enter api key");
         }
         Objects.requireNonNull(this.apiKey);

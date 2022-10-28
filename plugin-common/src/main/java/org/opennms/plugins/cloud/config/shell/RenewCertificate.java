@@ -50,7 +50,7 @@ public class RenewCertificate implements Action {
         manager.configure();
         ConfigurationManager.ConfigStatus status = manager.getStatus();
 
-        if(ConfigurationManager.ConfigStatus.CONFIGURED == status) {
+        if (ConfigurationManager.ConfigStatus.CONFIGURED == status) {
             System.out.println("Renewing of certificates was successful.");
         } else {
             System.out.printf("Renewing of certificates: %s. Check log (log:display) for details.", status);

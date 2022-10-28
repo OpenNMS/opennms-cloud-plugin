@@ -67,8 +67,7 @@ public class TsaasGrpcImpl extends TimeseriesGrpc.TimeseriesImplBase implements 
     @Override
     public void store(org.opennms.tsaas.Tsaas.Samples request,
                       io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
-        String clientID = GrpcTestServerInterceptor.CLIENT_ID.get();
-        LOG.debug("Store endpoint received {} samples with clientID {}", request.getSamplesCount(), clientID);
+        LOG.debug("Store endpoint received {} samples with clientID {}", request.getSamplesCount(), GrpcTestServerInterceptor.CLIENT_ID.get());
         List<Sample> samples = request
                 .getSamplesList()
                 .stream()
@@ -88,8 +87,7 @@ public class TsaasGrpcImpl extends TimeseriesGrpc.TimeseriesImplBase implements 
     @Override
     public void findMetrics(org.opennms.tsaas.Tsaas.TagMatchers request,
                            io.grpc.stub.StreamObserver<Tsaas.Metrics> responseObserver) {
-        String clientID = GrpcTestServerInterceptor.CLIENT_ID.get();
-        LOG.debug("findMetrics called with client ID {}", clientID);
+        LOG.debug("findMetrics called with client ID {}", GrpcTestServerInterceptor.CLIENT_ID.get());
         Collection<TagMatcher> tagMatchers = request.getMatchersList().stream().map(GrpcObjectMapper::toTagMatcher).collect(Collectors.toList());
         try {
             List<Metric> metrics;
@@ -107,8 +105,7 @@ public class TsaasGrpcImpl extends TimeseriesGrpc.TimeseriesImplBase implements 
     @Override
     public void getTimeseriesData(Tsaas.FetchRequest request,
                               io.grpc.stub.StreamObserver<Tsaas.TimeseriesData> responseObserver) {
-        String clientID = GrpcTestServerInterceptor.CLIENT_ID.get();
-        LOG.debug("getTimeseries called with client ID {}", clientID);
+        LOG.debug("getTimeseries called with client ID {}", GrpcTestServerInterceptor.CLIENT_ID.get());
         TimeSeriesFetchRequest fetchRequest = GrpcObjectMapper.toTimeseriesFetchRequest(request);
         try {
             TimeSeriesData timeSeriesData = storage.getTimeSeriesData(fetchRequest);

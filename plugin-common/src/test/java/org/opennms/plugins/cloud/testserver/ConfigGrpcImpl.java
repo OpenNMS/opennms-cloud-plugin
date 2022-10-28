@@ -62,7 +62,7 @@ public class ConfigGrpcImpl extends AuthenticateGrpc.AuthenticateImplBase implem
     @Override
     public void authenticateKey(AuthenticateOuterClass.AuthenticateKeyRequest request, StreamObserver<AuthenticateOuterClass.AuthenticateKeyResponse> responseObserver) {
         LOG.info("authenticateKey() called.");
-        if(this.config == null) {
+        if (this.config == null) {
             LOG.warn("call init() first.");
             responseObserver.onError(new IllegalAccessException("call init() first"));
             return;

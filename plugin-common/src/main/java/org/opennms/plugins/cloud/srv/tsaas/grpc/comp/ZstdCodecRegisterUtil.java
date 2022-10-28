@@ -26,42 +26,25 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.grpc;
+package org.opennms.plugins.cloud.srv.tsaas.grpc.comp;
 
-import java.util.ArrayList;
-import java.util.List;
+import io.grpc.CompressorRegistry;
+import io.grpc.DecompressorRegistry;
 
-import lombok.extern.slf4j.Slf4j;
+public class ZstdCodecRegisterUtil {
 
-/**
- * Convenient way to collect closables and close them at once.
- * Handles Exceptions and null objects.
- */
-@Slf4j
-public class CloseUtil implements AutoCloseable {
-    final List<AutoCloseable> closeables = new ArrayList<>();
-
-    public CloseUtil add(AutoCloseable closeable) {
-        if (closeable != null) {
-            closeables.add(closeable);
-        }
-        return this;
+    private ZstdCodecRegisterUtil() {
+        // Utility class
     }
 
-    @Override
-    public void close() {
-        for (AutoCloseable closable : closeables) {
-            close(closable);
-        }
+    public static DecompressorRegistry createDecompressorRegistry() {
+        return DecompressorRegistry.getDefaultInstance().with(new ZstdGrpcCodec(), true);
     }
 
-    public static void close(final AutoCloseable closable) {
-        try {
-            if (closable != null) {
-                closable.close();
-            }
-        } catch (Exception e) {
-            log.warn("An exception occurred while trying to close", e);
-        }
+    public static CompressorRegistry createCompressorRegistry() {
+        final CompressorRegistry  registry = CompressorRegistry.getDefaultInstance();
+        registry.register(new ZstdGrpcCodec());
+        return registry;
     }
+
 }

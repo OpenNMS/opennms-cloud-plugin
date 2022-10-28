@@ -34,7 +34,7 @@
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.coverage.exclusions>**/ittest/*.java<!-- sonar cannot measure the code coverage run in the integration test via docker container -->
         </sonar.coverage.exclusions>
-        <jacocoVersion>0.8.7</jacocoVersion>
+        <jacocoVersion>0.8.8</jacocoVersion>
         <osgiJaxRsVersion>1.1.0.ONMS</osgiJaxRsVersion>
     </properties>
 
@@ -69,7 +69,6 @@
                 <version>${awaitilityVersion}</version>
                 <scope>test</scope>
             </dependency>
-
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
@@ -268,6 +267,65 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>checkstyle</id>
+            <activation>
+                <property>
+                    <name>!disable.checkstyle</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-checkstyle-plugin</artifactId>
+                        <version>3.2.0</version><!-- contains checkstyle version 9.3 -->
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.opennms.plugins.cloud</groupId>
+                                <artifactId>checkstyle</artifactId>
+                                <version>${project.version}</version>
+                            </dependency>
+                        </dependencies>
+                        <configuration>
+                            <configLocation>nms_checks.xml</configLocation>
+                            <suppressionsLocation>checkstyle-suppressions.xml</suppressionsLocation>
+                           <includeResources>true</includeResources>
+                            <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                            <includeTestResources>true</includeTestResources>
+                            <failsOnError>false</failsOnError>
+                            <consoleOutput>true</consoleOutput>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>check-license</id>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                                <phase>process-sources</phase>
+                                <configuration>
+                                    <configLocation>check-license.xml</configLocation>
+                                    <suppressionsLocation>license-suppressions.xml</suppressionsLocation>
+                                    <headerLocation>AGPL-LICENSE.regexp.txt</headerLocation>
+                                    <includeResources>false</includeResources>
+                                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                                    <includeTestResources>false</includeTestResources>
+                                    <failsOnError>false</failsOnError>
+                                    <consoleOutput>true</consoleOutput>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>check-style</id>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                                <phase>process-sources</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
     <repositories>
@@ -297,6 +355,7 @@
     </repositories>
 
     <modules>
+        <module>checkstyle</module>
         <module>assembly</module>
         <module>plugin-common</module>
         <module>plugin-core</module>

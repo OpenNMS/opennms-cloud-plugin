@@ -1,4 +1,40 @@
+/*******************************************************************************
+ * This file is part of OpenNMS(R).
+ *
+ * Copyright (C) 2022 The OpenNMS Group, Inc.
+ * OpenNMS(R) is Copyright (C) 1999-2022 The OpenNMS Group, Inc.
+ *
+ * OpenNMS(R) is a registered trademark of The OpenNMS Group, Inc.
+ *
+ * OpenNMS(R) is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * OpenNMS(R) is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with OpenNMS(R).  If not, see:
+ *      http://www.gnu.org/licenses/
+ *
+ * For more information contact:
+ *     OpenNMS(R) Licensing <license@opennms.org>
+ *     http://www.opennms.org/
+ *     http://www.opennms.com/
+ *******************************************************************************/
+
 package org.opennms.plugins.cloud.ittest;
+
+import static org.opennms.plugins.cloud.ittest.MockCloudMain.MOCK_CLOUD_HOST;
+import static org.opennms.plugins.cloud.ittest.MockCloudMain.MOCK_CLOUD_PORT;
+import static org.opennms.plugins.cloud.testserver.FileUtil.classpathFileToString;
+
+import java.io.File;
+import java.net.InetSocketAddress;
+import java.time.Duration;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -12,23 +48,15 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.MountableFile;
 
-import java.io.File;
-import java.net.InetSocketAddress;
-import java.time.Duration;
-
-import static org.opennms.plugins.cloud.ittest.MockCloudMain.MOCK_CLOUD_HOST;
-import static org.opennms.plugins.cloud.ittest.MockCloudMain.MOCK_CLOUD_PORT;
-import static org.opennms.plugins.cloud.testserver.FileUtil.classpathFileToString;
-
 /**
  * This test checks if the plugin can be successfully installed in OpenNMS:
  * It starts a opennms container and installs the plugin into it.
  * => The Osgi wiring / dependencies are checked.
  * It does NOT test the functionality of the plugin itself.
  */
-public class EndToEndIT {
+public class EndToEndIt {
 
-    private static final Logger LOG = LoggerFactory.getLogger(EndToEndIT.class);
+    private static final Logger LOG = LoggerFactory.getLogger(EndToEndIt.class);
 
     public static DockerComposeContainer<?> environment;
 
@@ -115,15 +143,15 @@ public class EndToEndIT {
 
     private String createConfig() {
         return String.format(
-                "config:edit org.opennms.plugins.cloud%n" +
-                        "property-set pas.tls.host %s%n" +
-                        "property-set pas.tls.port %s%n" +
-                        "property-set pas.tls.security TLS%n" +
-                        "property-set pas.mtls.host %s%n" +
-                        "property-set pas.mtls.port %s%n" +
-                        "property-set pas.mtls.security MTLS%n" +
-                        "property-set grpc.truststore \"%s\"%n" +
-                        "config:update",
+                "config:edit org.opennms.plugins.cloud%n"
+                        + "property-set pas.tls.host %s%n"
+                        + "property-set pas.tls.port %s%n"
+                        + "property-set pas.tls.security TLS%n"
+                        + "property-set pas.mtls.host %s%n"
+                        + "property-set pas.mtls.port %s%n"
+                        + "property-set pas.mtls.security MTLS%n"
+                        + "property-set grpc.truststore \"%s\"%n"
+                        + "config:update",
                 MOCK_CLOUD_HOST,
                 MOCK_CLOUD_PORT,
                 MOCK_CLOUD_HOST,

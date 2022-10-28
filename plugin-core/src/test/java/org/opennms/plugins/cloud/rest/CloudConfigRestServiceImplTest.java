@@ -46,7 +46,7 @@ import org.opennms.plugins.cloud.config.ConfigurationManager;
 public class CloudConfigRestServiceImplTest {
 
     // not sure why we get the key in such a strange format.
-    private final static String API_KEY_JSON =  "{\"key\":{\"__v_isShallow\":false,\"dep\":{\"w\":0,\"n\":0},\"__v_isRef\":true,\"_rawValue\":\"aaa\",\"_value\":\"aaa\"}}";
+    private static final String API_KEY_JSON =  "{\"key\":{\"__v_isShallow\":false,\"dep\":{\"w\":0,\"n\":0},\"__v_isRef\":true,\"_rawValue\":\"aaa\",\"_value\":\"aaa\"}}";
 
     private ConfigurationManager cm;
 

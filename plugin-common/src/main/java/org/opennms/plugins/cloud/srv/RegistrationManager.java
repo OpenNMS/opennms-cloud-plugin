@@ -74,9 +74,9 @@ public class RegistrationManager {
     }
 
     public void register(final Service service) {
-        if(Service.TSAAS == service) {
+        if (Service.TSAAS == service) {
             register(Service.TSAAS, TimeSeriesStorage.class, tsaas);
-        } else if(Service.FAAS == service) {
+        } else if (Service.FAAS == service) {
             throw new UnsupportedOperationException("please implement me");
         } else {
             throw new UnsupportedOperationException("please implement me");
@@ -89,7 +89,7 @@ public class RegistrationManager {
             return;
         }
         @SuppressWarnings("java:S1149") // Hashtable is needed since that is what the Osgi interface expects
-        Hashtable<String,Object> properties = new Hashtable<>();
+        Hashtable<String, Object> properties = new Hashtable<>();
         properties.put("registration.export", "true");
         ServiceRegistration<T> registration = context.registerService(interfaceToRegister, serviceToRegister, properties);
         this.registrations.put(service, registration);
@@ -110,7 +110,7 @@ public class RegistrationManager {
     // called via blueprint
     public void destroy() {
         List<Service> servicesToDeRegister = new ArrayList<>(registrations.keySet());
-        for(Service service : servicesToDeRegister) {
+        for (Service service : servicesToDeRegister) {
             deregister(service);
         }
     }

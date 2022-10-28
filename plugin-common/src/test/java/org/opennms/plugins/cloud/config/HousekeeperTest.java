@@ -66,7 +66,7 @@ public class HousekeeperTest {
     }
 
     @Test
-    public void shouldRenewConfigForExpiredToken_OpenNMS() {
+    public void shouldRenewConfigForExpiredTokenOpenNms() {
         when(runtimeInfo.getContainer()).thenReturn(Container.OPENNMS);
         hk = new Housekeeper(cm, config, runtimeInfo, 1, 1, 1);
         doReturn(Instant.now().plusSeconds(60 * 60)) // first time: token valid
@@ -83,7 +83,7 @@ public class HousekeeperTest {
     }
 
     @Test
-    public void shouldRenewExpiredCerts_OpenNMS() throws CertificateException {
+    public void shouldRenewExpiredCertsOpenNms() throws CertificateException {
         when(runtimeInfo.getContainer()).thenReturn(Container.OPENNMS);
         hk = new Housekeeper(cm, config, runtimeInfo, 1, 1, 1);
         doReturn(Instant.now().plusSeconds(60 * 60)) // first time: cert valid
@@ -102,7 +102,7 @@ public class HousekeeperTest {
     }
 
     @Test
-    public void shouldNotCrashOnException_OpenNMS() throws CertificateException {
+    public void shouldNotCrashOnExceptionOpenNms() throws CertificateException {
         when(runtimeInfo.getContainer()).thenReturn(Container.OPENNMS);
         hk = new Housekeeper(cm, config, runtimeInfo, 1, 1000, 1);
         doReturn(Instant.now()).when(cm).getTokenExpiration(); // trigger every time

@@ -41,9 +41,13 @@ public class GrpcExceptionHandlerTest {
     @Test
     public void shouldSwallowNonRecoverableExceptions() throws StorageException {
         // no exception should be thrown:
-        GrpcExceptionHandler.executeRpcCall(()-> {throw new StatusRuntimeException(Status.UNIMPLEMENTED);});
+        GrpcExceptionHandler.executeRpcCall(() -> {
+            throw new StatusRuntimeException(Status.UNIMPLEMENTED);
+        });
         GrpcExceptionHandler.executeRpcCall(
-                ()-> {throw new StatusRuntimeException(Status.UNIMPLEMENTED);},
+                () -> {
+                    throw new StatusRuntimeException(Status.UNIMPLEMENTED);
+                },
                 (s) -> s,
                 () -> "");
     }
@@ -57,7 +61,9 @@ public class GrpcExceptionHandlerTest {
         assertThrows(
                 StorageException.class,
                 () -> GrpcExceptionHandler.executeRpcCall(
-                        () -> { throw new StatusRuntimeException(Status.UNAVAILABLE);},
+                        () -> {
+                            throw new StatusRuntimeException(Status.UNAVAILABLE);
+                        },
                         (s) -> s,
                         () -> "")
         );

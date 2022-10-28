@@ -68,11 +68,11 @@ public class CloudHealthCheck implements HealthCheck {
         String message;
         if (cm.getStatus() == FAILED) {
             status = Failure;
-            message =  String.format("Cloud init failed (status=%s)", FAILED);
-        } else if(cm.getStatus() == NOT_ATTEMPTED) {
+            message = String.format("Cloud init failed (status=%s)", FAILED);
+        } else if (cm.getStatus() == NOT_ATTEMPTED) {
             status = Status.Success;
             message = String.format("Cloud init not attempted (status=%s)", NOT_ATTEMPTED);
-        } else if(cm.getStatus() == AUTHENTCATED) {
+        } else if (cm.getStatus() == AUTHENTCATED) {
             status = Status.Starting;
             message = String.format("Cloud init successful, configuration has not happened yet (status=%s)", AUTHENTCATED);
         } else {

@@ -34,7 +34,9 @@ import com.auth0.jwt.JWT;
 
 public class TokenUtil {
 
-    private TokenUtil(){}
+    private TokenUtil() {
+        // Utility class
+    }
 
     public static Instant getExpiryDate(final String jwt) {
         return JWT.decode(jwt)

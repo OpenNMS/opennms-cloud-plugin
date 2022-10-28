@@ -66,6 +66,7 @@ public class ScvConfigStore implements ConfigStore {
         Objects.requireNonNull(value);
         putProperties(Collections.singletonMap(key, value));
     }
+
     public void putProperties(final Map<Key, String> properties) {
         Objects.requireNonNull(properties);
 
