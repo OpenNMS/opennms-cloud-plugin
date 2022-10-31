@@ -12,7 +12,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <awaitilityVersion>4.0.3</awaitilityVersion>
         <hamcrest.version>1.3</hamcrest.version>
-        <tsaasClientVersion>LATEST</tsaasClientVersion>
+        <tsaasClientVersion>0.20.1</tsaasClientVersion><!-- tsaas via cloud gateway -->
         <pasClientVersion>0.8.0</pasClientVersion><!-- PAS service -->
         <java.version>11</java.version>
         <jsonVersion>20220924</jsonVersion>
