@@ -109,6 +109,10 @@
                     <groupId>org.glassfish.jaxb</groupId><!-- to satisfy maven-enforcer-plugin -->
                     <artifactId>jaxb-runtime</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId><!-- to satisfy maven-enforcer-plugin -->
+                    <artifactId>log4j-api</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -125,6 +129,10 @@
                 <exclusion>
                     <groupId>com.google.guava</groupId><!-- to satisfy maven-enforcer-plugin -->
                     <artifactId>guava</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId><!-- to satisfy maven-enforcer-plugin -->
+                    <artifactId>log4j-api</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>

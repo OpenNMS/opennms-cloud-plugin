@@ -82,6 +82,7 @@ jobs:
       - run:
           name: Compile source without tests
           command: |
+            mvn -version
             mvn -DskipITs=true -DskipTests=true -Dbuild.packages clean install
       - save_cache:
           paths:
