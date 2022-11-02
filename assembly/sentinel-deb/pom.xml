@@ -32,7 +32,7 @@
                         <packageRevision>1</packageRevision>
                         <packageSection>contrib/net</packageSection>
                         <packageTitle>OpenNMS :: Plugins :: Cloud Plugin</packageTitle>
-                        <packageDescription>opennms-cloud-plugin</packageDescription>
+                        <packageDescription>sentinel-plugin-cloud</packageDescription>
                         <packageDependencies>
                             <packageDependency>opennms-sentinel (&gt;= 30.0.0)</packageDependency>
                         </packageDependencies>
@@ -77,10 +77,10 @@
                         </goals>
                         <configuration>
                             <sourceFile>
-                               ${project.build.directory}/releases/${project.artifactId}-${project.version}/opennms-cloud-plugin/org.opennms.plugins.cloud.assembly.kar-${project.version}.kar
+                               ${project.build.directory}/releases/${project.artifactId}-${project.version}/opennms-plugin-cloud/org.opennms.plugins.cloud.assembly.kar-${project.version}.kar
                             </sourceFile>
                             <destinationFile>
-                                ${project.build.directory}/deb/usr/share/sentinel/deploy/opennms-cloud-plugin.kar
+                                ${project.build.directory}/deb/usr/share/sentinel/deploy/opennms-plugin-cloud.kar
                             </destinationFile>
                         </configuration>
                     </execution>

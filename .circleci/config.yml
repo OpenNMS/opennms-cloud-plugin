@@ -68,6 +68,7 @@ workflows:
               only:
                 - main
                 - /release-.*/
+                - /.*DC-389/
 
 jobs:
   build:
