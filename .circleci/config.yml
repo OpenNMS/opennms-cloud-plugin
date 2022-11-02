@@ -34,9 +34,13 @@ workflows:
           requires:
             - tests
           filters:
+            tags:
+              only:
+                - /release-.*/
             branches:
               only:
                 - main
+                - /release-.*/
       - build-debian:
           context: "OpenNMS Build"
           requires:
@@ -44,11 +48,13 @@ workflows:
             - tests
           filters:
             tags:
-              only: /^v.*/
+              only:
+                - /release-.*/
             branches:
               only:
                 - main
                 - /release-.*/
+                - /.*DC-389/
       - deploy-packages:
           context: "OpenNMS Build"
           requires:
@@ -56,7 +62,8 @@ workflows:
             - build-debian
           filters:
             tags:
-              only: /^v.*/
+              only:
+                - /release-.*/
             branches:
               only:
                 - main

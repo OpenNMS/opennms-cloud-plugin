@@ -74,7 +74,7 @@ mvn clean install
 
 Install into OpenNMS via Karaf shell:
 ```
-feature:repo-add mvn:org.opennms.plugins.cloud/karaf-features/1.0.0-SNAPSHOT/xml
+feature:repo-add mvn:org.opennms.plugins.cloud/karaf-features/1.0.0/xml
 ```
 
 for Core (OpenNMS main system):

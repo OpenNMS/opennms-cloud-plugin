@@ -2,7 +2,7 @@
     <parent>
         <groupId>org.opennms.plugins.cloud</groupId>
         <artifactId>assembly</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.opennms.plugins.cloud.assembly</groupId>
@@ -27,7 +27,7 @@
                     </executions>
                     <configuration>
                         <targetDir>${project.build.directory}</targetDir>
-                        <packageName>sentinel-cloud-plugin</packageName>
+                        <packageName>sentinel-plugin-cloud</packageName><!-- align with other plugin name -->
                         <packageVersion>${project.version}</packageVersion>
                         <packageRevision>1</packageRevision>
                         <packageSection>contrib/net</packageSection>
