@@ -54,7 +54,6 @@ workflows:
               only:
                 - main
                 - /release-.*/
-                - /.*DC-389/
       - deploy-packages:
           context: "OpenNMS Build"
           requires:
@@ -68,7 +67,6 @@ workflows:
               only:
                 - main
                 - /release-.*/
-                - /.*DC-389/
 
 jobs:
   build:
