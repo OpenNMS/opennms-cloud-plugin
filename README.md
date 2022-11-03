@@ -29,11 +29,11 @@ Stop OpenNMS.
 The plugin is as `deb` and `rpm` archives available.
 Install with your favorite package manager:
 
-`apt-get install opennms-cloud-plugin-core`
+`apt-get install opennms-plugin-cloud-core`
 
 or
 
-`apt-get install opennms-cloud-plugin-sentinel`
+`apt-get install opennms-plugin-cloud-sentinel`
 
 ### Enabling Timeseries Integration Layer (TSS)
 TSS needs to be activated in order to use the plugin for sending time series data.
@@ -74,22 +74,22 @@ mvn clean install
 
 Install into OpenNMS via Karaf shell:
 ```
-feature:repo-add mvn:org.opennms.plugins.cloud/karaf-features/1.0.0-SNAPSHOT/xml
+feature:repo-add mvn:org.opennms.plugins.cloud/karaf-features/1.0.0/xml
 ```
 
 for Core (OpenNMS main system):
 ```
-feature:install opennms-cloud-plugin-core
+feature:install opennms-plugin-cloud-core
 ```
 
 for Sentinel:
 ```
-feature:install opennms-cloud-plugin-sentinel
+feature:install opennms-plugin-cloud-sentinel
 ```
 
 Check if it was properly installed and started:
 ```
-feature:list | grep opennms-cloud-plugin
+feature:list | grep opennms-plugin-cloud
 ```
 we expect it to say: _Started_
 
