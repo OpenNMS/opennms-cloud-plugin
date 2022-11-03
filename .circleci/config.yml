@@ -170,6 +170,10 @@ jobs:
             - v4-deb-dependencies-
 
       - run:
+          name: Install fakeroot
+          command: sudo apt install -y fakeroot 
+
+      - run:
           name: Build Debian packages
           command: |
             mvn install --projects org.opennms.plugins.cloud.assembly:org.opennms.plugins.cloud.assembly.opennms.deb,org.opennms.plugins.cloud.assembly:org.opennms.plugins.cloud.assembly.sentinel.deb --also-make -DskipTests=true -Dbuild.packages
