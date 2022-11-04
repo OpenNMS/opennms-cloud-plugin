@@ -157,7 +157,7 @@
                     <version>3.0.0-M5</version>
                     <configuration>
                         <excludes>
-                            <exclude>**/*IT.java</exclude>
+                            <exclude>**/*It.java</exclude>
                         </excludes>
                     </configuration>
                     <executions>
@@ -172,7 +172,7 @@
                                     <exclude>none</exclude>
                                 </excludes>
                                 <includes>
-                                    <include>**/*IT.java</include>
+                                    <include>**/*It.java</include>
                                 </includes>
                             </configuration>
                         </execution>
