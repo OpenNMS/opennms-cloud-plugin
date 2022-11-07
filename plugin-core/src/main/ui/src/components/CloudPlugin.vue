@@ -78,15 +78,17 @@ onMounted(async () => {
     </template>
   </FeatherSnackbar>
   <div class="center">
-    <h1>OpenNMS Cloud Services</h1>
-    <p>Activate the OpenNMS Hybrid and Cloud Services.</p>
-    <p class="small">For more information about this feature, click <a href="https://github.com/OpenNMS/opennms-cloud-plugin">here</a></p>
-    <Toggle :active="active" :toggle="toggle" activeText="Cloud Services Enabled"
-      disabledText="Cloud Services Disabled" />
+    <h1>Cloud Services</h1>
+    <p class="margin-bottom">Activate OpenNMS cloud-hosted services including 
+      <a target="_blank" href="https://docs.opennms.com/horizon/latest/deployment/time-series-storage/timeseries/hosted-tss.html">time series storage</a>.
+    </p>
+    <Toggle :active="active" :toggle="toggle" activeText="Cloud Services Activated"
+      disabledText="Cloud Services Deactivated" />
     <div class="key-entry" v-if="active">
-      <FeatherTextarea :disabled="keyDisabled" label="Enter API Key" rows="5" :modelValue="key"
+      <p class="smaller">To activate, generate a key in the OpenNMS Portal and paste it here.</p>
+      <FeatherTextarea :disabled="keyDisabled" label="Enter Activation Key" rows="5" :modelValue="key"
         @update:modelValue="(val: string) => key = val" />
-      <FeatherButton primary @click="tryToSubmit">Activate Cloud Services for OpenNMS</FeatherButton>
+      <FeatherButton primary @click="tryToSubmit">Activate</FeatherButton>
     </div>
   </div>
 </template>
@@ -109,6 +111,11 @@ p.small {
   @include headline2();
   margin-bottom: var($spacing-xxl);
 }
+p.smaller {
+  @include headline3();
+  margin-bottom: var($spacing-xxl);
+}
+
 
 .center {
   display: flex;
@@ -118,5 +125,8 @@ p.small {
 
 .key-entry {
   margin-top: 40px;
+}
+.margin-bottom {
+  margin-bottom:24px;
 }
 </style>
