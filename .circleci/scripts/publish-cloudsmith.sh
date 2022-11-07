@@ -13,6 +13,9 @@ else
     main)
       REPO="common-testing"
       ;;
+    *DC-372)
+      REPO="common-testing"
+      ;;
     release-*)
       REPO="stable"
       ;;

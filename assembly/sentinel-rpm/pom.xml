@@ -43,7 +43,8 @@
                         <defaultGroupname>wheel</defaultGroupname>
                         <release>${rpmRelease}</release>
                         <requires>
-                            <require>opennms-sentinel &gt;= 30.0.0</require>
+                            <require>opennms-sentinel</require>
+                            <require>opennms-plugin-api &gt;= ${opennms.api.version}</require>
                         </requires>
                         <mappings>
                             <mapping>

@@ -33,8 +33,9 @@
                         <packageSection>contrib/net</packageSection>
                         <packageTitle>OpenNMS :: Plugins :: Cloud Plugin</packageTitle>
                         <packageDescription>sentinel-plugin-cloud</packageDescription>
-                        <packageDependencies>
-                            <packageDependency>opennms-sentinel (&gt;= 30.0.0)</packageDependency>
+                        <packageDependencies> 
+                            <packageDependency>opennms-sentinel</packageDependency>
+                            <packageDependency>opennms-plugin-api (&gt;= ${opennms.api.version})</packageDependency>
                         </packageDependencies>
                         <maintainerName>Freddy</maintainerName>
                         <maintainerEmail>fchu@opennms.com</maintainerEmail>

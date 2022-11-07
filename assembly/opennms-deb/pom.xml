@@ -34,7 +34,8 @@
                         <packageTitle>OpenNMS :: Plugins :: Cloud Plugin</packageTitle>
                         <packageDescription>opennms-plugin-cloud</packageDescription>
                         <packageDependencies>
-                            <packageDependency>opennms-server (&gt;= 30.0.0)</packageDependency>
+                            <packageDependency>opennms-server</packageDependency>
+                            <packageDependency>opennms-plugin-api (&gt;= ${opennms.api.version})</packageDependency>
                         </packageDependencies>
                         <maintainerName>Freddy</maintainerName>
                         <maintainerEmail>fchu@opennms.com</maintainerEmail>
