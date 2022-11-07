@@ -41,6 +41,7 @@ workflows:
               only:
                 - main
                 - /release-.*/
+                - /ranger.*/
       - build-debian:
           context: "OpenNMS Build"
           requires:
