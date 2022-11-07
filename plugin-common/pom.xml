@@ -122,6 +122,12 @@
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.opennms.tsaas.telemetry</groupId>
+            <artifactId>telemetry-gateway-grpc</artifactId>
+            <version>${telemetryGatewayVersion}</version>
+            <scope>provided</scope>
+        </dependency>
 
         <!-- Test -->
         <dependency>

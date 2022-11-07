@@ -86,11 +86,21 @@
         <argument ref="configStore"/>
         <argument ref="runtimeInfo"/>
     </bean>
+    <service ref="houseKeeper" interface="org.opennms.plugins.cloud.util.RunnerWrapper" />
 
-    <bean id="logService" class="org.opennms.plugins.cloud.grpc.CloudLogService" />
-    <bean id="grpcHandler" class="org.opennms.plugins.cloud.grpc.GrpcExecutionHandler" >
-        <argument ref="logService" />
+    <bean id="grpcLogEntryQueue" class="org.opennms.plugins.cloud.grpc.GrpcLogEntryQueue">
     </bean>
+
+    <bean id="grpcHandler" class="org.opennms.plugins.cloud.grpc.GrpcExecutionHandler" >
+        <argument ref="grpcLogEntryQueue" />
+    </bean>
+
+    <bean id="cloudLogService" class="org.opennms.plugins.cloud.grpc.CloudLogService"
+          destroy-method="destroy" init-method="init">
+        <argument ref="grpcLogEntryQueue"/>
+        <argument ref="grpcHandler"/>
+    </bean>
+    <service ref="cloudLogService" interface="org.opennms.plugins.cloud.util.RunnerWrapper" />
 
     <!-- HEALTH -->
     <bean id="cloudHealthCheck" class="org.opennms.plugins.cloud.srv.tsaas.CloudHealthCheck">

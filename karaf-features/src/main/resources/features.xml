@@ -14,6 +14,7 @@
         <bundle>mvn:org.opennms.plugins.cloud/plugin-common/${project.version}</bundle>
         <bundle>mvn:org.opennms.plugins.cloud.wrap/grpc/${project.version}</bundle>
         <bundle>mvn:org.opennms.plugins.cloud.wrap/jwt/${project.version}</bundle>
+        <bundle>mvn:org.opennms.tsaas.telemetry/telemetry-gateway-grpc/${telemetryGatewayVersion}</bundle>
         <bundle>mvn:org.json/json/${jsonVersion}</bundle>
         <bundle dependency="true">mvn:com.google.guava/failureaccess/${failureAccessVersion}</bundle>
         <bundle dependency="true">mvn:com.google.guava/guava/${guavaVersion}</bundle>

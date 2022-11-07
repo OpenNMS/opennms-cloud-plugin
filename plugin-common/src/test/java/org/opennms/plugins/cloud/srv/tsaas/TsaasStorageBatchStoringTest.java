@@ -48,8 +48,8 @@ import org.opennms.integration.api.v1.timeseries.StorageException;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableMetric;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableSample;
-import org.opennms.plugins.cloud.grpc.CloudLogService;
 import org.opennms.plugins.cloud.grpc.GrpcExecutionHandler;
+import org.opennms.plugins.cloud.grpc.GrpcLogEntryQueue;
 import org.opennms.plugins.cloud.testserver.MockCloud;
 
 public class TsaasStorageBatchStoringTest {
@@ -65,7 +65,7 @@ public class TsaasStorageBatchStoringTest {
                 .batchSize(10)
                 .maxBatchWaitTimeInMilliSeconds(500)
                 .build();
-        GrpcExecutionHandler grpcHandler = new GrpcExecutionHandler(mock(CloudLogService.class));
+        GrpcExecutionHandler grpcHandler = new GrpcExecutionHandler(mock(GrpcLogEntryQueue.class));
         TsaasStorage plugin = new TsaasStorage(tsaasConfig, grpcHandler);
         plugin.initGrpc(cloud.getClientConfigWithToken());
 

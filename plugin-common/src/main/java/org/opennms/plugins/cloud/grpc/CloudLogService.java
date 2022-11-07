@@ -28,20 +28,89 @@
 
 package org.opennms.plugins.cloud.grpc;
 
-import io.grpc.MethodDescriptor;
-import io.grpc.Status.Code;
+import static java.util.Objects.requireNonNull;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static org.opennms.plugins.cloud.grpc.LogEntryUtil.convertToLatencyTraceList;
+
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import org.opennms.integration.api.v1.timeseries.StorageException;
+import org.opennms.plugins.cloud.srv.GrpcService;
+import org.opennms.plugins.cloud.util.RunnerWrapper;
+import org.opennms.tsaas.telemetry.GatewayGrpc;
+import org.opennms.tsaas.telemetry.GatewayOuterClass;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Logs Requests and sends them in batches to the cloud.
  */
 @Slf4j
-public class CloudLogService {
+public class CloudLogService implements RunnerWrapper, GrpcService {
 
-    public void log(long startTime, MethodDescriptor methodInvoked, Code returnCode) {
-        // TODO:  in DC-366: Plugin: Push latency data to cloud gateway
-        log.debug("received cloud log with startTime={}, endTime={}, methodInvoked={}, returnCode={}",
-                startTime, System.currentTimeMillis(), methodInvoked.getFullMethodName(), returnCode);
+    private static final int RUNNING_PERIOD = 1;
+    private static final TimeUnit TIME_UNIT = MINUTES;
+    private static final int GRPC_BATCH_SIZE = 1000;
+
+    private final ScheduledExecutorService executor;
+
+    private final GrpcExecutionHandler grpcHandler;
+
+    @Getter
+    @VisibleForTesting
+    private GrpcConnection<GatewayGrpc.GatewayBlockingStub> grpc;
+
+    private final GrpcLogEntryQueue grpcLogEntryQueue;
+
+    private static final Logger LOG = LoggerFactory.getLogger(CloudLogService.class);
+
+    public CloudLogService(GrpcLogEntryQueue grpcLogEntryQueue, GrpcExecutionHandler grpcHandler) {
+        this.executor = Executors.newSingleThreadScheduledExecutor();
+        this.grpcLogEntryQueue = grpcLogEntryQueue;
+        this.grpcHandler = requireNonNull(grpcHandler);
     }
 
+    public void init() {
+        executor.scheduleAtFixedRate(() -> wrap(this::handleLogQueue), 1, RUNNING_PERIOD, TIME_UNIT);
+    }
+
+    public void destroy() {
+        executor.shutdown();
+    }
+
+    @Override
+    public void initGrpc(GrpcConnectionConfig grpcConfig) {
+        GrpcConnection<GatewayGrpc.GatewayBlockingStub> oldGrpc = this.grpc;
+        LOG.debug("Initializing Grpc Connection with host {} and port {}", grpcConfig.getHost(), grpcConfig.getPort());
+        this.grpc = new GrpcConnection<>(grpcConfig, GatewayGrpc::newBlockingStub);
+        CloseUtil.close(oldGrpc);
+    }
+
+    public void handleLogQueue() throws StorageException {
+        if (grpcLogEntryQueue.isQueueEmpty()) {
+            LOG.debug("The logs queue is empty, nothing to report.");
+        } else {
+            while (grpcLogEntryQueue.isQueueNotEmpty()) {
+                List<LogEntry> logEntryList = grpcLogEntryQueue.getQueueBatch(GRPC_BATCH_SIZE);
+                LOG.debug("Sending {} batch of elements to grpc endpoint", GRPC_BATCH_SIZE);
+                GatewayOuterClass.SendTracesRequest sendTracesRequest = GatewayOuterClass.SendTracesRequest.newBuilder()
+                        .addAllLatencyTraces(convertToLatencyTraceList(logEntryList))
+                        .build();
+                grpcHandler.executeRpcCallVoid(GrpcExecutionHandler.GrpcCall.builder()
+                        .callToExecute(() -> this.grpc.get().sendTraces(sendTracesRequest))
+                        .methodDescriptor(GatewayGrpc.getSendTracesMethod())
+                        .build());
+
+                grpcLogEntryQueue.removeBatch(logEntryList);
+            }
+        }
+    }
 }

@@ -56,9 +56,9 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.opennms.integration.api.v1.runtime.RuntimeInfo;
 import org.opennms.plugins.cloud.config.ConfigStore.Key;
-import org.opennms.plugins.cloud.grpc.CloudLogService;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.grpc.GrpcExecutionHandler;
+import org.opennms.plugins.cloud.grpc.GrpcLogEntryQueue;
 import org.opennms.plugins.cloud.srv.GrpcService;
 import org.opennms.plugins.cloud.srv.RegistrationManager;
 import org.opennms.plugins.cloud.srv.tsaas.TsaasConfig;
@@ -89,7 +89,7 @@ public class ConfigurationManagerTest {
 
     @Test
     public void shouldGetCloudConfig() {
-        GrpcExecutionHandler grpcHandler = new GrpcExecutionHandler(mock(CloudLogService.class));
+        GrpcExecutionHandler grpcHandler = new GrpcExecutionHandler(mock(GrpcLogEntryQueue.class));
         TsaasStorage grpc = spy(new TsaasStorage(new TsaasConfig(1, 1), grpcHandler));
         ConfigurationManager cm = new ConfigurationManager(config, clientConfig, clientConfig, mock(RegistrationManager.class),
                 info,
@@ -173,7 +173,7 @@ public class ConfigurationManagerTest {
     @Test
     public void shouldCallConfigureIfAuthenticatedOrConfigured() {
         // test prep: initialize already
-        GrpcExecutionHandler grpcHandler = new GrpcExecutionHandler(mock(CloudLogService.class));
+        GrpcExecutionHandler grpcHandler = new GrpcExecutionHandler(mock(GrpcLogEntryQueue.class));
         TsaasStorage grpc = spy(new TsaasStorage(new TsaasConfig(1, 1), grpcHandler));
         ConfigurationManager cm = new ConfigurationManager(config, clientConfig, clientConfig, mock(RegistrationManager.class),
                 info,
