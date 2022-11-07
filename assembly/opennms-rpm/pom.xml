@@ -2,7 +2,7 @@
     <parent>
         <groupId>org.opennms.plugins.cloud</groupId>
         <artifactId>assembly</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.opennms.plugins.cloud.assembly</groupId>
@@ -32,7 +32,7 @@
                         </execution>
                     </executions>
                     <configuration>
-                        <name>opennms-cloud-plugin</name>
+                        <name>opennms-plugin-cloud</name><!-- align with other plugin name -->
                         <summary>OpenNMS :: Plugins :: Cloud Plugin</summary>
                         <description>OpenNMS cloud plugin</description>
                         <license>AGPL v3</license>

@@ -2,7 +2,7 @@
     <parent>
         <groupId>org.opennms.plugins.cloud</groupId>
         <artifactId>assembly</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.opennms.plugins.cloud.assembly</groupId>
@@ -27,12 +27,12 @@
                     </executions>
                     <configuration>
                         <targetDir>${project.build.directory}</targetDir>
-                        <packageName>opennms-cloud-plugin</packageName>
+                        <packageName>opennms-plugin-cloud</packageName><!-- align with other plugin name -->
                         <packageVersion>${project.version}</packageVersion>
                         <packageRevision>1</packageRevision>
                         <packageSection>contrib/net</packageSection>
                         <packageTitle>OpenNMS :: Plugins :: Cloud Plugin</packageTitle>
-                        <packageDescription>opennms-cloud-plugin</packageDescription>
+                        <packageDescription>opennms-plugin-cloud</packageDescription>
                         <packageDependencies>
                             <packageDependency>opennms-server (&gt;= 30.0.0)</packageDependency>
                         </packageDependencies>
@@ -78,10 +78,10 @@
                         </goals>
                         <configuration>
                             <sourceFile>
-                                ${project.build.directory}/releases/${project.artifactId}-${project.version}/opennms-cloud-plugin/org.opennms.plugins.cloud.assembly.kar-${project.version}.kar
+                                ${project.build.directory}/releases/${project.artifactId}-${project.version}/opennms-plugin-cloud/org.opennms.plugins.cloud.assembly.kar-${project.version}.kar
                             </sourceFile>
                             <destinationFile>
-                                ${project.build.directory}/deb/usr/share/opennms/deploy/opennms-cloud-plugin.kar
+                                ${project.build.directory}/deb/usr/share/opennms/deploy/opennms-plugin-cloud.kar
                             </destinationFile>
                         </configuration>
                     </execution>
