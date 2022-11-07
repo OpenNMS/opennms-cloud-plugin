@@ -2,7 +2,7 @@
     <parent>
         <groupId>org.opennms.plugins.cloud</groupId>
         <artifactId>assembly</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.opennms.plugins.cloud.assembly</groupId>
@@ -32,7 +32,7 @@
                         </execution>
                     </executions>
                     <configuration>
-                        <name>sentinel-cloud-plugin</name>
+                        <name>sentinel-plugin-cloud</name><!-- align with other plugin name -->
                         <summary>Sentinel :: Plugins :: Cloud Plugin</summary>
                         <description>Sentinel cloud plugin</description>
                         <license>AGPL v3</license>

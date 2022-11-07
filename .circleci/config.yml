@@ -34,9 +34,13 @@ workflows:
           requires:
             - tests
           filters:
+            tags:
+              only:
+                - /release-.*/
             branches:
               only:
                 - main
+                - /release-.*/
       - build-debian:
           context: "OpenNMS Build"
           requires:
@@ -44,7 +48,8 @@ workflows:
             - tests
           filters:
             tags:
-              only: /^v.*/
+              only:
+                - /release-.*/
             branches:
               only:
                 - main
@@ -56,7 +61,8 @@ workflows:
             - build-debian
           filters:
             tags:
-              only: /^v.*/
+              only:
+                - /release-.*/
             branches:
               only:
                 - main
@@ -98,7 +104,7 @@ jobs:
           skip_if_forked_pr: true
           gnupg_home: ~/tmp/gpg
           gnupg_key: opennms@opennms.org
-          packages: assembly/*-rpm/target/rpm/*-cloud-plugin/RPMS/noarch/*.rpm
+          packages: assembly/*-rpm/target/rpm/*-plugin-cloud/RPMS/noarch/*.rpm
 
   tests:
     executor: system-test-executor
@@ -162,6 +168,10 @@ jobs:
             - v4-deb-dependencies-
 
       - run:
+          name: Install fakeroot
+          command: sudo apt install -y fakeroot 
+
+      - run:
           name: Build Debian packages
           command: |
             mvn install --projects org.opennms.plugins.cloud.assembly:org.opennms.plugins.cloud.assembly.opennms.deb,org.opennms.plugins.cloud.assembly:org.opennms.plugins.cloud.assembly.sentinel.deb --also-make -DskipTests=true -Dbuild.packages
@@ -185,8 +195,8 @@ jobs:
           name: Gather artifacts
           command: |
             mkdir -p ~/dist/
-            cp assembly/opennms-deb/target/opennms-cloud-plugin_*.deb ~/dist/
-            cp assembly/sentinel-deb/target/sentinel-cloud-plugin_*.deb ~/dist/
+            cp assembly/opennms-deb/target/opennms-plugin-cloud_*.deb ~/dist/
+            cp assembly/sentinel-deb/target/sentinel-plugin-cloud_*.deb ~/dist/
 
       - store_artifacts:
           path: ~/dist
