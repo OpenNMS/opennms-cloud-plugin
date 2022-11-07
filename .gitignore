@@ -17,3 +17,4 @@ build.properties
 /plugin/src/main/ui/node_modules/
 yarn.lock
 wrap/grpc/dependency-reduced-pom.xml
+wrap/jwt/dependency-reduced-pom.xml
