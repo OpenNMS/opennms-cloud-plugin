@@ -31,6 +31,9 @@ package org.opennms.plugins.cloud.srv.tsaas;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -38,9 +41,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.opennms.integration.api.v1.timeseries.AbstractStorageIntegrationTest;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
-import org.opennms.plugins.cloud.grpc.CloudLogService;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.grpc.GrpcExecutionHandler;
+import org.opennms.plugins.cloud.grpc.GrpcLogEntryQueue;
 import org.opennms.plugins.cloud.testserver.MockCloud;
 import org.opennms.tsaas.Tsaas;
 
@@ -55,10 +58,11 @@ public class TsaasStorageTest extends AbstractStorageIntegrationTest {
     @Before
     public void setUp() throws Exception {
         GrpcConnectionConfig clientConfig = cloud.getClientConfigWithToken();
+        GrpcLogEntryQueue grpcLogEntryQueue = new GrpcLogEntryQueue();
+        GrpcExecutionHandler grpcHandler = new GrpcExecutionHandler(grpcLogEntryQueue);
         TsaasConfig tsaasConfig = TsaasConfig.builder()
                 .batchSize(1) // set to 1 so that samples are not held back in the queue
                 .build();
-        GrpcExecutionHandler grpcHandler = new GrpcExecutionHandler(new CloudLogService());
         storage = new TsaasStorage(tsaasConfig, grpcHandler);
         storage.initGrpc(clientConfig);
         super.setUp();

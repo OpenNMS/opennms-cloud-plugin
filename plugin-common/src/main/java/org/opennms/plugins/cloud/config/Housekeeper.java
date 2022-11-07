@@ -48,6 +48,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.opennms.integration.api.v1.runtime.RuntimeInfo;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
+import org.opennms.plugins.cloud.util.RunnerWrapper;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -55,7 +56,7 @@ import lombok.extern.slf4j.Slf4j;
  * Schedules and executes needed tasks.
  */
 @Slf4j
-public class Housekeeper {
+public class Housekeeper implements RunnerWrapper {
 
     private final ScheduledExecutorService executor;
     private final int intervalInSecondsForToken;
@@ -167,17 +168,4 @@ public class Housekeeper {
                 .port(config.get(grpcport).map(Integer::valueOf).orElse(0))
                 .build();
     }
-
-    private void wrap(RunnableWithException r) {
-        try {
-            r.run();
-        } catch (Exception e) {
-            log.error("Job failed.", e);
-        }
-    }
-
-    private interface RunnableWithException {
-        void run() throws Exception;
-    }
-
 }
