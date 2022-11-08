@@ -43,6 +43,7 @@ workflows:
               only:
                 - main
                 - /release-.*/
+                - /.*DC-372/
       - build-debian:
           context: "OpenNMS Build"
           requires:
@@ -56,6 +57,7 @@ workflows:
               only:
                 - main
                 - /release-.*/
+                - /.*DC-372/
       - deploy-packages:
           context: "OpenNMS Build"
           requires:
@@ -69,6 +71,7 @@ workflows:
               only:
                 - main
                 - /release-.*/
+                - /.*DC-372/
 
 jobs:
   build:
