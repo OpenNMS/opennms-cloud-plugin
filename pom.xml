@@ -322,9 +322,6 @@
         </profile>
         <profile>
             <id>release</id>
-            <properties>
-                <disable.checkstyle>true</disable.checkstyle>
-            </properties>
             <build>
                 <plugins>
                     <plugin>
@@ -344,6 +341,7 @@
                 </plugins>
             </build>
             <properties>
+                <disable.checkstyle>true</disable.checkstyle>
                 <package.version>${project.version}</package.version>
                 <package.buildNumber>${buildNumber}</package.buildNumber><!-- rpm > release  deb > bundle in version -->
             </properties>
