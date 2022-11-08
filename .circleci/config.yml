@@ -182,7 +182,12 @@ jobs:
       - run:
           name: Build Debian packages
           command: |
-            mvn install --projects org.opennms.plugins.cloud.assembly:org.opennms.plugins.cloud.assembly.opennms.deb,org.opennms.plugins.cloud.assembly:org.opennms.plugins.cloud.assembly.sentinel.deb --also-make -DskipTests=true -Dbuild.packages
+            if [[ ! << pipeline.git.branch >> =~ ^release.* ]]; then
+              PROFILE="-Psnapshot"
+            else
+              PROFILE="-Prelease"
+            fi
+            mvn install $PROFILE --projects org.opennms.plugins.cloud.assembly:org.opennms.plugins.cloud.assembly.opennms.deb,org.opennms.plugins.cloud.assembly:org.opennms.plugins.cloud.assembly.sentinel.deb --also-make -DskipTests=true -Dbuild.packages
 
       - run:
           name: Remove old artifacts to keep workspace size down
