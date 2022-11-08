@@ -315,6 +315,7 @@
             </activation>
             <properties>
                 <package.version>${project.version}-${maven.build.timestamp}</package.version>
+                <maven.build.timestamp.format>yyyyMMddTHHmm</maven.build.timestamp.format>
             </properties>
         </profile>
         <profile>
@@ -342,6 +343,7 @@
             </build>
             <properties>
                 <package.version>${project.version}</package.version>
+                <maven.build.timestamp.format>yyyyMMddTHHmm</maven.build.timestamp.format>
             </properties>
         </profile>
         <profile>
