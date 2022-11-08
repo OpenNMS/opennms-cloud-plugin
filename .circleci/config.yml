@@ -31,6 +31,7 @@ workflows:
       - deploy:
           context:
             - OSSRH Principal
+            - OpenNMS Build
           requires:
             - tests
           filters:
@@ -77,7 +78,6 @@ jobs:
 
       - sign-packages/setup-env:
           skip_if_forked_pr: true
-          gnupg_home: ~/tmp/gpg
 
       - checkout
       - restore_cache:
@@ -102,7 +102,6 @@ jobs:
 
       - sign-packages/sign-rpms:
           skip_if_forked_pr: true
-          gnupg_home: ~/tmp/gpg
           gnupg_key: opennms@opennms.org
           packages: assembly/*-rpm/target/rpm/*-plugin-cloud/RPMS/noarch/*.rpm
 
@@ -142,10 +141,12 @@ jobs:
           keys:
             - v1-dependencies-{{ checksum "pom.xml" }}
 
+      - sign-packages/setup-env:
+          skip_if_forked_pr: true
       - run:
           name: Upload snapshot
           command: |
-            mvn -s .circleci/.circleci.settings.xml -DskipTests -Dmaven.verify.skip=true -Dmaven.install.skip=true deploy
+            mvn -Prelease -s .circleci/.circleci.settings.xml -DskipTests -Dmaven.verify.skip=true -Dmaven.install.skip=true deploy
 
   build-debian:
     executor: build-debian-executor
@@ -159,7 +160,6 @@ jobs:
           use_sudo: true
       - sign-packages/setup-env:
           skip_if_forked_pr: true
-          gnupg_home: ~/tmp/gpg
 
       - restore_cache:
           keys:
@@ -187,7 +187,6 @@ jobs:
 
       - sign-packages/sign-debs:
           skip_if_forked_pr: true
-          gnupg_home: ~/tmp/gpg
           gnupg_key: opennms@opennms.org
           packages: assembly/*-deb/target/*.deb
 
