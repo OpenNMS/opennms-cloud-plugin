@@ -97,9 +97,10 @@ jobs:
             else
               MVN_OPTIONS="-Prelease"
               BUILD_NUMBER=$(echo '<< pipeline.git.branch >>' | sed -e 's/release-[^-]*-//')
-              if [[ ! -z "$BUILD_NUMBER" ]]; then
-                MVN_OPTIONS="${MVN_OPTIONS} -DbuildNumber=${BUILD_NUMBER}"
+              if [[ -z "$BUILD_NUMBER" ]]; then
+                BUILD_NUMBER=1
               fi
+              MVN_OPTIONS="${MVN_OPTIONS} -DbuildNumber=${BUILD_NUMBER}"
             fi
             mvn $MVN_OPTIONS -DskipITs=true -DskipTests=true -Dbuild.packages clean install
       - save_cache:
@@ -191,9 +192,10 @@ jobs:
             else
               MVN_OPTIONS="-Prelease"
               BUILD_NUMBER=$(echo '<< pipeline.git.branch >>' | sed -e 's/release-[^-]*-//')
-              if [[ ! -z "$BUILD_NUMBER" ]]; then
-                MVN_OPTIONS="${MVN_OPTIONS} -DbuildNumber=${BUILD_NUMBER}"
+              if [[ -z "$BUILD_NUMBER" ]]; then
+                BUILD_NUMBER=1
               fi
+              MVN_OPTIONS="${MVN_OPTIONS} -DbuildNumber=${BUILD_NUMBER}"
             fi
             mvn install ${MVN_OPTIONS} --projects org.opennms.plugins.cloud.assembly:org.opennms.plugins.cloud.assembly.opennms.deb,org.opennms.plugins.cloud.assembly:org.opennms.plugins.cloud.assembly.sentinel.deb --also-make -DskipTests=true -Dbuild.packages
 

@@ -28,8 +28,7 @@
                     <configuration>
                         <targetDir>${project.build.directory}</targetDir>
                         <packageName>sentinel-plugin-cloud</packageName><!-- align with other plugin name -->
-                        <packageVersion>${package.version}</packageVersion>
-                        <packageRevision>${package.buildNumber}</packageRevision>
+                        <packageVersion>${package.version}-${package.buildNumber}</packageVersion>
                         <packageSection>contrib/net</packageSection>
                         <packageTitle>OpenNMS :: Plugins :: Cloud Plugin</packageTitle>
                         <packageDescription>sentinel-plugin-cloud</packageDescription>

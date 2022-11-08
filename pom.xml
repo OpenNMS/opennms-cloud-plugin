@@ -316,7 +316,7 @@
             </activation>
             <properties>
                 <package.version>${project.version}</package.version>
-                <package.buildNumber>${maven.build.timestamp}</package.buildNumber><!-- rpm > release  deb > revision -->
+                <package.buildNumber>${maven.build.timestamp}</package.buildNumber><!-- rpm > release  deb > bundle in version -->
                 <maven.build.timestamp.format>yyyyMMdd.HHmm</maven.build.timestamp.format>
             </properties>
         </profile>
@@ -345,7 +345,7 @@
             </build>
             <properties>
                 <package.version>${project.version}</package.version>
-                <package.buildNumber>${buildNumber}</package.buildNumber><!-- rpm > release  deb > revision -->
+                <package.buildNumber>${buildNumber}</package.buildNumber><!-- rpm > release  deb > bundle in version -->
             </properties>
         </profile>
         <profile>
