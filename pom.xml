@@ -225,7 +225,7 @@
                 <version>3.0.0-M5</version>
                 <configuration>
                     <excludes>
-                        <exclude>**/*IT.java</exclude>
+                        <exclude>**/*It.java</exclude>
                     </excludes>
                 </configuration>
                 <executions>
@@ -240,7 +240,7 @@
                                 <exclude>none</exclude>
                             </excludes>
                             <includes>
-                                <include>**/*IT.java</include>
+                                <include>**/*It.java</include>
                             </includes>
                         </configuration>
                     </execution>
@@ -343,7 +343,8 @@
             <properties>
                 <disable.checkstyle>true</disable.checkstyle>
                 <package.version>${project.version}</package.version>
-                <package.buildNumber>${buildNumber}</package.buildNumber><!-- rpm > release  deb > bundle in version -->
+                <!-- for release expect to pass in command line -DbuildNumber=XXX rpm > release  deb > bundle in version -->
+                <package.buildNumber>${buildNumber}</package.buildNumber>
             </properties>
         </profile>
         <profile>
