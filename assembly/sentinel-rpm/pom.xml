@@ -41,7 +41,7 @@
                         <defaultFilemode>644</defaultFilemode>
                         <defaultUsername>root</defaultUsername>
                         <defaultGroupname>wheel</defaultGroupname>
-                        <release>${rpmRelease}</release>
+                        <release>${package.version}</release>
                         <requires>
                             <require>opennms-sentinel</require>
                             <require>opennms-plugin-api &gt;= ${opennms.api.version}</require>

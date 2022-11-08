@@ -92,7 +92,12 @@ jobs:
           name: Compile source without tests
           command: |
             mvn -version
-            mvn -DskipITs=true -DskipTests=true -Dbuild.packages clean install
+            if [[ ! << pipeline.git.branch >> =~ ^release.* ]]; then
+              PROFILE="-Psnapshot"
+            else
+              PROFILE="-Prelease"
+            fi
+            mvn $PROFILE -DskipITs=true -DskipTests=true -Dbuild.packages clean install
       - save_cache:
           paths:
             - ~/.m2

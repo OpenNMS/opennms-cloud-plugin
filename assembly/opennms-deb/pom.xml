@@ -28,7 +28,7 @@
                     <configuration>
                         <targetDir>${project.build.directory}</targetDir>
                         <packageName>opennms-plugin-cloud</packageName><!-- align with other plugin name -->
-                        <packageVersion>${project.version}</packageVersion>
+                        <packageVersion>${package.version}</packageVersion>
                         <packageRevision>1</packageRevision>
                         <packageSection>contrib/net</packageSection>
                         <packageTitle>OpenNMS :: Plugins :: Cloud Plugin</packageTitle>
