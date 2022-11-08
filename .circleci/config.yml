@@ -97,7 +97,7 @@ jobs:
               MVN_OPTIONS="-Psnapshot"
             else
               MVN_OPTIONS="-Prelease"
-              BUILD_NUMBER=$(echo '<< pipeline.git.branch >>' | sed -e 's/release-[^-]*-//')
+              BUILD_NUMBER=$(echo '<< pipeline.git.branch >>' | sed -e 's/release-[^-]*-*//')
               if [[ -z "$BUILD_NUMBER" ]]; then
                 BUILD_NUMBER=1
               fi
@@ -192,7 +192,7 @@ jobs:
               MVN_OPTIONS="-Psnapshot"
             else
               MVN_OPTIONS="-Prelease"
-              BUILD_NUMBER=$(echo '<< pipeline.git.branch >>' | sed -e 's/release-[^-]*-//')
+              BUILD_NUMBER=$(echo '<< pipeline.git.branch >>' | sed -e 's/release-[^-]*-*//')
               if [[ -z "$BUILD_NUMBER" ]]; then
                 BUILD_NUMBER=1
               fi
