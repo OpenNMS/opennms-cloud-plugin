@@ -41,7 +41,7 @@
                         <defaultFilemode>644</defaultFilemode>
                         <defaultUsername>root</defaultUsername>
                         <defaultGroupname>wheel</defaultGroupname>
-                        <release>${package.version}</release>
+                        <version>${package.version}</version>
                         <requires>
                             <require>opennms-core</require>
                             <require>opennms-plugin-api &gt;= ${opennms.api.version}</require>
