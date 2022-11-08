@@ -36,7 +36,7 @@ import java.util.function.Function;
 
 import javax.net.ssl.SSLException;
 
-import org.opennms.plugins.cloud.srv.tsaas.grpc.comp.ZstdCodecRegisterUtil;
+import org.opennms.plugins.cloud.grpc.comp.ZstdCodecRegisterUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

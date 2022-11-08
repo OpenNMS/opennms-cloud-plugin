@@ -26,7 +26,7 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.srv.tsaas.grpc.comp;
+package org.opennms.plugins.cloud.grpc.comp;
 
 import java.io.IOException;
 import java.io.InputStream;

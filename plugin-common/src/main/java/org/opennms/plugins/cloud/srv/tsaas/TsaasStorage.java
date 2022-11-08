@@ -28,7 +28,6 @@
 
 package org.opennms.plugins.cloud.srv.tsaas;
 
-import static org.opennms.plugins.cloud.grpc.GrpcExceptionHandler.executeRpcCall;
 import static org.opennms.plugins.cloud.srv.tsaas.grpc.GrpcObjectMapper.toMetric;
 import static org.opennms.plugins.cloud.srv.tsaas.grpc.GrpcObjectMapper.toTimestamp;
 
@@ -50,6 +49,8 @@ import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.plugins.cloud.grpc.CloseUtil;
 import org.opennms.plugins.cloud.grpc.GrpcConnection;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
+import org.opennms.plugins.cloud.grpc.GrpcExecutionHandler;
+import org.opennms.plugins.cloud.grpc.GrpcExecutionHandler.GrpcCall;
 import org.opennms.plugins.cloud.srv.GrpcService;
 import org.opennms.plugins.cloud.srv.tsaas.grpc.GrpcObjectMapper;
 import org.opennms.tsaas.TimeseriesGrpc;
@@ -71,14 +72,18 @@ public class TsaasStorage implements TimeSeriesStorage, GrpcService {
     private final TsaasConfig config;
     private final ConcurrentLinkedDeque<Tsaas.Sample> queue; // holds samples to be batched
     private Instant lastBatchSentTs;
+
+    private GrpcExecutionHandler grpcHandler;
+
     @Getter
     @VisibleForTesting
     private GrpcConnection<TimeseriesGrpc.TimeseriesBlockingStub> grpc;
 
-    public TsaasStorage(TsaasConfig config) {
+    public TsaasStorage(TsaasConfig config, GrpcExecutionHandler grpcHandler) {
         this.config = Objects.requireNonNull(config);
         queue = new ConcurrentLinkedDeque<>();
         lastBatchSentTs = Instant.now();
+        this.grpcHandler = Objects.requireNonNull(grpcHandler);
     }
 
     @Override
@@ -111,7 +116,10 @@ public class TsaasStorage implements TimeSeriesStorage, GrpcService {
             }
             // Make call (only if we have anything to send):
             if (builder.getSamplesCount() > 0) {
-                executeRpcCall(() -> this.grpc.get().store(builder.build()));
+                grpcHandler.executeRpcCallVoid(GrpcCall.builder()
+                        .callToExecute(() -> this.grpc.get().store(builder.build()))
+                        .methodDescriptor(TimeseriesGrpc.getStoreMethod())
+                        .build());
                 lastBatchSentTs = Instant.now();
             }
         }
@@ -131,10 +139,13 @@ public class TsaasStorage implements TimeSeriesStorage, GrpcService {
                 .addAllMatchers(mappedTags)
                 .build();
         LOG.trace("Getting the metrics for the following tags: {}", tagsMessage);
-        return executeRpcCall(
-                () -> this.grpc.get().findMetrics(tagsMessage),
-                GrpcObjectMapper::toMetrics,
-                Collections::emptyList
+        return grpcHandler.executeRpcCall(
+                GrpcCall.<Tsaas.Metrics, List<Metric>>builder()
+                        .callToExecute(() -> this.grpc.get().findMetrics(tagsMessage))
+                        .mapper(GrpcObjectMapper::toMetrics)
+                        .defaultFunction(Collections::emptyList)
+                        .methodDescriptor(TimeseriesGrpc.getFindMetricsMethod())
+                        .build()
         );
     }
 
@@ -149,10 +160,13 @@ public class TsaasStorage implements TimeSeriesStorage, GrpcService {
                 .setAggregation(Tsaas.Aggregation.valueOf(request.getAggregation().name()))
                 .build();
         LOG.trace("Getting time series for request: {}", fetchRequest);
-        return executeRpcCall(
-                () -> this.grpc.get().getTimeseriesData(fetchRequest),
-                GrpcObjectMapper::toSamples,
-                Collections::emptyList
+        return grpcHandler.executeRpcCall(
+                GrpcCall.<Tsaas.TimeseriesData, List<Sample>>builder()
+                        .callToExecute(() -> this.grpc.get().getTimeseriesData(fetchRequest))
+                        .mapper(GrpcObjectMapper::toSamples)
+                        .defaultFunction(Collections::emptyList)
+                        .methodDescriptor(TimeseriesGrpc.getGetTimeseriesDataMethod())
+                        .build()
         );
     }
 

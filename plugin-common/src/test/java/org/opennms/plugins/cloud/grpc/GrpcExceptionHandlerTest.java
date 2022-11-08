@@ -29,44 +29,69 @@
 package org.opennms.plugins.cloud.grpc;
 
 import static org.junit.Assert.assertThrows;
+import static org.mockito.Mockito.mock;
 
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.function.ThrowingRunnable;
 import org.opennms.integration.api.v1.timeseries.StorageException;
+import org.opennms.plugins.cloud.grpc.GrpcExecutionHandler.GrpcCall;
+import org.opennms.tsaas.TimeseriesGrpc;
 
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 
 public class GrpcExceptionHandlerTest {
 
+    private GrpcExecutionHandler grpcHandler;
+
+    @Before
+    public void setUp() {
+        this.grpcHandler = new GrpcExecutionHandler(mock(CloudLogService.class));
+    }
+
     @Test
     public void shouldSwallowNonRecoverableExceptions() throws StorageException {
         // no exception should be thrown:
-        GrpcExceptionHandler.executeRpcCall(() -> {
-            throw new StatusRuntimeException(Status.UNIMPLEMENTED);
-        });
-        GrpcExceptionHandler.executeRpcCall(
-                () -> {
+        grpcHandler.executeRpcCallVoid(
+                GrpcCall.builder()
+                        .callToExecute(() -> {
+                            throw new StatusRuntimeException(Status.UNIMPLEMENTED);
+                        })
+                        .methodDescriptor(TimeseriesGrpc.getStoreMethod())
+                        .build());
+
+        grpcHandler.executeRpcCall(GrpcExecutionHandler.GrpcCall.builder()
+                .callToExecute(() -> {
                     throw new StatusRuntimeException(Status.UNIMPLEMENTED);
-                },
-                (s) -> s,
-                () -> "");
+                })
+                .mapper((s) -> s)
+                .defaultFunction(() -> "")
+                .methodDescriptor(TimeseriesGrpc.getStoreMethod())
+                .build());
     }
 
     @Test
     public void shouldRethrowRecoverableExceptions() {
-        assertThrows(StorageException.class,
-                () -> GrpcExceptionHandler.executeRpcCall(() -> {
+        ThrowingRunnable run = () -> grpcHandler
+                .executeRpcCallVoid(
+                        GrpcCall
+                                .builder()
+                                .callToExecute(() -> {
+                                    throw new StatusRuntimeException(Status.UNAVAILABLE);
+                                })
+                                .methodDescriptor(TimeseriesGrpc.getStoreMethod()).build());
+        assertThrows(StorageException.class, run);
+
+        run = () -> grpcHandler.executeRpcCall(GrpcExecutionHandler.GrpcCall.builder()
+                .callToExecute(() -> {
                     throw new StatusRuntimeException(Status.UNAVAILABLE);
-                }));
-        assertThrows(
-                StorageException.class,
-                () -> GrpcExceptionHandler.executeRpcCall(
-                        () -> {
-                            throw new StatusRuntimeException(Status.UNAVAILABLE);
-                        },
-                        (s) -> s,
-                        () -> "")
-        );
+                })
+                .mapper((s) -> s)
+                .defaultFunction(() -> "")
+                .methodDescriptor(TimeseriesGrpc.getStoreMethod())
+                .build());
+        assertThrows(StorageException.class, run);
     }
 
 }

@@ -26,25 +26,22 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.srv.tsaas.grpc.comp;
+package org.opennms.plugins.cloud.grpc;
 
-import io.grpc.CompressorRegistry;
-import io.grpc.DecompressorRegistry;
+import io.grpc.MethodDescriptor;
+import io.grpc.Status.Code;
+import lombok.extern.slf4j.Slf4j;
 
-public class ZstdCodecRegisterUtil {
+/**
+ * Logs Requests and sends them in batches to the cloud.
+ */
+@Slf4j
+public class CloudLogService {
 
-    private ZstdCodecRegisterUtil() {
-        // Utility class
-    }
-
-    public static DecompressorRegistry createDecompressorRegistry() {
-        return DecompressorRegistry.getDefaultInstance().with(new ZstdGrpcCodec(), true);
-    }
-
-    public static CompressorRegistry createCompressorRegistry() {
-        final CompressorRegistry  registry = CompressorRegistry.getDefaultInstance();
-        registry.register(new ZstdGrpcCodec());
-        return registry;
+    public void log(long startTime, long endTime, MethodDescriptor methodInvoked, Code returnCode) {
+        // TODO:  in DC-366: Plugin: Push latency data to cloud gateway
+        log.debug("received cloud log with startTime={}, endTime={}, methodInvoked={}, returnCode={}",
+                startTime, endTime, methodInvoked.getFullMethodName(), returnCode);
     }
 
 }

@@ -31,6 +31,7 @@ package org.opennms.plugins.cloud.srv.tsaas;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -41,20 +42,21 @@ import java.util.List;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.mockito.Mockito;
 import org.opennms.integration.api.v1.timeseries.IntrinsicTagNames;
 import org.opennms.integration.api.v1.timeseries.Sample;
 import org.opennms.integration.api.v1.timeseries.StorageException;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableMetric;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableSample;
+import org.opennms.plugins.cloud.grpc.CloudLogService;
+import org.opennms.plugins.cloud.grpc.GrpcExecutionHandler;
 import org.opennms.plugins.cloud.testserver.MockCloud;
 
 public class TsaasStorageBatchStoringTest {
 
     @Rule
     public MockCloud cloud = MockCloud.builder()
-            .serverStorage(Mockito.mock(TimeSeriesStorage.class))
+            .serverStorage(mock(TimeSeriesStorage.class))
             .build();
 
     @Test
@@ -63,7 +65,8 @@ public class TsaasStorageBatchStoringTest {
                 .batchSize(10)
                 .maxBatchWaitTimeInMilliSeconds(500)
                 .build();
-        TsaasStorage plugin = new TsaasStorage(tsaasConfig);
+        GrpcExecutionHandler grpcHandler = new GrpcExecutionHandler(mock(CloudLogService.class));
+        TsaasStorage plugin = new TsaasStorage(tsaasConfig, grpcHandler);
         plugin.initGrpc(cloud.getClientConfigWithToken());
 
         // store 2 samples. The batch size is 10 => should only call server when 10 samples are reached or maxBatchWaitTime has passed:
