@@ -22,7 +22,8 @@ workflows:
   build-deploy:
     jobs:
       - build:
-          context: "OpenNMS Build"
+          context:
+            - OpenNMS Build
       - tests:
           requires:
             - build
