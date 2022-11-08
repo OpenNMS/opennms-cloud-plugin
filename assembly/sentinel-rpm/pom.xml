@@ -41,9 +41,12 @@
                         <defaultFilemode>644</defaultFilemode>
                         <defaultUsername>root</defaultUsername>
                         <defaultGroupname>wheel</defaultGroupname>
-                        <release>${rpmRelease}</release>
+                        <version>${package.version}</version>
+                        <release>${package.buildNumber}</release>
                         <requires>
-                            <require>opennms-sentinel &gt;= 30.0.0</require>
+                            <require>opennms-sentinel</require>
+                            <require>opennms-plugin-api &gt;= ${opennms.api.version}</require>
+                            <require>opennms-plugin-api &lt; ${opennms.api.version.max}</require>
                         </requires>
                         <mappings>
                             <mapping>

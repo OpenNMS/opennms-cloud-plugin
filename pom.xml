@@ -46,7 +46,8 @@
         <karaf.version>4.3.6</karaf.version>
         <log4j.version>2.18.0</log4j.version>
         <mockito.version>2.18.0</mockito.version>
-        <opennms.api.version>1.1.0</opennms.api.version>
+        <opennms.api.version>1.2.0</opennms.api.version>
+        <opennms.api.version.max>2.0.0</opennms.api.version.max><!-- exclusive ver. allowed for packages dependency rpm & deb-->
         <osgi.version>6.0.0</osgi.version>
         <slf4j-api.version>1.7.32</slf4j-api.version>
         <protobufVersion>3.19.4</protobufVersion>
@@ -224,7 +225,7 @@
                 <version>3.0.0-M5</version>
                 <configuration>
                     <excludes>
-                        <exclude>**/*IT.java</exclude>
+                        <exclude>**/*It.java</exclude>
                     </excludes>
                 </configuration>
                 <executions>
@@ -239,7 +240,7 @@
                                 <exclude>none</exclude>
                             </excludes>
                             <includes>
-                                <include>**/*IT.java</include>
+                                <include>**/*It.java</include>
                             </includes>
                         </configuration>
                     </execution>
@@ -309,10 +310,18 @@
 
     <profiles>
         <profile>
-            <id>release</id>
+            <id>snapshot</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <properties>
-                <disable.checkstyle>true</disable.checkstyle>
+                <package.version>${project.version}</package.version>
+                <package.buildNumber>${maven.build.timestamp}</package.buildNumber><!-- rpm > release  deb > bundle in version -->
+                <maven.build.timestamp.format>yyyyMMdd.HHmm</maven.build.timestamp.format>
             </properties>
+        </profile>
+        <profile>
+            <id>release</id>
             <build>
                 <plugins>
                     <plugin>
@@ -331,6 +340,12 @@
                     </plugin>
                 </plugins>
             </build>
+            <properties>
+                <disable.checkstyle>true</disable.checkstyle>
+                <package.version>${project.version}</package.version>
+                <!-- for release expect to pass in command line -DbuildNumber=XXX rpm > release  deb > bundle in version -->
+                <package.buildNumber>${buildNumber}</package.buildNumber>
+            </properties>
         </profile>
         <profile>
             <id>checkstyle</id>

@@ -22,7 +22,8 @@ workflows:
   build-deploy:
     jobs:
       - build:
-          context: "OpenNMS Build"
+          context:
+            - OpenNMS Build
       - tests:
           requires:
             - build
@@ -89,7 +90,17 @@ jobs:
           name: Compile source without tests
           command: |
             mvn -version
-            mvn -DskipITs=true -DskipTests=true -Dbuild.packages clean install
+            if [[ ! << pipeline.git.branch >> =~ ^release.* ]]; then
+              MVN_OPTIONS="-Psnapshot"
+            else
+              MVN_OPTIONS="-Prelease"
+              BUILD_NUMBER=$(echo '<< pipeline.git.branch >>' | sed -e 's/release-[^-]*-*//')
+              if [[ -z "$BUILD_NUMBER" ]]; then
+                BUILD_NUMBER=1
+              fi
+              MVN_OPTIONS="${MVN_OPTIONS} -DbuildNumber=${BUILD_NUMBER}"
+            fi
+            mvn $MVN_OPTIONS -DskipITs=true -DskipTests=true -Dbuild.packages clean install
       - save_cache:
           paths:
             - ~/.m2
@@ -174,7 +185,17 @@ jobs:
       - run:
           name: Build Debian packages
           command: |
-            mvn install --projects org.opennms.plugins.cloud.assembly:org.opennms.plugins.cloud.assembly.opennms.deb,org.opennms.plugins.cloud.assembly:org.opennms.plugins.cloud.assembly.sentinel.deb --also-make -DskipTests=true -Dbuild.packages
+            if [[ ! << pipeline.git.branch >> =~ ^release.* ]]; then
+              MVN_OPTIONS="-Psnapshot"
+            else
+              MVN_OPTIONS="-Prelease"
+              BUILD_NUMBER=$(echo '<< pipeline.git.branch >>' | sed -e 's/release-[^-]*-*//')
+              if [[ -z "$BUILD_NUMBER" ]]; then
+                BUILD_NUMBER=1
+              fi
+              MVN_OPTIONS="${MVN_OPTIONS} -DbuildNumber=${BUILD_NUMBER}"
+            fi
+            mvn install ${MVN_OPTIONS} --projects org.opennms.plugins.cloud.assembly:org.opennms.plugins.cloud.assembly.opennms.deb,org.opennms.plugins.cloud.assembly:org.opennms.plugins.cloud.assembly.sentinel.deb --also-make -DskipTests=true -Dbuild.packages
 
       - run:
           name: Remove old artifacts to keep workspace size down
