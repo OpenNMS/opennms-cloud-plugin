@@ -14,7 +14,7 @@ else
       REPO="common-testing"
       ;;
     release-*)
-      REPO="stable"
+      REPO="common"
       ;;
     *)
       echo "This branch is not eligible for deployment: ${CIRCLE_BRANCH}"
