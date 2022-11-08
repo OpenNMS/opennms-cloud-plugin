@@ -42,9 +42,11 @@
                         <defaultUsername>root</defaultUsername>
                         <defaultGroupname>wheel</defaultGroupname>
                         <version>${package.version}</version>
+                        <release>${package.buildNumber}</release>
                         <requires>
                             <require>opennms-core</require>
                             <require>opennms-plugin-api &gt;= ${opennms.api.version}</require>
+                            <require>opennms-plugin-api &lt; ${opennms.api.version.max}</require>
                         </requires>
                         <mappings>
                             <mapping>

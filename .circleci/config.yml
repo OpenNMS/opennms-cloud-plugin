@@ -93,11 +93,15 @@ jobs:
           command: |
             mvn -version
             if [[ ! << pipeline.git.branch >> =~ ^release.* ]]; then
-              PROFILE="-Psnapshot"
+              MVN_OPTIONS="-Psnapshot"
             else
-              PROFILE="-Prelease"
+              MVN_OPTIONS="-Prelease"
+              BUILD_NUMBER=$(echo '<< pipeline.git.branch >>' | sed -e 's/release-[^-]*-//')
+              if [[ ! -z "$BUILD_NUMBER" ]]; then
+                MVN_OPTIONS="${MVN_OPTIONS} -DbuildNumber=${BUILD_NUMBER}"
+              fi
             fi
-            mvn $PROFILE -DskipITs=true -DskipTests=true -Dbuild.packages clean install
+            mvn $MVN_OPTIONS -DskipITs=true -DskipTests=true -Dbuild.packages clean install
       - save_cache:
           paths:
             - ~/.m2
@@ -183,11 +187,15 @@ jobs:
           name: Build Debian packages
           command: |
             if [[ ! << pipeline.git.branch >> =~ ^release.* ]]; then
-              PROFILE="-Psnapshot"
+              MVN_OPTIONS="-Psnapshot"
             else
-              PROFILE="-Prelease"
+              MVN_OPTIONS="-Prelease"
+              BUILD_NUMBER=$(echo '<< pipeline.git.branch >>' | sed -e 's/release-[^-]*-//')
+              if [[ ! -z "$BUILD_NUMBER" ]]; then
+                MVN_OPTIONS="${MVN_OPTIONS} -DbuildNumber=${BUILD_NUMBER}"
+              fi
             fi
-            mvn install $PROFILE --projects org.opennms.plugins.cloud.assembly:org.opennms.plugins.cloud.assembly.opennms.deb,org.opennms.plugins.cloud.assembly:org.opennms.plugins.cloud.assembly.sentinel.deb --also-make -DskipTests=true -Dbuild.packages
+            mvn install ${MVN_OPTIONS} --projects org.opennms.plugins.cloud.assembly:org.opennms.plugins.cloud.assembly.opennms.deb,org.opennms.plugins.cloud.assembly:org.opennms.plugins.cloud.assembly.sentinel.deb --also-make -DskipTests=true -Dbuild.packages
 
       - run:
           name: Remove old artifacts to keep workspace size down

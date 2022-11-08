@@ -29,13 +29,14 @@
                         <targetDir>${project.build.directory}</targetDir>
                         <packageName>opennms-plugin-cloud</packageName><!-- align with other plugin name -->
                         <packageVersion>${package.version}</packageVersion>
-                        <packageRevision>1</packageRevision>
+                        <packageRevision>${package.buildNumber}</packageRevision>
                         <packageSection>contrib/net</packageSection>
                         <packageTitle>OpenNMS :: Plugins :: Cloud Plugin</packageTitle>
                         <packageDescription>opennms-plugin-cloud</packageDescription>
                         <packageDependencies>
                             <packageDependency>opennms-server</packageDependency>
                             <packageDependency>opennms-plugin-api (&gt;= ${opennms.api.version})</packageDependency>
+                            <packageDependency>opennms-plugin-api (&lt; ${opennms.api.version.max})</packageDependency>
                         </packageDependencies>
                         <maintainerName>Freddy</maintainerName>
                         <maintainerEmail>fchu@opennms.com</maintainerEmail>

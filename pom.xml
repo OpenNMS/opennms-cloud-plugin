@@ -46,7 +46,8 @@
         <karaf.version>4.3.6</karaf.version>
         <log4j.version>2.18.0</log4j.version>
         <mockito.version>2.18.0</mockito.version>
-        <opennms.api.version>1.1.0</opennms.api.version>
+        <opennms.api.version>1.2.0</opennms.api.version>
+        <opennms.api.version.max>2.0.0</opennms.api.version.max><!-- exclusive ver. allowed for packages dependency rpm & deb-->
         <osgi.version>6.0.0</osgi.version>
         <slf4j-api.version>1.7.32</slf4j-api.version>
         <protobufVersion>3.19.4</protobufVersion>
@@ -314,7 +315,8 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
-                <package.version>${project.version}.${maven.build.timestamp}</package.version>
+                <package.version>${project.version}</package.version>
+                <package.buildNumber>${maven.build.timestamp}</package.buildNumber><!-- rpm > release  deb > revision -->
                 <maven.build.timestamp.format>yyyyMMdd.HHmm</maven.build.timestamp.format>
             </properties>
         </profile>
@@ -343,6 +345,7 @@
             </build>
             <properties>
                 <package.version>${project.version}</package.version>
+                <package.buildNumber>${buildNumber}</package.buildNumber><!-- rpm > release  deb > revision -->
             </properties>
         </profile>
         <profile>
