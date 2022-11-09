@@ -1,1 +1,1 @@
-opennms-plugin-cloud-core wait-for-kar=opennms-cloud-plugin
+opennms-plugin-cloud-core wait-for-kar=opennms-plugin-cloud
