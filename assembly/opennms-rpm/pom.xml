@@ -67,6 +67,15 @@
                                     </source>
                                 </sources>
                             </mapping>
+                            <mapping>
+                                <directory>/opt/opennms/etc/featuresBoot.d</directory>
+                                <directoryIncluded>false</directoryIncluded>
+                                <sources>
+                                    <source>
+                                        <location>../common-resources/etc/featuresBoot.d/plugin-cloud.boot</location>
+                                    </source>
+                                </sources>
+                            </mapping>
                         </mappings>
                         <postinstallScriptlet>
                             <scriptFile>../common-resources/scripts/postinst.opennms.rpm.sh</scriptFile>
