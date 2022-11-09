@@ -28,14 +28,20 @@
 
 package org.opennms.plugins.cloud.ittest;
 
+import static java.lang.String.format;
 import static org.opennms.plugins.cloud.ittest.MockCloudMain.MOCK_CLOUD_HOST;
 import static org.opennms.plugins.cloud.ittest.MockCloudMain.MOCK_CLOUD_PORT;
 import static org.opennms.plugins.cloud.testserver.FileUtil.classpathFileToString;
 
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.time.Duration;
 
+import org.apache.maven.model.Model;
+import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -63,10 +69,16 @@ public class EndToEndIt {
     private KarafShell opennmsShell;
     private KarafShell sentinelShell;
 
+    private static String pluginVersion;
+
     @BeforeClass
-    public static void beforeAll() {
+    public static void beforeAll() throws IOException, XmlPullParserException {
+        MavenXpp3Reader mavenXpp3Reader = new MavenXpp3Reader();
+        Model model = mavenXpp3Reader.read(new FileReader("pom.xml"));
+        pluginVersion = model.getParent().getVersion();
         environment = new DockerComposeContainer<>(new File("src/test/resources/docker-compose.yaml"))
                 .withEnv("USER_HOME", System.getProperty("user.home"))
+                .withEnv("PLUGIN_VERSION", pluginVersion)
                 .withTailChildContainers(true)
                 .withExposedService("database_1", 5432, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(15)))
                 .withLogConsumer("database_1", new Slf4jLogConsumer(LOG))
@@ -107,7 +119,7 @@ public class EndToEndIt {
     private void installAndStartPluginInOpenNms() {
 
         // install plugin for core
-        opennmsShell.runCommand("kar:install --no-start mvn:org.opennms.plugins.cloud.assembly/org.opennms.plugins.cloud.assembly.kar/1.1.0-SNAPSHOT/kar");
+        opennmsShell.runCommand(format("kar:install --no-start mvn:org.opennms.plugins.cloud.assembly/org.opennms.plugins.cloud.assembly.kar/%s/kar", pluginVersion));
         opennmsShell.runCommand("feature:install opennms-plugin-cloud-core");
 
         // check if plugin has been started, if so we assume the installation worked well.
@@ -125,7 +137,7 @@ public class EndToEndIt {
     private void installAndStartPluginInSentinel() {
 
         // install plugin for core
-        sentinelShell.runCommand("kar:install --no-start mvn:org.opennms.plugins.cloud.assembly/org.opennms.plugins.cloud.assembly.kar/1.1.0-SNAPSHOT/kar");
+        sentinelShell.runCommand(format("kar:install --no-start mvn:org.opennms.plugins.cloud.assembly/org.opennms.plugins.cloud.assembly.kar/%s/kar", pluginVersion));
         sentinelShell.runCommand("feature:install opennms-plugin-cloud-sentinel");
 
         // check if plugin has been started, if so we assume the installation worked well.
@@ -142,7 +154,7 @@ public class EndToEndIt {
     }
 
     private String createConfig() {
-        return String.format(
+        return format(
                 "config:edit org.opennms.plugins.cloud%n"
                         + "property-set pas.tls.host %s%n"
                         + "property-set pas.tls.port %s%n"
@@ -162,7 +174,7 @@ public class EndToEndIt {
 
     private static ContainerState getContainer(final String container) {
         return environment.getContainerByServiceName(container)
-                .orElseThrow(() -> new IllegalArgumentException(String.format("container %s not found", container)));
+                .orElseThrow(() -> new IllegalArgumentException(format("container %s not found", container)));
     }
 
     private static void printContainerStartup(String container) {
