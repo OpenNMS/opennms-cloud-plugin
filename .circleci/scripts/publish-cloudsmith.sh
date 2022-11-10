@@ -10,9 +10,6 @@ if [ -n "${CIRCLE_TAG}" ]; then
   REPO="stable"
 else
   case "${CIRCLE_BRANCH}" in
-    *DC-419*)
-      REPO="common-testing"
-      ;;
     main)
       REPO="common-testing"
       ;;
