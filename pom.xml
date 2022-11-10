@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>cloud-parent</artifactId>
     <groupId>org.opennms.plugins.cloud</groupId>
-    <version>1.0.2</version>
+    <version>1.0.3-SNAPSHOT</version>
     <name>OpenNMS :: Plugins :: Cloud Plugin :: Parent</name>
     <url>https://github.com/OpenNMS/opennms-cloud-plugin</url>
     <description>Cloud Plugin for OpenNMS</description>
