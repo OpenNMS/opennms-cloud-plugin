@@ -9,8 +9,12 @@ REPO=""
 if [ -n "${CIRCLE_TAG}" ]; then
   REPO="stable"
 else
+  # only put release-1.0.0 into common, the release-1.x will still in common-testing
   case "${CIRCLE_BRANCH}" in
     main)
+      REPO="common-testing"
+      ;;
+    release-*x)
       REPO="common-testing"
       ;;
     release-*)

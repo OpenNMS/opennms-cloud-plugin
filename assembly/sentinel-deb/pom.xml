@@ -35,7 +35,7 @@
                         <packageDependencies> 
                             <packageDependency>opennms-sentinel</packageDependency>
                             <packageDependency>opennms-plugin-api (&gt;= ${opennms.api.version})</packageDependency>
-                            <packageDependency>opennms-plugin-api (&lt; ${opennms.api.version.max})</packageDependency>
+                            <packageDependency>opennms-plugin-api (&lt;&lt; ${opennms.api.version.max})</packageDependency>
                         </packageDependencies>
                         <maintainerName>Freddy</maintainerName>
                         <maintainerEmail>fchu@opennms.com</maintainerEmail>
