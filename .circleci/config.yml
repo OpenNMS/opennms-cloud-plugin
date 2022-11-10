@@ -90,7 +90,8 @@ jobs:
           name: Compile source without tests
           command: |
             mvn -version
-            if [[ ! << pipeline.git.branch >> =~ ^release.* ]]; then
+            # avoid release-[0-9].x go into release
+            if [[ ! << pipeline.git.branch >> =~ ^release-[0-9.]*$ ]]; then
               MVN_OPTIONS="-Psnapshot"
             else
               MVN_OPTIONS="-Prelease"
@@ -185,7 +186,8 @@ jobs:
       - run:
           name: Build Debian packages
           command: |
-            if [[ ! << pipeline.git.branch >> =~ ^release.* ]]; then
+            # avoid release-[0-9].x go into release
+            if [[ ! << pipeline.git.branch >> =~ ^release-[0-9.]*$ ]]; then
               MVN_OPTIONS="-Psnapshot"
             else
               MVN_OPTIONS="-Prelease"
