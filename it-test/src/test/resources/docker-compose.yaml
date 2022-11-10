@@ -28,10 +28,10 @@ services:
     image: "opennms/deploy-base:jre-2.0.6.b165"
     hostname: cloudMock
     entrypoint: /bin/bash
-    command: ["-c", "java -cp /usr/share/opennms/.m2/repository/org/opennms/plugins/cloud/it-test/1.0.2-SNAPSHOT/it-test-1.0.2-SNAPSHOT-jar-with-dependencies.jar org.opennms.plugins.cloud.ittest.MockCloudMain"]
+    command: ["-c", "java -cp /usr/share/opennms/.m2/repository/org/opennms/plugins/cloud/it-test/1.0.2/it-test-1.0.2-jar-with-dependencies.jar org.opennms.plugins.cloud.ittest.MockCloudMain"]
     volumes:
       # the path is a bit ugly but the jar is not yet in the local mvn repo.
-      - ../../../target:/usr/share/opennms/.m2/repository/org/opennms/plugins/cloud/it-test/1.0.2-SNAPSHOT:ro
+      - ../../../target:/usr/share/opennms/.m2/repository/org/opennms/plugins/cloud/it-test/1.0.2:ro
     ports:
       - "9003:9003/tcp" # mock server port
 
@@ -47,7 +47,7 @@ services:
       TZ: ${TIMEZONE:-America/New_York}
     volumes:
       # we overlay folder with kar into maven repo. It contains the plugin jars and dependencies:
-      - ../../../../assembly/kar/target/opennms-plugin-cloud.kar:/usr/share/opennms/.m2/repository/org/opennms/plugins/cloud/assembly/org.opennms.plugins.cloud.assembly.kar/1.0.2-SNAPSHOT/org.opennms.plugins.cloud.assembly.kar-1.0.2-SNAPSHOT.kar:ro
+      - ../../../../assembly/kar/target/opennms-plugin-cloud.kar:/usr/share/opennms/.m2/repository/org/opennms/plugins/cloud/assembly/org.opennms.plugins.cloud.assembly.kar/1.0.2/org.opennms.plugins.cloud.assembly.kar-1.0.2.kar:ro
     command: ["-s"]
     ports:
       - "8101:8101/tcp" # ssh port for karaf console
@@ -70,7 +70,7 @@ services:
       JAVA_MAX_MEM: 2048M
     volumes:
       # we overlay folder with kar into system repo. It contains the plugin jars and dependencies:
-      - ../../../../assembly/kar/target/opennms-plugin-cloud.kar:/usr/share/sentinel/.m2/repository/org/opennms/plugins/cloud/assembly/org.opennms.plugins.cloud.assembly.kar/1.0.2-SNAPSHOT/org.opennms.plugins.cloud.assembly.kar-1.0.2-SNAPSHOT.kar:ro
+      - ../../../../assembly/kar/target/opennms-plugin-cloud.kar:/usr/share/sentinel/.m2/repository/org/opennms/plugins/cloud/assembly/org.opennms.plugins.cloud.assembly.kar/1.0.2/org.opennms.plugins.cloud.assembly.kar-1.0.2.kar:ro
     command: ["-f"]
     ports:
       - "8301:8301/tcp" # ssh port for karaf console
