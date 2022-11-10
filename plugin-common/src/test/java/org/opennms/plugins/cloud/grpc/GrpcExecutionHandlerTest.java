@@ -29,7 +29,12 @@
 package org.opennms.plugins.cloud.grpc;
 
 import static org.junit.Assert.assertThrows;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -37,29 +42,40 @@ import org.junit.function.ThrowingRunnable;
 import org.opennms.integration.api.v1.timeseries.StorageException;
 import org.opennms.plugins.cloud.grpc.GrpcExecutionHandler.GrpcCall;
 import org.opennms.tsaas.TimeseriesGrpc;
+import org.opennms.tsaas.Tsaas;
 
+import com.google.protobuf.Empty;
+
+import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 
-public class GrpcExceptionHandlerTest {
+public class GrpcExecutionHandlerTest {
+
+    private final static MethodDescriptor<Tsaas.Samples, Empty> METHOD = TimeseriesGrpc.getStoreMethod();
 
     private GrpcExecutionHandler grpcHandler;
+    private CloudLogService cloudLogService;
 
     @Before
     public void setUp() {
-        this.grpcHandler = new GrpcExecutionHandler(mock(CloudLogService.class));
+        this.cloudLogService = mock(CloudLogService.class);
+        this.grpcHandler = new GrpcExecutionHandler(cloudLogService);
     }
 
     @Test
     public void shouldSwallowNonRecoverableExceptions() throws StorageException {
+
         // no exception should be thrown:
         grpcHandler.executeRpcCallVoid(
                 GrpcCall.builder()
                         .callToExecute(() -> {
                             throw new StatusRuntimeException(Status.UNIMPLEMENTED);
                         })
-                        .methodDescriptor(TimeseriesGrpc.getStoreMethod())
+                        .methodDescriptor(METHOD)
                         .build());
+        verify(cloudLogService, times(1)).log(anyLong(), eq(METHOD), eq(Status.UNIMPLEMENTED.getCode()));
+        clearInvocations(cloudLogService);
 
         grpcHandler.executeRpcCall(GrpcExecutionHandler.GrpcCall.builder()
                 .callToExecute(() -> {
@@ -67,8 +83,9 @@ public class GrpcExceptionHandlerTest {
                 })
                 .mapper((s) -> s)
                 .defaultFunction(() -> "")
-                .methodDescriptor(TimeseriesGrpc.getStoreMethod())
+                .methodDescriptor(METHOD)
                 .build());
+        verify(cloudLogService, times(1)).log(anyLong(), eq(METHOD), eq(Status.UNIMPLEMENTED.getCode()));
     }
 
     @Test
@@ -82,6 +99,8 @@ public class GrpcExceptionHandlerTest {
                                 })
                                 .methodDescriptor(TimeseriesGrpc.getStoreMethod()).build());
         assertThrows(StorageException.class, run);
+        verify(cloudLogService, times(1)).log(anyLong(), eq(METHOD), eq(Status.UNAVAILABLE.getCode()));
+        clearInvocations(cloudLogService);
 
         run = () -> grpcHandler.executeRpcCall(GrpcExecutionHandler.GrpcCall.builder()
                 .callToExecute(() -> {
@@ -92,6 +111,7 @@ public class GrpcExceptionHandlerTest {
                 .methodDescriptor(TimeseriesGrpc.getStoreMethod())
                 .build());
         assertThrows(StorageException.class, run);
+        verify(cloudLogService, times(1)).log(anyLong(), eq(METHOD), eq(Status.UNAVAILABLE.getCode()));
     }
 
 }

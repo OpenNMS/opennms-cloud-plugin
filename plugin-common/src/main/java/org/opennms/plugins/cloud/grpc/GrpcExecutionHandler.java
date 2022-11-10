@@ -99,7 +99,7 @@ public class GrpcExecutionHandler {
                 return callToExecute.getDefaultFunction().get();
             }
         } finally {
-            cloudLog.log(startTime, System.currentTimeMillis(), callToExecute.getMethodDescriptor(), status);
+            cloudLog.log(startTime, callToExecute.getMethodDescriptor(), status);
         }
     }
 

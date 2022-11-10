@@ -38,10 +38,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class CloudLogService {
 
-    public void log(long startTime, long endTime, MethodDescriptor methodInvoked, Code returnCode) {
+    public void log(long startTime, MethodDescriptor methodInvoked, Code returnCode) {
         // TODO:  in DC-366: Plugin: Push latency data to cloud gateway
         log.debug("received cloud log with startTime={}, endTime={}, methodInvoked={}, returnCode={}",
-                startTime, endTime, methodInvoked.getFullMethodName(), returnCode);
+                startTime, System.currentTimeMillis(), methodInvoked.getFullMethodName(), returnCode);
     }
 
 }
