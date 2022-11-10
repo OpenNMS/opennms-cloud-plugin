@@ -2,7 +2,7 @@
     <parent>
         <groupId>org.opennms.plugins.cloud</groupId>
         <artifactId>assembly</artifactId>
-        <version>1.0.1</version>
+        <version>1.0.2-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.opennms.plugins.cloud.assembly</groupId>
@@ -64,6 +64,15 @@
                                 <sources>
                                     <source>
                                         <location>../common-resources/etc/examples/opennms.properties.d/timeseries.properties</location>
+                                    </source>
+                                </sources>
+                            </mapping>
+                            <mapping>
+                                <directory>/opt/opennms/etc/featuresBoot.d</directory>
+                                <directoryIncluded>false</directoryIncluded>
+                                <sources>
+                                    <source>
+                                        <location>../common-resources/etc/featuresBoot.d/plugin-cloud.boot</location>
                                     </source>
                                 </sources>
                             </mapping>

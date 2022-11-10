@@ -2,7 +2,7 @@
     <parent>
         <groupId>org.opennms.plugins.cloud</groupId>
         <artifactId>assembly</artifactId>
-        <version>1.0.1</version>
+        <version>1.0.2-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.opennms.plugins.cloud.assembly</groupId>
@@ -35,7 +35,7 @@
                         <packageDependencies> 
                             <packageDependency>opennms-sentinel</packageDependency>
                             <packageDependency>opennms-plugin-api (&gt;= ${opennms.api.version})</packageDependency>
-                            <packageDependency>opennms-plugin-api (&lt; ${opennms.api.version.max})</packageDependency>
+                            <packageDependency>opennms-plugin-api (&lt;&lt; ${opennms.api.version.max})</packageDependency>
                         </packageDependencies>
                         <maintainerName>Freddy</maintainerName>
                         <maintainerEmail>fchu@opennms.com</maintainerEmail>
