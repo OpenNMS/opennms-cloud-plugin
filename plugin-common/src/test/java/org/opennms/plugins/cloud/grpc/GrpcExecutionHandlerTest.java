@@ -52,7 +52,7 @@ import io.grpc.StatusRuntimeException;
 
 public class GrpcExecutionHandlerTest {
 
-    private final static MethodDescriptor<Tsaas.Samples, Empty> METHOD = TimeseriesGrpc.getStoreMethod();
+    private static final MethodDescriptor<Tsaas.Samples, Empty> METHOD = TimeseriesGrpc.getStoreMethod();
 
     private GrpcExecutionHandler grpcHandler;
     private CloudLogService cloudLogService;
