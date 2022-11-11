@@ -52,6 +52,8 @@ import org.opennms.integration.api.v1.timeseries.StorageException;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableMetric;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableSample;
+import org.opennms.plugins.cloud.grpc.CloudLogService;
+import org.opennms.plugins.cloud.grpc.GrpcExecutionHandler;
 import org.opennms.plugins.cloud.testserver.MockCloud;
 
 public class TsaasStorageNetworkProblemTest {
@@ -63,7 +65,8 @@ public class TsaasStorageNetworkProblemTest {
 
     @Test
     public void shouldRecoverAfterServerFailure() throws StorageException, InterruptedException, IOException {
-        TsaasStorage plugin = new TsaasStorage(TsaasConfig.builder().batchSize(1).build());
+        GrpcExecutionHandler grpcHandler = new GrpcExecutionHandler(mock(CloudLogService.class));
+        TsaasStorage plugin = new TsaasStorage(TsaasConfig.builder().batchSize(1).build(), grpcHandler);
         plugin.initGrpc(cloud.getClientConfigWithToken());
 
         plugin.store(createSamples());
@@ -87,7 +90,8 @@ public class TsaasStorageNetworkProblemTest {
 
     @Test
     public void shouldRecoverAfterServerException() throws StorageException, InterruptedException {
-        TsaasStorage plugin = new TsaasStorage(TsaasConfig.builder().batchSize(1).build());
+        GrpcExecutionHandler grpcHandler = new GrpcExecutionHandler(mock(CloudLogService.class));
+        TsaasStorage plugin = new TsaasStorage(TsaasConfig.builder().batchSize(1).build(), grpcHandler);
         plugin.initGrpc(cloud.getClientConfigWithToken());
 
         doThrow(new StorageException("hups")).when(cloud.getServerStorage()).store(any());

@@ -26,33 +26,25 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.plugins.cloud.srv.tsaas.grpc.comp;
+package org.opennms.plugins.cloud.grpc.comp;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import io.grpc.CompressorRegistry;
+import io.grpc.DecompressorRegistry;
 
-import com.github.luben.zstd.ZstdInputStream;
-import com.github.luben.zstd.ZstdOutputStream;
+public class ZstdCodecRegisterUtil {
 
-import io.grpc.Codec;
-
-public class ZstdGrpcCodec implements Codec {
-
-    public static final String ZSTD = "zstd";
-
-    @Override
-    public String getMessageEncoding() {
-        return ZSTD;
+    private ZstdCodecRegisterUtil() {
+        // Utility class
     }
 
-    @Override
-    public InputStream decompress(final InputStream inputStream) throws IOException {
-        return new ZstdInputStream(inputStream);
+    public static DecompressorRegistry createDecompressorRegistry() {
+        return DecompressorRegistry.getDefaultInstance().with(new ZstdGrpcCodec(), true);
     }
 
-    @Override
-    public OutputStream compress(final OutputStream outputStream) throws IOException {
-        return new ZstdOutputStream(outputStream);
+    public static CompressorRegistry createCompressorRegistry() {
+        final CompressorRegistry  registry = CompressorRegistry.getDefaultInstance();
+        registry.register(new ZstdGrpcCodec());
+        return registry;
     }
+
 }

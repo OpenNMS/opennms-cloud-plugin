@@ -38,7 +38,7 @@ import javax.annotation.PreDestroy;
 
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
-import org.opennms.plugins.cloud.srv.tsaas.grpc.comp.ZstdCodecRegisterUtil;
+import org.opennms.plugins.cloud.grpc.comp.ZstdCodecRegisterUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

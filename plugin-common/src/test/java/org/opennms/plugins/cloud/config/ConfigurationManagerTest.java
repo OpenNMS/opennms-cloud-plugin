@@ -56,7 +56,9 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.opennms.integration.api.v1.runtime.RuntimeInfo;
 import org.opennms.plugins.cloud.config.ConfigStore.Key;
+import org.opennms.plugins.cloud.grpc.CloudLogService;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
+import org.opennms.plugins.cloud.grpc.GrpcExecutionHandler;
 import org.opennms.plugins.cloud.srv.GrpcService;
 import org.opennms.plugins.cloud.srv.RegistrationManager;
 import org.opennms.plugins.cloud.srv.tsaas.TsaasConfig;
@@ -87,7 +89,8 @@ public class ConfigurationManagerTest {
 
     @Test
     public void shouldGetCloudConfig() {
-        TsaasStorage grpc = spy(new TsaasStorage(new TsaasConfig(1, 1)));
+        GrpcExecutionHandler grpcHandler = new GrpcExecutionHandler(mock(CloudLogService.class));
+        TsaasStorage grpc = spy(new TsaasStorage(new TsaasConfig(1, 1), grpcHandler));
         ConfigurationManager cm = new ConfigurationManager(config, clientConfig, clientConfig, mock(RegistrationManager.class),
                 info,
                 Collections.singletonList(grpc));
@@ -163,12 +166,15 @@ public class ConfigurationManagerTest {
         assertEquals(FAILED, cm.getStatus()); // make sure the status is correct
     }
 
-    /** We ecpect the ConfigurationManager to start configuration() immediately after it was created if the status is
-     * already AUTHENTCATED or CONFIGURED. */
+    /**
+     * We expect the ConfigurationManager to start configuration() immediately after it was created if the status is
+     * already AUTHENTCATED or CONFIGURED.
+     */
     @Test
     public void shouldCallConfigureIfAuthenticatedOrConfigured() {
         // test prep: initialize already
-        TsaasStorage grpc = spy(new TsaasStorage(new TsaasConfig(1, 1)));
+        GrpcExecutionHandler grpcHandler = new GrpcExecutionHandler(mock(CloudLogService.class));
+        TsaasStorage grpc = spy(new TsaasStorage(new TsaasConfig(1, 1), grpcHandler));
         ConfigurationManager cm = new ConfigurationManager(config, clientConfig, clientConfig, mock(RegistrationManager.class),
                 info,
                 Collections.singletonList(grpc));

@@ -38,7 +38,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.opennms.integration.api.v1.timeseries.AbstractStorageIntegrationTest;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
+import org.opennms.plugins.cloud.grpc.CloudLogService;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
+import org.opennms.plugins.cloud.grpc.GrpcExecutionHandler;
 import org.opennms.plugins.cloud.testserver.MockCloud;
 import org.opennms.tsaas.Tsaas;
 
@@ -56,7 +58,8 @@ public class TsaasStorageTest extends AbstractStorageIntegrationTest {
         TsaasConfig tsaasConfig = TsaasConfig.builder()
                 .batchSize(1) // set to 1 so that samples are not held back in the queue
                 .build();
-        storage = new TsaasStorage(tsaasConfig);
+        GrpcExecutionHandler grpcHandler = new GrpcExecutionHandler(new CloudLogService());
+        storage = new TsaasStorage(tsaasConfig, grpcHandler);
         storage.initGrpc(clientConfig);
         super.setUp();
     }

@@ -87,6 +87,11 @@
         <argument ref="runtimeInfo"/>
     </bean>
 
+    <bean id="logService" class="org.opennms.plugins.cloud.grpc.CloudLogService" />
+    <bean id="grpcHandler" class="org.opennms.plugins.cloud.grpc.GrpcExecutionHandler" >
+        <argument ref="logService" />
+    </bean>
+
     <!-- HEALTH -->
     <bean id="cloudHealthCheck" class="org.opennms.plugins.cloud.srv.tsaas.CloudHealthCheck">
         <argument ref="cloudConfigManager"/>
@@ -112,6 +117,7 @@
     <!-- SERVICE: TSAAS -->
     <bean id="timeSeriesStorage" class="org.opennms.plugins.cloud.srv.tsaas.TsaasStorage" destroy-method="destroy">
         <argument ref="tsaasConfig"/>
+        <argument ref="grpcHandler" />
     </bean>
     <service ref="timeSeriesStorage" interface="org.opennms.plugins.cloud.srv.tsaas.TsaasStorage" />
 </blueprint>
