@@ -107,7 +107,7 @@ public class EndToEndIt {
     private void installAndStartPluginInOpenNms() {
 
         // install plugin for core
-        opennmsShell.runCommand("kar:install --no-start mvn:org.opennms.plugins.cloud.assembly/org.opennms.plugins.cloud.assembly.kar/1.0.3-SNAPSHOT/kar");
+        opennmsShell.runCommand("kar:install --no-start mvn:org.opennms.plugins.cloud.assembly/org.opennms.plugins.cloud.assembly.kar/1.0.3/kar");
         opennmsShell.runCommand("feature:install opennms-plugin-cloud-core");
 
         // check if plugin has been started, if so we assume the installation worked well.
@@ -125,7 +125,7 @@ public class EndToEndIt {
     private void installAndStartPluginInSentinel() {
 
         // install plugin for core
-        sentinelShell.runCommand("kar:install --no-start mvn:org.opennms.plugins.cloud.assembly/org.opennms.plugins.cloud.assembly.kar/1.0.3-SNAPSHOT/kar");
+        sentinelShell.runCommand("kar:install --no-start mvn:org.opennms.plugins.cloud.assembly/org.opennms.plugins.cloud.assembly.kar/1.0.3/kar");
         sentinelShell.runCommand("feature:install opennms-plugin-cloud-sentinel");
 
         // check if plugin has been started, if so we assume the installation worked well.
