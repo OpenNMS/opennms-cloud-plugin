@@ -60,6 +60,11 @@
         </sonar.coverage.exclusions>
         <jacocoVersion>0.8.8</jacocoVersion>
         <osgiJaxRsVersion>1.1.0.ONMS</osgiJaxRsVersion>
+
+        <!-- used in RPM/Debian packaging, overridden by the release profile -->
+        <package.version>${project.version}</package.version>
+        <package.buildNumber>${maven.build.timestamp}</package.buildNumber><!-- rpm > release  deb > bundle in version -->
+        <maven.build.timestamp.format>yyyyMMdd.HHmm</maven.build.timestamp.format>
     </properties>
 
     <dependencyManagement>
@@ -309,17 +314,6 @@
     </distributionManagement>
 
     <profiles>
-        <profile>
-            <id>snapshot</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties>
-                <package.version>${project.version}</package.version>
-                <package.buildNumber>${maven.build.timestamp}</package.buildNumber><!-- rpm > release  deb > bundle in version -->
-                <maven.build.timestamp.format>yyyyMMdd.HHmm</maven.build.timestamp.format>
-            </properties>
-        </profile>
         <profile>
             <id>release</id>
             <build>

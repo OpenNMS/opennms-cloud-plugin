@@ -4,14 +4,16 @@ OPENNMS_HOME="/usr/share/opennms"
 
 if [ -f "$OPENNMS_HOME/etc/opennms.conf" ]; then
   . "$OPENNMS_HOME/etc/opennms.conf"
-else
-  RUNAS="opennms"
 fi
 
-chown -R $RUNAS "$OPENNMS_HOME/etc/examples/opennms.properties.d"
+[ -z "$RUNAS" ] && RUNAS="opennms"
+
+chown -R "$RUNAS" \
+  "$OPENNMS_HOME/etc/examples/opennms.properties.d" \
+  "$OPENNMS_HOME/etc/featuresBoot.d"
 
 if [ -f "$OPENNMS_HOME/etc/featuresBoot.d/plugin-cloud.boot" ]; then
-  chown -R $RUNAS "$OPENNMS_HOME/etc/featuresBoot.d/plugin-cloud.boot"
+  chmod 664 "$OPENNMS_HOME/etc/featuresBoot.d/plugin-cloud.boot"
 fi
 
 echo "Please make sure org.opennms.timeseries.strategy=integration"
