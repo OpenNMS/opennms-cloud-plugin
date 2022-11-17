@@ -56,10 +56,10 @@ workflows:
               only:
                 - main
                 - /release-.*/
-      - deploy-packages:
-          context: "OpenNMS Build"
+                - /.*DC-382.*/
+      - test-packages:
           requires:
-            - tests
+            - build
             - build-debian
           filters:
             tags:
@@ -69,7 +69,22 @@ workflows:
               only:
                 - main
                 - /release-.*/
-
+                - /.*DC-382.*/
+      - deploy-packages:
+          context: "OpenNMS Build"
+          requires:
+            - tests
+            - build-debian
+            - test-packages
+          filters:
+            tags:
+              only:
+                - /release-.*/
+            branches:
+              only:
+                - main
+                - /release-.*/
+                - /.*DC-382.*/
 jobs:
   build:
     executor: build-executor
@@ -228,6 +243,35 @@ jobs:
           root: ~/
           paths:
             - project/assembly/
+
+  test-packages:
+    executor: system-test-executor
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install openssl
+          command: |
+            sudo apt-get install openssl
+      - run:
+          name: Force openjdk11
+          command: |
+            sudo update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
+      - run:
+          name: Run unit and integration tests
+          command: |
+            cd it-test
+            mvn -DskipITs=false -DskipTests=false -Dtest=InstallPackageTest test org.jacoco:jacoco-maven-plugin:prepare-agent install integration-test org.jacoco:jacoco-maven-plugin:report sonar:sonar -Dsonar.projectKey=OpenNMS_opennms-cloud-plugin
+      - run:
+          name: Save test results
+          command: |
+            mkdir -p ~/junit/
+            find . -type f -regex ".*/target/failsafe-reports/.*xml" -exec cp {} ~/junit/ \;
+            find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/junit/ \;
+          when: always
+      - store_test_results:
+          path: ~/junit
+
 
   deploy-packages:
     executor: cloudsmith/default

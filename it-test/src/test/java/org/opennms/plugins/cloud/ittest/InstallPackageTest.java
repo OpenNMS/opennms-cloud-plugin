@@ -29,6 +29,8 @@
 package org.opennms.plugins.cloud.ittest;
 
 import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,15 +40,21 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Avoid using parameter testing for easier debug
  * Testing flow:
- * 1. docker-compose build (Dockerfile install all needed packages)
- * 2. start opennms & sentinel container
- * 3. connect to karaf shell and check plugin status (opennms should start by default, sentinel need to install)
+ * 1. copy packages from assembly
+ * 2. docker-compose build (Dockerfile install all needed packages)
+ * 3. start opennms & sentinel container
+ * 4. connect to karaf shell and check plugin status (opennms should start by default, sentinel need to install)
  */
 public class InstallPackageTest {
     private static final Logger LOG = LoggerFactory.getLogger(InstallPackageTest.class);
@@ -55,6 +63,21 @@ public class InstallPackageTest {
 
     private KarafShell opennmsShell;
     private KarafShell sentinelShell;
+
+    @BeforeClass
+    public void copyPackages() throws IOException {
+        // deb
+        copyPackages("src/test/resources/package/deb/opennms-plugin-cloud.deb",
+                "../assembly/opennms-deb/target", "opennms-plugin-cloud.*.deb");
+        copyPackages("src/test/resources/package/deb/sentinel-plugin-cloud.deb",
+                "../assembly/sentinel-deb/target", "sentinel-plugin-cloud.*.deb");
+
+        // rpm
+        copyPackages("src/test/resources/package/rpm/opennms-plugin-cloud.rpm",
+                "../assembly/opennms-rpm/target/rpm/opennms-plugin-cloud/RPMS/noarch", "opennms-plugin-cloud.*.rpm");
+        copyPackages("src/test/resources/package/rpm/sentinel-plugin-cloud.rpm",
+                "../assembly/sentinel-rpm/target/rpm/sentinel-plugin-cloud/RPMS/noarch", "sentinel-plugin-cloud.*.rpm");
+    }
 
     private void startContainer(String dockerfileDir, String opennmsHome, String sentinelHome) {
         environment = new DockerComposeContainer<>(new File("src/test/resources/package/docker-compose.yaml"))
@@ -80,18 +103,27 @@ public class InstallPackageTest {
     @Test
     @SuppressWarnings("java:S2699") // no assertions because we are an integration test and test against karaf shell
     public void checkDebPluginInstallAndStarted() {
-        startContainer("./deb",  "/usr/share/opennms", "/usr/share/sentinel");
+        startContainer("./deb", "/usr/share/opennms", "/usr/share/sentinel");
         checkPluginLoading();
     }
 
     @Test
     @SuppressWarnings("java:S2699") // no assertions because we are an integration test and test against karaf shell
     public void checkRpmPluginInstallAndStarted() {
-        startContainer("./rpm",  "/opt/opennms", "/opt/sentinel");
+        startContainer("./rpm", "/opt/opennms", "/opt/sentinel");
         checkPluginLoading();
     }
 
-    private void checkPluginLoading(){
+    private void copyPackages(String dockerFileDir, String srcPath, String fileRegex) throws IOException {
+        List<Path> files = Files.find(Path.of(srcPath),
+                Integer.MAX_VALUE,
+                (path, basicFileAttributes) -> path.toFile().getName().matches(fileRegex)
+        ).collect(Collectors.toList());
+        Assert.assertEquals(String.format("Should only fine 1 package file. Path: %s Pattern: %s", srcPath, fileRegex), 1, files.size());
+        Files.copy(files.get(0), Path.of(dockerFileDir + "/opennms-plugin-cloud.deb"));
+    }
+
+    private void checkPluginLoading() {
         // horizon is enabled by boot
         opennmsShell.runCommand("feature:list | grep opennms-plugin-cloud-core", output -> output.contains("Started"));
 
