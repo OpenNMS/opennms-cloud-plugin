@@ -65,7 +65,7 @@ public class InstallPackageTest {
     private KarafShell sentinelShell;
 
     @BeforeClass
-    public void copyPackages() throws IOException {
+    public void copyAllPackages() throws IOException {
         // deb
         copyPackages("src/test/resources/package/deb/opennms-plugin-cloud.deb",
                 "../assembly/opennms-deb/target", "opennms-plugin-cloud.*.deb");
@@ -79,6 +79,15 @@ public class InstallPackageTest {
                 "../assembly/sentinel-rpm/target/rpm/sentinel-plugin-cloud/RPMS/noarch", "sentinel-plugin-cloud.*.rpm");
     }
 
+    private void copyPackages(String dockerFileDir, String srcPath, String fileRegex) throws IOException {
+        List<Path> files = Files.find(Path.of(srcPath),
+                Integer.MAX_VALUE,
+                (path, basicFileAttributes) -> path.toFile().getName().matches(fileRegex)
+        ).collect(Collectors.toList());
+        Assert.assertEquals(String.format("Should only fine 1 package file. Path: %s Pattern: %s", srcPath, fileRegex), 1, files.size());
+        Files.copy(files.get(0), Path.of(dockerFileDir + "/opennms-plugin-cloud.deb"));
+    }
+    
     private void startContainer(String dockerfileDir, String opennmsHome, String sentinelHome) {
         environment = new DockerComposeContainer<>(new File("src/test/resources/package/docker-compose.yaml"))
                 .withBuild(true)
@@ -112,15 +121,6 @@ public class InstallPackageTest {
     public void checkRpmPluginInstallAndStarted() {
         startContainer("./rpm", "/opt/opennms", "/opt/sentinel");
         checkPluginLoading();
-    }
-
-    private void copyPackages(String dockerFileDir, String srcPath, String fileRegex) throws IOException {
-        List<Path> files = Files.find(Path.of(srcPath),
-                Integer.MAX_VALUE,
-                (path, basicFileAttributes) -> path.toFile().getName().matches(fileRegex)
-        ).collect(Collectors.toList());
-        Assert.assertEquals(String.format("Should only fine 1 package file. Path: %s Pattern: %s", srcPath, fileRegex), 1, files.size());
-        Files.copy(files.get(0), Path.of(dockerFileDir + "/opennms-plugin-cloud.deb"));
     }
 
     private void checkPluginLoading() {
