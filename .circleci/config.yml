@@ -261,7 +261,7 @@ jobs:
           name: Run unit and integration tests
           command: |
             cd it-test
-            mvn -DskipITs=false -DskipTests=false -Dtest=InstallPackageTest test org.jacoco:jacoco-maven-plugin:prepare-agent install integration-test org.jacoco:jacoco-maven-plugin:report sonar:sonar -Dsonar.projectKey=OpenNMS_opennms-cloud-plugin
+            mvn -DskipITs=false -DskipTests=false -Dtest=InstallPackageTest test
       - run:
           name: Save test results
           command: |
