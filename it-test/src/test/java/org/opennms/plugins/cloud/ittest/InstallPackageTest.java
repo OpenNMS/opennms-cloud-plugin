@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -85,7 +86,7 @@ public class InstallPackageTest {
                 (path, basicFileAttributes) -> path.toFile().getName().matches(fileRegex)
         ).collect(Collectors.toList());
         Assert.assertEquals(String.format("Should only fine 1 package file. Path: %s Pattern: %s", srcPath, fileRegex), 1, files.size());
-        Files.copy(files.get(0), Path.of(destPath));
+        Files.copy(files.get(0), Path.of(destPath), StandardCopyOption.REPLACE_EXISTING);
     }
 
     private void startContainer(String dockerfileDir, String opennmsHome, String sentinelHome) {
