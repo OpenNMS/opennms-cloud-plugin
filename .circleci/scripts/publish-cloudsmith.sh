@@ -17,9 +17,6 @@ else
     release-*x)
       REPO="common-testing"
       ;;
-    *DC-382)
-      REPO="common-testing"
-      ;;
     release-*)
       REPO="common"
       ;;

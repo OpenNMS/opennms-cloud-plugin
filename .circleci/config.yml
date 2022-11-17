@@ -56,7 +56,6 @@ workflows:
               only:
                 - main
                 - /release-.*/
-                - /.*DC-382.*/
       - test-packages:
           requires:
             - build
@@ -69,7 +68,6 @@ workflows:
               only:
                 - main
                 - /release-.*/
-                - /.*DC-382.*/
       - deploy-packages:
           context: "OpenNMS Build"
           requires:
@@ -84,7 +82,6 @@ workflows:
               only:
                 - main
                 - /release-.*/
-                - /.*DC-382.*/
 jobs:
   build:
     executor: build-executor
