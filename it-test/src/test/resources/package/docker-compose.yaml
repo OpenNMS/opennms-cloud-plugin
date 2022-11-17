@@ -1,0 +1,48 @@
+---
+version: '3'
+
+volumes:
+  data-postgres: {}
+
+services:
+  database:
+    image: ${DOCKER_REGISTRY:-docker.io}/postgres:${POSTGRES_VERSION:-14.5}
+    hostname: database
+    environment:
+      TZ: ${TIMEZONE:-America/New_York}
+      POSTGRES_HOST: database
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - data-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 30s
+      retries: 3
+  horizon:
+    build: ${DOCKERFILE_DIR}
+    hostname: horizon
+    sysctls:
+      net.ipv4.ping_group_range: "0 429496729"
+    depends_on:
+      - database
+    environment:
+      TZ: ${TIMEZONE:-America/New_York}
+    volumes:
+      - ./opennms-datasources.xml:${OPENNMS_HOME}/etc/opennms-datasources.xml:rw
+    command: /startHorizon.sh
+
+  sentinel:
+    build: ${DOCKERFILE_DIR}
+    hostname: sentinel
+    sysctls:
+      net.ipv4.ping_group_range: "0 429496729"
+    depends_on:
+      - database
+    environment:
+      TZ: ${TIMEZONE:-America/New_York}
+    volumes:
+      - ./org.opennms.netmgt.distributed.datasource.cfg:${SENTINEL_HOME}/etc/org.opennms.netmgt.distributed.datasource.cfg:rw
+    command: /startSentinel.sh

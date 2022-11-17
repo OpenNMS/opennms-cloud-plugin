@@ -231,6 +231,7 @@
                 <configuration>
                     <excludes>
                         <exclude>**/*It.java</exclude>
+                        <exclude>**/*PackageTest.java</exclude><!-- only run test before publish to cloudsmith -->
                     </excludes>
                 </configuration>
                 <executions>

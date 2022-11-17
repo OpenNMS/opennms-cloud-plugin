@@ -77,7 +77,8 @@ public class KarafShell {
                         if (command != null) {
                             pipe.println(command);
                         }
-                        pipe.println("log:display");
+
+                        // should not append log:display it will affect the verifyOutputFunction
                         pipe.println("logout");
 
                         // Wait for karaf to process the commands
