@@ -79,13 +79,13 @@ public class InstallPackageTest {
                 "../assembly/sentinel-rpm/target/rpm/sentinel-plugin-cloud/RPMS/noarch", "sentinel-plugin-cloud.*.rpm");
     }
 
-    private static void copyPackages(String dockerFileDir, String srcPath, String fileRegex) throws IOException {
+    private static void copyPackages(String destPath, String srcPath, String fileRegex) throws IOException {
         List<Path> files = Files.find(Path.of(srcPath),
                 Integer.MAX_VALUE,
                 (path, basicFileAttributes) -> path.toFile().getName().matches(fileRegex)
         ).collect(Collectors.toList());
         Assert.assertEquals(String.format("Should only fine 1 package file. Path: %s Pattern: %s", srcPath, fileRegex), 1, files.size());
-        Files.copy(files.get(0), Path.of(dockerFileDir + "/opennms-plugin-cloud.deb"));
+        Files.copy(files.get(0), Path.of(destPath));
     }
 
     private void startContainer(String dockerfileDir, String opennmsHome, String sentinelHome) {
