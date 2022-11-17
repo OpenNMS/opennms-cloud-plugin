@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
+ * Tests if the Cloud Plugin installation packages (Debian and Rpm) can be installed and the plugin can be started.
  * Avoid using parameter testing for easier debug
  * Testing flow:
  * 1. copy packages from assembly
