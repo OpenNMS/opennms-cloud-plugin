@@ -15,5 +15,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y opennms /tmp/opennms-plugi
 COPY --chown=opennms horizon/org.apache.karaf.shell.cfg /usr/share/opennms/etc/org.apache.karaf.shell.cfg
 COPY --chown=sentinel sentinel/org.apache.karaf.shell.cfg /usr/share/sentinel/etc/org.apache.karaf.shell.cfg
 
-COPY --chmod=755 --chown=opennms horizon/startHorizon.sh /startHorizon.sh
-COPY --chmod=755 --chown=opennms sentinel/startSentinel.sh /startSentinel.sh
+COPY --chown=opennms horizon/startHorizon.sh /startHorizon.sh
+COPY --chown=opennms sentinel/startSentinel.sh /startSentinel.sh
+
+RUN chmod 755 /startHorizon.sh /startSentinel.sh

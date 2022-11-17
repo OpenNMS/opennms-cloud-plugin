@@ -14,5 +14,7 @@ RUN dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x
 COPY --chown=opennms horizon/org.apache.karaf.shell.cfg /opt/opennms/etc/org.apache.karaf.shell.cfg
 COPY --chown=sentinel sentinel/org.apache.karaf.shell.cfg /opt/sentinel/etc/org.apache.karaf.shell.cfg
 
-COPY --chmod=755 --chown=opennms horizon/startHorizon.sh /startHorizon.sh
-COPY --chmod=755 --chown=opennms sentinel/startSentinel.sh /startSentinel.sh
+COPY --chown=opennms horizon/startHorizon.sh /startHorizon.sh
+COPY --chown=opennms sentinel/startSentinel.sh /startSentinel.sh
+
+RUN chmod 755 /startHorizon.sh /startSentinel.sh
