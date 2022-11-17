@@ -231,6 +231,7 @@
                 <configuration>
                     <excludes>
                         <exclude>**/*It.java</exclude>
+                        <exclude>**/*PackageTest.java</exclude>
                     </excludes>
                 </configuration>
                 <executions>
