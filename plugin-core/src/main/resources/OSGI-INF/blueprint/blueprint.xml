@@ -13,7 +13,7 @@
             <property name="id" value="cloudUiExtension"/>
             <property name="menuEntry" value="Cloud Services"/>
             <property name="resourceRoot" value="ui-ext"/>
-            <property name="moduleFileName" value="uiextension.es.js"/>
+            <property name="moduleFileName" value="cloudUiExtension.es.js"/>
         </bean>
     </service>
 

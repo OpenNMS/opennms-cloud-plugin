@@ -11,9 +11,12 @@ const routes = [
 
 const VRouter: Router = (window as any).VRouter
 if (VRouter) {
+  const cloudParentRoute = 'Plugin-cloudUiExtension'
+  const parentRoute = VRouter.hasRoute(cloudParentRoute) ? cloudParentRoute : 'Plugin'
+
   for (const route of routes) {
     const { path, name, component } = route
-    VRouter.addRoute('Plugin', { path: path.slice(1), name, component })
+    VRouter.addRoute(parentRoute, { path: path.slice(1), name, component })
   }
 }
 
