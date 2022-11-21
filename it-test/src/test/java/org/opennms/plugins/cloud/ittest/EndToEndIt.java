@@ -94,7 +94,7 @@ public class EndToEndIt {
         // fix me: this should be done in docker-compose but I couldn't get it to work:
         getContainer("sentinel_1")
                 .copyFileToContainer(MountableFile.forClasspathResource(
-                        "/overlay/sentinel/usr/share/sentinel/etc/org.opennms.netmgt.distributed.datasource.cfg"),
+                                "/overlay/sentinel/usr/share/sentinel/etc/org.opennms.netmgt.distributed.datasource.cfg"),
                         "/usr/share/sentinel/etc/org.opennms.netmgt.distributed.datasource.cfg");
 
         printContainerStartup("horizon_1");

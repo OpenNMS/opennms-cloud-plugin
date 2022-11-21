@@ -57,6 +57,7 @@ import org.junit.Test;
 import org.opennms.integration.api.v1.runtime.RuntimeInfo;
 import org.opennms.plugins.cloud.config.ConfigStore.Key;
 import org.opennms.plugins.cloud.grpc.CloudLogService;
+import org.opennms.plugins.cloud.grpc.CloudLogServiceConfig;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.grpc.GrpcExecutionHandler;
 import org.opennms.plugins.cloud.srv.GrpcService;
@@ -77,6 +78,7 @@ public class ConfigurationManagerTest {
     private GrpcService grpc;
     private RuntimeInfo info;
     private GrpcConnectionConfig clientConfig;
+    private CloudLogServiceConfig cloudLogServiceConfig;
 
     @Before
     public void setUp() throws IOException {
@@ -85,11 +87,12 @@ public class ConfigurationManagerTest {
         info = mock(RuntimeInfo.class);
         when(info.getSystemId()).thenReturn(UUID.randomUUID().toString());
         clientConfig = cloud.getClientConfig();
+        this.cloudLogServiceConfig = new CloudLogServiceConfig(1000, 60);
     }
 
     @Test
     public void shouldGetCloudConfig() {
-        GrpcExecutionHandler grpcHandler = new GrpcExecutionHandler(mock(CloudLogService.class));
+        GrpcExecutionHandler grpcHandler = new GrpcExecutionHandler(new CloudLogService(cloudLogServiceConfig));
         TsaasStorage grpc = spy(new TsaasStorage(new TsaasConfig(1, 1), grpcHandler));
         ConfigurationManager cm = new ConfigurationManager(config, clientConfig, clientConfig, mock(RegistrationManager.class),
                 info,
@@ -173,7 +176,7 @@ public class ConfigurationManagerTest {
     @Test
     public void shouldCallConfigureIfAuthenticatedOrConfigured() {
         // test prep: initialize already
-        GrpcExecutionHandler grpcHandler = new GrpcExecutionHandler(mock(CloudLogService.class));
+        GrpcExecutionHandler grpcHandler = new GrpcExecutionHandler(new CloudLogService(cloudLogServiceConfig));
         TsaasStorage grpc = spy(new TsaasStorage(new TsaasConfig(1, 1), grpcHandler));
         ConfigurationManager cm = new ConfigurationManager(config, clientConfig, clientConfig, mock(RegistrationManager.class),
                 info,

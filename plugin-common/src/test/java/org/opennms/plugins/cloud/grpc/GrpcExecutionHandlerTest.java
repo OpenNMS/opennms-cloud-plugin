@@ -74,7 +74,8 @@ public class GrpcExecutionHandlerTest {
                         })
                         .methodDescriptor(METHOD)
                         .build());
-        verify(cloudLogService, times(1)).log(anyLong(), eq(METHOD), eq(Status.UNIMPLEMENTED.getCode()));
+        verify(cloudLogService, times(1))
+                .log(anyLong(), anyLong(), eq(METHOD), eq(Status.UNIMPLEMENTED.getCode()));
         clearInvocations(cloudLogService);
 
         grpcHandler.executeRpcCall(GrpcExecutionHandler.GrpcCall.builder()
@@ -85,7 +86,8 @@ public class GrpcExecutionHandlerTest {
                 .defaultFunction(() -> "")
                 .methodDescriptor(METHOD)
                 .build());
-        verify(cloudLogService, times(1)).log(anyLong(), eq(METHOD), eq(Status.UNIMPLEMENTED.getCode()));
+        verify(cloudLogService, times(1))
+                .log(anyLong(), anyLong(), eq(METHOD), eq(Status.UNIMPLEMENTED.getCode()));
     }
 
     @Test
@@ -99,7 +101,8 @@ public class GrpcExecutionHandlerTest {
                                 })
                                 .methodDescriptor(TimeseriesGrpc.getStoreMethod()).build());
         assertThrows(StorageException.class, run);
-        verify(cloudLogService, times(1)).log(anyLong(), eq(METHOD), eq(Status.UNAVAILABLE.getCode()));
+        verify(cloudLogService, times(1))
+                .log(anyLong(), anyLong(), eq(METHOD), eq(Status.UNAVAILABLE.getCode()));
         clearInvocations(cloudLogService);
 
         run = () -> grpcHandler.executeRpcCall(GrpcExecutionHandler.GrpcCall.builder()
@@ -111,7 +114,8 @@ public class GrpcExecutionHandlerTest {
                 .methodDescriptor(TimeseriesGrpc.getStoreMethod())
                 .build());
         assertThrows(StorageException.class, run);
-        verify(cloudLogService, times(1)).log(anyLong(), eq(METHOD), eq(Status.UNAVAILABLE.getCode()));
+        verify(cloudLogService, times(1))
+                .log(anyLong(), anyLong(), eq(METHOD), eq(Status.UNAVAILABLE.getCode()));
     }
 
 }

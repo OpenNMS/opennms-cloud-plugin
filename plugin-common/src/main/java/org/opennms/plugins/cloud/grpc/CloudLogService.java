@@ -28,20 +28,114 @@
 
 package org.opennms.plugins.cloud.grpc;
 
+import static java.util.Objects.requireNonNull;
+import static org.apache.commons.lang3.StringUtils.contains;
+import static org.opennms.plugins.cloud.grpc.CloudLogServiceUtil.convertToLatencyTraceList;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.stream.Collectors;
+
+import org.opennms.integration.api.v1.timeseries.StorageException;
+import org.opennms.plugins.cloud.srv.GrpcService;
+import org.opennms.tsaas.telemetry.GatewayGrpc;
+import org.opennms.tsaas.telemetry.GatewayOuterClass;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.annotations.VisibleForTesting;
+
 import io.grpc.MethodDescriptor;
-import io.grpc.Status.Code;
-import lombok.extern.slf4j.Slf4j;
+import io.grpc.Status;
+import lombok.Getter;
 
-/**
- * Logs Requests and sends them in batches to the cloud.
- */
-@Slf4j
-public class CloudLogService {
+public class CloudLogService implements GrpcService {
 
-    public void log(long startTime, MethodDescriptor methodInvoked, Code returnCode) {
-        // TODO:  in DC-366: Plugin: Push latency data to cloud gateway
-        log.debug("received cloud log with startTime={}, endTime={}, methodInvoked={}, returnCode={}",
-                startTime, System.currentTimeMillis(), methodInvoked.getFullMethodName(), returnCode);
+    private final ConcurrentLinkedQueue<LogEntry> logEntryQueue;
+
+    private final CloudLogServiceConfig cloudLogServiceConfig;
+
+    private static final String SEND_TRACES_METHOD = "Gateway/SendTraces";
+
+    private static final Logger LOG = LoggerFactory.getLogger(CloudLogService.class);
+
+
+    @Getter
+    @VisibleForTesting
+    private GrpcConnection<GatewayGrpc.GatewayBlockingStub> grpc;
+
+    public CloudLogService(CloudLogServiceConfig cloudLogServiceConfig) {
+        this.cloudLogServiceConfig = requireNonNull(cloudLogServiceConfig);
+        logEntryQueue = new ConcurrentLinkedQueue<>();
     }
 
+    @Override
+    public void initGrpc(GrpcConnectionConfig grpcConfig) {
+        GrpcConnection<GatewayGrpc.GatewayBlockingStub> oldGrpc = this.grpc;
+        LOG.debug("Initializing Grpc Connection with host {} and port {}", grpcConfig.getHost(), grpcConfig.getPort());
+        this.grpc = new GrpcConnection<>(grpcConfig, GatewayGrpc::newBlockingStub);
+        CloseUtil.close(oldGrpc);
+    }
+
+    public void handleLogQueue() throws StorageException {
+        GrpcExecutionHandler grpcExecutionHandler = new GrpcExecutionHandler(this);
+        if (isQueueEmpty()) {
+            LOG.debug("The logs queue is empty, nothing to report.");
+        } else {
+            while (isQueueNotEmpty()) {
+                List<LogEntry> logEntryList = getQueueBatch(cloudLogServiceConfig.getBatchSize());
+                LOG.debug("Sending {} batch of elements to grpc endpoint", logEntryList.size());
+                GatewayOuterClass.SendTracesRequest sendTracesRequest = GatewayOuterClass.SendTracesRequest.newBuilder()
+                        .addAllLatencyTraces(convertToLatencyTraceList(logEntryList))
+                        .build();
+                grpcExecutionHandler.executeRpcCallVoid(GrpcExecutionHandler.GrpcCall.builder()
+                        .callToExecute(() -> this.getGrpc().get().sendTraces(sendTracesRequest))
+                        .methodDescriptor(GatewayGrpc.getSendTracesMethod())
+                        .build());
+
+                removeBatch(logEntryList);
+            }
+        }
+    }
+
+    public void log(long startTime, long endTime, MethodDescriptor<?, ?> methodInvoked, Status.Code returnCode) {
+        LOG.debug("received cloud log with startTime={}, endTime={}, methodInvoked={}, returnCode={}",
+                startTime, endTime, methodInvoked.getFullMethodName(), returnCode);
+
+        if (!contains(methodInvoked.getFullMethodName(), SEND_TRACES_METHOD)) {
+            logEntryQueue.add(LogEntry.builder()
+                    .startTime(startTime)
+                    .endTime(endTime)
+                    .methodInvoked(methodInvoked)
+                    .returnCode(returnCode).build());
+        }
+    }
+
+    public int getLogEntryQueueSize() {
+        return logEntryQueue.size();
+    }
+
+    public List<LogEntry> getQueueBatch(int batchSize) {
+        return logEntryQueue.stream()
+                .limit(batchSize).collect(Collectors.toList());
+    }
+
+    public void removeBatch(List<LogEntry> elementsToBeRemoved) {
+        logEntryQueue.removeAll(elementsToBeRemoved);
+        LOG.debug("Removed from log entry queue {} elements; current size: {}", elementsToBeRemoved.size(), getLogEntryQueueSize());
+    }
+
+    public boolean isQueueEmpty() {
+        return logEntryQueue.isEmpty();
+    }
+
+    public boolean isQueueNotEmpty() {
+        return !logEntryQueue.isEmpty();
+    }
+
+    public void deleteAll() {
+        LOG.debug("Removing from log entry queue {} elements.", getLogEntryQueueSize());
+        logEntryQueue.clear();
+    }
 }

@@ -28,7 +28,6 @@
 
 package org.opennms.plugins.cloud.srv.tsaas;
 
-import static org.mockito.Mockito.mock;
 import static org.opennms.plugins.cloud.testserver.FileUtil.classpathFileToString;
 
 import java.util.HashMap;
@@ -42,6 +41,7 @@ import org.junit.Test;
 import org.opennms.integration.api.v1.timeseries.AbstractStorageIntegrationTest;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.plugins.cloud.grpc.CloudLogService;
+import org.opennms.plugins.cloud.grpc.CloudLogServiceConfig;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.grpc.GrpcExecutionHandler;
 import org.opennms.plugins.cloud.testserver.MockCloud;
@@ -67,7 +67,8 @@ public class TsaasStorageWithMtlsTest extends AbstractStorageIntegrationTest {
         clientConfig.clientTrustStore(classpathFileToString("/cert/clienttruststore.pem"));
 
         TsaasConfig tsaasConfig = TsaasConfig.builder().batchSize(1).build(); // set to 1 so that samples are not held back in the queue
-        GrpcExecutionHandler grpcHandler = new GrpcExecutionHandler(mock(CloudLogService.class));
+        CloudLogServiceConfig cloudLogServiceConfig = new CloudLogServiceConfig(1000, 60);
+        GrpcExecutionHandler grpcHandler = new GrpcExecutionHandler(new CloudLogService(cloudLogServiceConfig));
         storage = new TsaasStorage(tsaasConfig, grpcHandler);
         storage.initGrpc(clientConfig.build());
         super.setUp();

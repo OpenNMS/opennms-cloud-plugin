@@ -56,12 +56,13 @@ import lombok.Data;
  * Manages functionality for GRPC calls:
  * - ExceptionHandling: Tries to distinguish between
  * - recoverable Exceptions: will be propgated to OpenNMS and
- * - non recoverable Exceptions: will be logged dropped
+ * - non-recoverable Exceptions: will be logged dropped
  * - Request logging (logs are send towards the cloud)
  * see also: https://www.grpc.io/docs/guides/error/
  */
 public class GrpcExecutionHandler {
 
+    private final CloudLogService cloudLogService;
     private static final Logger LOG = LoggerFactory.getLogger(GrpcExecutionHandler.class);
     private static final Set<Code> RECOVERABLE_EXCEPTIONS = new HashSet<>(Arrays.asList(
             DEADLINE_EXCEEDED,
@@ -69,10 +70,8 @@ public class GrpcExecutionHandler {
             UNAUTHENTICATED,
             RESOURCE_EXHAUSTED));
 
-    final CloudLogService cloudLog;
-
-    public GrpcExecutionHandler(final CloudLogService cloudLog) {
-        this.cloudLog = Objects.requireNonNull(cloudLog);
+    public GrpcExecutionHandler(CloudLogService cloudLogService) {
+        this.cloudLogService = Objects.requireNonNull(cloudLogService);
     }
 
     public <T, R> R executeRpcCall(GrpcCall<T, R> callToExecute) throws StorageException {
@@ -99,7 +98,7 @@ public class GrpcExecutionHandler {
                 return callToExecute.getDefaultFunction().get();
             }
         } finally {
-            cloudLog.log(startTime, callToExecute.getMethodDescriptor(), status);
+            cloudLogService.log(startTime, System.currentTimeMillis(), callToExecute.getMethodDescriptor(), status);
         }
     }
 
@@ -113,12 +112,13 @@ public class GrpcExecutionHandler {
         executeRpcCall(call);
     }
 
+
     @Builder(toBuilder = true)
     @Data
     public static class GrpcCall<T, R> {
         final Supplier<T> callToExecute;
         final Function<T, R> mapper;
         final Supplier<R> defaultFunction;
-        final MethodDescriptor methodDescriptor;
+        final MethodDescriptor<?, ?> methodDescriptor;
     }
 }
