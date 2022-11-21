@@ -29,6 +29,8 @@
 package org.opennms.plugins.cloud.config;
 
 import static java.time.temporal.ChronoUnit.DAYS;
+import static java.util.Objects.requireNonNull;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.opennms.integration.api.v1.runtime.Container.OPENNMS;
 import static org.opennms.integration.api.v1.runtime.Container.SENTINEL;
 import static org.opennms.plugins.cloud.config.ConfigStore.Key.configstatus;
@@ -44,9 +46,10 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import org.opennms.integration.api.v1.runtime.RuntimeInfo;
+import org.opennms.plugins.cloud.grpc.CloudLogService;
+import org.opennms.plugins.cloud.grpc.CloudLogServiceConfig;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.util.RunnerWrapper;
 
@@ -65,19 +68,25 @@ public class Housekeeper implements RunnerWrapper {
 
     private final ConfigurationManager configurationManager;
     private final ConfigStore config;
+    private final CloudLogServiceConfig cloudLogServiceConfig;
 
     private final RuntimeInfo runtimeInfo;
     private GrpcConnectionConfig currentConfig;
+    private final CloudLogService cloudLogService;
 
     public Housekeeper(final ConfigurationManager configurationManager,
                        final ConfigStore config,
+                       final CloudLogServiceConfig cloudLogServiceConfig,
                        final RuntimeInfo runtimeInfo,
+                       final CloudLogService cloudLogService,
                        final int intervalInSecondsForToken,
                        final int intervalInSecondsForCert,
                        final int intervalForSyncInSeconds) {
         this.configurationManager = configurationManager;
-        this.config = Objects.requireNonNull(config);
-        this.runtimeInfo = Objects.requireNonNull(runtimeInfo);
+        this.config = requireNonNull(config);
+        this.cloudLogServiceConfig = requireNonNull(cloudLogServiceConfig);
+        this.runtimeInfo = requireNonNull(runtimeInfo);
+        this.cloudLogService = requireNonNull(cloudLogService);
         executor = Executors.newSingleThreadScheduledExecutor();
         this.intervalInSecondsForToken = intervalInSecondsForToken;
         this.intervalInSecondsForCert = intervalInSecondsForCert;
@@ -85,11 +94,15 @@ public class Housekeeper implements RunnerWrapper {
     }
 
     public Housekeeper(final ConfigurationManager configurationManager,
+                       final CloudLogService cloudLogService,
                        final ConfigStore config,
+                       final CloudLogServiceConfig cloudLogServiceConfig,
                        final RuntimeInfo runtimeInfo) {
         this(configurationManager,
                 config,
+                cloudLogServiceConfig,
                 runtimeInfo,
+                cloudLogService,
                 60 * 60, // token check every 60 min
                 60 * 50 * 24, // cert: check once per day
                 60 * 5 // sync every 5 min
@@ -110,12 +123,14 @@ public class Housekeeper implements RunnerWrapper {
     }
 
     private void initForOpenNms() {
-        executor.scheduleAtFixedRate(() -> wrap(this::renewToken), 1, intervalInSecondsForToken, TimeUnit.SECONDS);
-        executor.scheduleAtFixedRate(() -> wrap(this::renewCerts), 1, intervalInSecondsForCert, TimeUnit.SECONDS);
+        executor.scheduleAtFixedRate(() -> wrap(this::renewToken), 1, intervalInSecondsForToken, SECONDS);
+        executor.scheduleAtFixedRate(() -> wrap(this::renewCerts), 1, intervalInSecondsForCert, SECONDS);
+        executor.scheduleAtFixedRate(() -> wrap(cloudLogService::handleLogQueue), 1, cloudLogServiceConfig.getRunningPeriod(), SECONDS);
     }
 
     private void initForSentinel() {
-        executor.scheduleAtFixedRate(() -> wrap(this::syncConfig), 1, intervalForSyncInSeconds, TimeUnit.SECONDS);
+        executor.scheduleAtFixedRate(() -> wrap(this::syncConfig), 1, intervalForSyncInSeconds, SECONDS);
+        executor.scheduleAtFixedRate(() -> wrap(cloudLogService::handleLogQueue), 1, cloudLogServiceConfig.getRunningPeriod(), SECONDS);
     }
 
     public void destroy() {

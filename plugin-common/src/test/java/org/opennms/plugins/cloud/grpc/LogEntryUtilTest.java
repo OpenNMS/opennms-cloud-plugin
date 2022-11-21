@@ -30,7 +30,8 @@ package org.opennms.plugins.cloud.grpc;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertEquals;
-import static org.opennms.plugins.cloud.grpc.LogEntryUtil.convertToLatencyTraceList;
+import static org.junit.Assert.assertNotNull;
+import static org.opennms.plugins.cloud.grpc.CloudLogServiceUtil.convertToLatencyTraceList;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -43,10 +44,10 @@ import com.google.protobuf.Timestamp;
 
 import io.grpc.Status;
 
-public class LogEntryUtilTest extends CloudLogServiceTestUtil {
+public class LogEntryUtilTest implements CloudLogServiceTestUtil {
 
     @Test
-    public void long_millis_must_be_correctly_converted_to_g_protobuf_timestamp() {
+    public void longMillisMustBeCorrectlyConvertedToProtobufTimestamp() {
         // Given
         LocalDateTime localDateTime = LocalDateTime.of(2022, 11, 16, 12, 0);
         long millis = localDateTime
@@ -54,26 +55,26 @@ public class LogEntryUtilTest extends CloudLogServiceTestUtil {
                 .toInstant().toEpochMilli();
 
         // When
-        Timestamp timestamp = LogEntryUtil.convertToTimestamp(millis);
+        Timestamp timestamp = CloudLogServiceUtil.convertToTimestamp(millis);
 
         // Then
         assertEquals(MILLISECONDS.toSeconds(millis), timestamp.getSeconds());
     }
 
     @Test
-    public void log_entry_must_be_correctly_converted_to_latency_trace() {
+    public void logEntryMustBeCorrectlyConvertedToLatencyTrace() {
         // Given
         int batchSize = 2;
-        GrpcLogEntryQueue grpcLogEntryQueue = new GrpcLogEntryQueue();
-        fillOutLogEntryQueue(batchSize, grpcLogEntryQueue);
+        CloudLogService cloudLogService = new CloudLogService(new CloudLogServiceConfig(1000, 60));
+        fillOutLogEntryQueueCloudLog(batchSize, cloudLogService);
 
         // When
-        List<GatewayOuterClass.LatencyTrace> latencyTraces = convertToLatencyTraceList(grpcLogEntryQueue.getQueueBatch(batchSize));
+        List<GatewayOuterClass.LatencyTrace> latencyTraces = convertToLatencyTraceList(cloudLogService.getQueueBatch(batchSize));
 
         // Then
         assertEquals(2, latencyTraces.size());
         latencyTraces.forEach(latencyTrace -> {
-            assertEquals("test-method", latencyTrace.getTraceId());
+            assertNotNull(latencyTrace.getTraceId());
             assertEquals(Status.Code.OK.value(), latencyTrace.getStatusCode());
         });
     }

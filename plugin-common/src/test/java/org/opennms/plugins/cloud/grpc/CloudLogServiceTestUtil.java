@@ -29,10 +29,13 @@
 package org.opennms.plugins.cloud.grpc;
 
 import static io.grpc.MethodDescriptor.MethodType.CLIENT_STREAMING;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
+
+import org.apache.commons.lang3.StringUtils;
 
 import com.google.protobuf.Message;
 import com.google.rpc.context.AttributeContext;
@@ -41,12 +44,12 @@ import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 import io.grpc.protobuf.ProtoUtils;
 
-public class CloudLogServiceTestUtil {
+public interface CloudLogServiceTestUtil {
 
-    protected void fillOutLogEntryQueue(int batchSize, GrpcLogEntryQueue grpcLogEntryQueue) {
+    default void fillOutLogEntryQueueCloudLog(int batchSize, CloudLogService cloudLogService) {
         IntStream.range(0, batchSize).forEach(el -> {
             try {
-                grpcLogEntryQueue.insertElementInQueue(0, ThreadLocalRandom.current().nextInt(1, 100), createMethodDescriptor(), Status.Code.OK);
+                cloudLogService.log(0, ThreadLocalRandom.current().nextInt(1, 100), createMethodDescriptor(), Status.Code.OK);
             } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
@@ -60,7 +63,7 @@ public class CloudLogServiceTestUtil {
                 .getMethod("getDefaultInstance", null).invoke(null, null));
 
         return MethodDescriptor.newBuilder()
-                .setType(CLIENT_STREAMING).setFullMethodName("test-method")
+                .setType(CLIENT_STREAMING).setFullMethodName(EMPTY)
                 .setRequestMarshaller(marshaller)
                 .setResponseMarshaller(marshaller)
                 .build();

@@ -49,6 +49,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.opennms.integration.api.v1.runtime.Container;
 import org.opennms.integration.api.v1.runtime.RuntimeInfo;
+import org.opennms.plugins.cloud.grpc.CloudLogService;
+import org.opennms.plugins.cloud.grpc.CloudLogServiceConfig;
 
 public class HousekeeperTest {
 
@@ -56,19 +58,23 @@ public class HousekeeperTest {
     private ConfigurationManager cm;
     private ConfigStore config;
     private RuntimeInfo runtimeInfo;
+    private CloudLogService cloudLogService;
+    private CloudLogServiceConfig cloudLogServiceConfig;
 
     @Before
     public void setUp() {
+        cloudLogServiceConfig = new CloudLogServiceConfig(1000, 60);
         config = mock(ConfigStore.class);
         runtimeInfo = mock(RuntimeInfo.class);
         cm = mock(ConfigurationManager.class);
         when(config.getOrNull(configstatus)).thenReturn(ConfigurationManager.ConfigStatus.CONFIGURED.name());
+        cloudLogService = new CloudLogService(cloudLogServiceConfig);
     }
 
     @Test
     public void shouldRenewConfigForExpiredTokenOpenNms() {
         when(runtimeInfo.getContainer()).thenReturn(Container.OPENNMS);
-        hk = new Housekeeper(cm, config, runtimeInfo, 1, 1, 1);
+        hk = new Housekeeper(cm, config, cloudLogServiceConfig, runtimeInfo, cloudLogService, 1, 1, 1);
         doReturn(Instant.now().plusSeconds(60 * 60)) // first time: token valid
                 .doReturn(Instant.now()) // second time: token expired
                 .when(cm).getTokenExpiration();
@@ -85,7 +91,7 @@ public class HousekeeperTest {
     @Test
     public void shouldRenewExpiredCertsOpenNms() throws CertificateException {
         when(runtimeInfo.getContainer()).thenReturn(Container.OPENNMS);
-        hk = new Housekeeper(cm, config, runtimeInfo, 1, 1, 1);
+        hk = new Housekeeper(cm, config, cloudLogServiceConfig, runtimeInfo, cloudLogService, 1, 1, 1);
         doReturn(Instant.now().plusSeconds(60 * 60)) // first time: cert valid
                 .doReturn(Instant.now()) // second time: cert expired
                 .when(cm).getCertExpiration();
@@ -104,7 +110,7 @@ public class HousekeeperTest {
     @Test
     public void shouldNotCrashOnExceptionOpenNms() throws CertificateException {
         when(runtimeInfo.getContainer()).thenReturn(Container.OPENNMS);
-        hk = new Housekeeper(cm, config, runtimeInfo, 1, 1000, 1);
+        hk = new Housekeeper(cm, config, cloudLogServiceConfig, runtimeInfo, cloudLogService, 1, 1000, 1);
         doReturn(Instant.now()).when(cm).getTokenExpiration(); // trigger every time
         doReturn(Instant.now().plusSeconds(60 * 60)).when(cm).getCertExpiration(); // cert always valid
         doThrow(new NullPointerException("oh oh")).when(cm).configure(); // Exception should be ignored
@@ -126,7 +132,7 @@ public class HousekeeperTest {
     @Test
     public void shouldReconfigureIfConfigChanged_Sentinel() {
         when(runtimeInfo.getContainer()).thenReturn(Container.SENTINEL);
-        hk = new Housekeeper(cm, config, runtimeInfo, 1, 1, 1);
+        hk = new Housekeeper(cm, config, cloudLogServiceConfig, runtimeInfo, cloudLogService, 1, 1, 1);
         hk.init();
 
         // wait for a bit to check if configure was called. It shouldn't since the token hasn't changed
@@ -181,7 +187,7 @@ public class HousekeeperTest {
 
     private void shouldTriggerNothing(final Container container) throws CertificateException {
         when(runtimeInfo.getContainer()).thenReturn(container);
-        hk = new Housekeeper(cm, config, runtimeInfo, 1, 1, 1);
+        hk = new Housekeeper(cm, config, cloudLogServiceConfig, runtimeInfo, cloudLogService, 1, 1, 1);
         hk.init();
 
         // wait for a bit to check if configure was called. It shouldn't since the token hasn't changed

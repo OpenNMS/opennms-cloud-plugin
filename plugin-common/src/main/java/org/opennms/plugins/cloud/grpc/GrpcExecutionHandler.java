@@ -62,6 +62,7 @@ import lombok.Data;
  */
 public class GrpcExecutionHandler {
 
+    private final CloudLogService cloudLogService;
     private static final Logger LOG = LoggerFactory.getLogger(GrpcExecutionHandler.class);
     private static final Set<Code> RECOVERABLE_EXCEPTIONS = new HashSet<>(Arrays.asList(
             DEADLINE_EXCEEDED,
@@ -69,10 +70,8 @@ public class GrpcExecutionHandler {
             UNAUTHENTICATED,
             RESOURCE_EXHAUSTED));
 
-    private final GrpcLogEntryQueue grpcLogEntryQueue;
-
-    public GrpcExecutionHandler(GrpcLogEntryQueue grpcLogEntryQueue) {
-        this.grpcLogEntryQueue = grpcLogEntryQueue;
+    public GrpcExecutionHandler(CloudLogService cloudLogService) {
+        this.cloudLogService = Objects.requireNonNull(cloudLogService);
     }
 
     public <T, R> R executeRpcCall(GrpcCall<T, R> callToExecute) throws StorageException {
@@ -99,7 +98,7 @@ public class GrpcExecutionHandler {
                 return callToExecute.getDefaultFunction().get();
             }
         } finally {
-            grpcLogEntryQueue.insertElementInQueue(startTime, System.currentTimeMillis(), callToExecute.getMethodDescriptor(), status);
+            cloudLogService.log(startTime, System.currentTimeMillis(), callToExecute.getMethodDescriptor(), status);
         }
     }
 
@@ -112,6 +111,7 @@ public class GrpcExecutionHandler {
                 .build();
         executeRpcCall(call);
     }
+
 
     @Builder(toBuilder = true)
     @Data

@@ -59,13 +59,14 @@ public class GrpcTestServer {
     private Server server;
     private final TsaasGrpcImpl timeSeriesService;
     private final ConfigGrpcImpl configGrpcService;
-
+    private final LogServiceGrpc logServiceGrpc;
 
     public GrpcTestServer(final GrpcConnectionConfig config,
                           final TimeSeriesStorage storage) {
         this.configGrpcService = new ConfigGrpcImpl();
         this.timeSeriesService = new TsaasGrpcImpl(storage);
         this.config = config;
+        this.logServiceGrpc = new LogServiceGrpc();
     }
 
     @PostConstruct
@@ -76,6 +77,7 @@ public class GrpcTestServer {
                 .forPort(config.getPort())
                 .addService(configGrpcService)
                 .addService(timeSeriesService)
+                .addService(logServiceGrpc)
                 .decompressorRegistry(ZstdCodecRegisterUtil.createDecompressorRegistry())
                 .compressorRegistry(ZstdCodecRegisterUtil.createCompressorRegistry())
                 .intercept(new GrpcTestServerInterceptor());

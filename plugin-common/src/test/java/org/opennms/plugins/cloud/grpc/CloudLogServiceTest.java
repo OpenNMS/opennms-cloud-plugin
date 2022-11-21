@@ -30,51 +30,60 @@ package org.opennms.plugins.cloud.grpc;
 
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.clearInvocations;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.powermock.api.mockito.PowerMockito.when;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mockito;
-import org.opennms.integration.api.v1.timeseries.StorageException;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
-public class CloudLogServiceTest extends CloudLogServiceTestUtil {
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(CloudLogService.class)
+@PowerMockIgnore({ "com.sun.org.apache.xerces.*", "javax.xml.*", "org.xml.*", "javax.management.*", "org.w3c.dom.*" })
+public class CloudLogServiceTest implements CloudLogServiceTestUtil {
 
     private CloudLogService cloudLogService;
 
-    private GrpcLogEntryQueue grpcLogEntryQueue;
+    private CloudLogService cloudLogServiceMock;
 
-    private GrpcExecutionHandler grpcExecutionHandlerSpy;
+    private GrpcExecutionHandler grpcExecutionHandlerMock;
+
+    private CloudLogServiceConfig cloudLogServiceConfig;
 
     @Before
     public void setUp() {
-        grpcLogEntryQueue = new GrpcLogEntryQueue();
-        GrpcExecutionHandler grpcExecutionHandler = new GrpcExecutionHandler(grpcLogEntryQueue);
-        grpcExecutionHandlerSpy = Mockito.spy(grpcExecutionHandler);
-        cloudLogService = new CloudLogService(grpcLogEntryQueue, grpcExecutionHandlerSpy);
+        cloudLogServiceConfig = new CloudLogServiceConfig(1000, 60);
+        cloudLogService = new CloudLogService(cloudLogServiceConfig);
+        cloudLogServiceMock = PowerMockito.spy(cloudLogService);
+        grpcExecutionHandlerMock = Mockito.mock(GrpcExecutionHandler.class);
     }
 
     @Test
-    public void cloud_log_service_must_send_all_log_entries_in_the_expected_amount_of_calls() throws StorageException {
+    public void cloudLogServiceMustSendAllLogEntriesInTheExpectedAmountOfCalls() throws Exception {
         // Given
-        fillOutLogEntryQueue(2500, grpcLogEntryQueue);
-        Mockito.doNothing().when(grpcExecutionHandlerSpy).executeRpcCallVoid(any());
+        whenNew(GrpcExecutionHandler.class).withAnyArguments().thenReturn(grpcExecutionHandlerMock);
+        fillOutLogEntryQueueCloudLog(2500, cloudLogServiceMock);
+        when(cloudLogServiceMock.getGrpc()).thenReturn(PowerMockito.mock(GrpcConnection.class));
 
         // When
-        cloudLogService.handleLogQueue();
+        cloudLogServiceMock.handleLogQueue();
 
         // Then
-        assertTrue(grpcLogEntryQueue.isQueueEmpty());
-        verify(grpcExecutionHandlerSpy, times(3)).executeRpcCallVoid(any());
+        assertTrue(cloudLogServiceMock.isQueueEmpty());
+        verify(grpcExecutionHandlerMock, Mockito.times(3)).executeRpcCallVoid(any());
 
         // When
-        clearInvocations(grpcExecutionHandlerSpy);
-        cloudLogService.handleLogQueue();
+        cloudLogServiceMock.handleLogQueue();
 
         // Then
-        assertTrue(grpcLogEntryQueue.isQueueEmpty());
-        verifyZeroInteractions(grpcExecutionHandlerSpy);
+        assertTrue(cloudLogServiceMock.isQueueEmpty());
+        verifyNoMoreInteractions(grpcExecutionHandlerMock);
     }
 }

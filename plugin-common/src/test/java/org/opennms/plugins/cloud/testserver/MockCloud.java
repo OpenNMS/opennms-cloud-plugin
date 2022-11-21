@@ -54,9 +54,13 @@ public class MockCloud extends ExternalResource implements AutoCloseable {
     @Getter
     private final TimeSeriesStorage serverStorage;
 
-    private GrpcConnectionConfig serverConfig;
+    private final GrpcConnectionConfig serverConfig;
+
     @Getter
     private GrpcConnectionConfig clientConfig;
+
+    @Getter
+    private final LogServiceGrpc logServiceGrpc;
 
     private final String certPrefix;
 
@@ -67,11 +71,13 @@ public class MockCloud extends ExternalResource implements AutoCloseable {
     @Builder
     public MockCloud(final GrpcConnectionConfig serverConfig,
                      final TimeSeriesStorage serverStorage,
+                     final LogServiceGrpc logServiceGrpc,
                      final String certPrefix,
                      final String keyCertChainFilename,
                      final String keyFilename) {
         this.serverConfig = serverConfig;
         this.serverStorage = Objects.requireNonNull(serverStorage);
+        this.logServiceGrpc = logServiceGrpc;
         this.certPrefix = Objects.requireNonNull(certPrefix);
         this.keyCertChainFilename = Objects.requireNonNull(keyCertChainFilename);
         this.keyFilename = Objects.requireNonNull(keyFilename);
@@ -93,7 +99,9 @@ public class MockCloud extends ExternalResource implements AutoCloseable {
                 .build();
     }
 
-    /** Simulates a config that is valid after init() and configure() (we have already received the access token). */
+    /**
+     * Simulates a config that is valid after init() and configure() (we have already received the access token).
+     */
     public GrpcConnectionConfig getClientConfigWithToken() {
         return this.getClientConfig()
                 .toBuilder()
@@ -122,9 +130,11 @@ public class MockCloud extends ExternalResource implements AutoCloseable {
         }
     }
 
+
     public static class MockCloudBuilder {
         private GrpcConnectionConfig serverConfig = defaultServerConfig().build(); // default value
         private TimeSeriesStorage serverStorage = new InMemoryStorage(); //default value
+        private LogServiceGrpc logServiceGrpc = new LogServiceGrpc();
         private String certPrefix = "/cert"; // default value
         private String keyFilename = "server_pkcs8_key.pem";
         private String keyCertChainFilename = "server.crt";

@@ -28,48 +28,29 @@
 
 package org.opennms.plugins.cloud.grpc;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.util.List;
+import java.util.stream.Collectors;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.opennms.tsaas.telemetry.GatewayOuterClass;
 
-public class GrpcLogEntryQueueTest extends CloudLogServiceTestUtil {
+import com.google.protobuf.Timestamp;
 
+public final class CloudLogServiceUtil {
 
-    private GrpcLogEntryQueue grpcLogEntryQueue;
-
-    @Before
-    public void setUp() {
-        grpcLogEntryQueue = new GrpcLogEntryQueue();
+    private CloudLogServiceUtil() {
     }
 
-    @Test
-    public void entry_is_correctly_inserted_in_queue() {
-        // When
-        fillOutLogEntryQueue(1, grpcLogEntryQueue);
-
-        // Then
-        assertEquals(1, grpcLogEntryQueue.getLogEntryQueueSize());
+    public static List<GatewayOuterClass.LatencyTrace> convertToLatencyTraceList(List<LogEntry> logEntryList) {
+        return logEntryList.stream().map(logEntry -> GatewayOuterClass.LatencyTrace.newBuilder()
+                .setStartTime(convertToTimestamp(logEntry.getStartTime()))
+                .setEndTime(convertToTimestamp(logEntry.getEndTime()))
+                .setTraceId(logEntry.getMethodInvoked().getFullMethodName())
+                .setStatusCode(logEntry.getReturnCode().value())
+                .build()).collect(Collectors.toList());
     }
 
-    @Test
-    public void entries_are_correctly_batched_from_queue() {
-        // When
-        fillOutLogEntryQueue(100, grpcLogEntryQueue);
-
-        // Then
-        assertEquals(100, grpcLogEntryQueue.getLogEntryQueueSize());
-
-        // When
-        List<LogEntry> logEntryList = grpcLogEntryQueue.getQueueBatch(35);
-        grpcLogEntryQueue.removeBatch(logEntryList);
-
-        // Then
-        assertEquals(35, logEntryList.size());
-        assertEquals(65, grpcLogEntryQueue.getLogEntryQueueSize());
-        assertTrue(grpcLogEntryQueue.isQueueNotEmpty());
+    public static Timestamp convertToTimestamp(long time) {
+        return Timestamp.newBuilder().setSeconds(time / 1000)
+                .setNanos((int) ((time % 1000) * 1_000_000)).build();
     }
 }

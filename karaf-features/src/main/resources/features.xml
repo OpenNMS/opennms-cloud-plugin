@@ -18,6 +18,7 @@
         <bundle>mvn:org.json/json/${jsonVersion}</bundle>
         <bundle dependency="true">mvn:com.google.guava/failureaccess/${failureAccessVersion}</bundle>
         <bundle dependency="true">mvn:com.google.guava/guava/${guavaVersion}</bundle>
+        <bundle>mvn:org.apache.commons/commons-lang3/3.12.0</bundle>
     </feature>
 
     <!-- to be installed into OpenNMS core -->

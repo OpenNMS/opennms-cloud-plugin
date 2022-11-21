@@ -28,31 +28,20 @@
 
 package org.opennms.plugins.cloud.grpc;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import lombok.Builder;
+import lombok.Data;
 
-import org.opennms.tsaas.telemetry.GatewayOuterClass;
+@Builder
+@Data
+public class CloudLogServiceConfig {
 
-import com.google.protobuf.Timestamp;
+    private final int batchSize;
+    private final long runningPeriod;
 
-import lombok.NoArgsConstructor;
-
-public final class LogEntryUtil {
-
-    private LogEntryUtil() {
-    }
-
-    public static List<GatewayOuterClass.LatencyTrace> convertToLatencyTraceList(List<LogEntry> logEntryList) {
-        return logEntryList.stream().map(logEntry -> GatewayOuterClass.LatencyTrace.newBuilder()
-                .setStartTime(convertToTimestamp(logEntry.getStartTime()))
-                .setEndTime(convertToTimestamp(logEntry.getEndTime()))
-                .setTraceId(logEntry.getMethodInvoked().getFullMethodName())
-                .setStatusCode(logEntry.getReturnCode().value())
-                .build()).collect(Collectors.toList());
-    }
-
-    public static Timestamp convertToTimestamp(long time) {
-        return Timestamp.newBuilder().setSeconds(time / 1000)
-                .setNanos((int) ((time % 1000) * 1000000)).build();
+    public CloudLogServiceConfig(
+            final int batchSize,
+            final long runningPeriod) {
+        this.batchSize = batchSize;
+        this.runningPeriod = runningPeriod;
     }
 }

@@ -55,12 +55,12 @@ public class GrpcExecutionHandlerTest {
     private static final MethodDescriptor<Tsaas.Samples, Empty> METHOD = TimeseriesGrpc.getStoreMethod();
 
     private GrpcExecutionHandler grpcHandler;
-    private GrpcLogEntryQueue grpcLogEntryQueue;
+    private CloudLogService cloudLogService;
 
     @Before
     public void setUp() {
-        this.grpcLogEntryQueue = mock(GrpcLogEntryQueue.class);
-        this.grpcHandler = new GrpcExecutionHandler(grpcLogEntryQueue);
+        this.cloudLogService = mock(CloudLogService.class);
+        this.grpcHandler = new GrpcExecutionHandler(cloudLogService);
     }
 
     @Test
@@ -74,9 +74,9 @@ public class GrpcExecutionHandlerTest {
                         })
                         .methodDescriptor(METHOD)
                         .build());
-        verify(grpcLogEntryQueue, times(1))
-                .insertElementInQueue(anyLong(), anyLong(), eq(METHOD), eq(Status.UNIMPLEMENTED.getCode()));
-        clearInvocations(grpcLogEntryQueue);
+        verify(cloudLogService, times(1))
+                .log(anyLong(), anyLong(), eq(METHOD), eq(Status.UNIMPLEMENTED.getCode()));
+        clearInvocations(cloudLogService);
 
         grpcHandler.executeRpcCall(GrpcExecutionHandler.GrpcCall.builder()
                 .callToExecute(() -> {
@@ -86,8 +86,8 @@ public class GrpcExecutionHandlerTest {
                 .defaultFunction(() -> "")
                 .methodDescriptor(METHOD)
                 .build());
-        verify(grpcLogEntryQueue, times(1))
-                .insertElementInQueue(anyLong(), anyLong(), eq(METHOD), eq(Status.UNIMPLEMENTED.getCode()));
+        verify(cloudLogService, times(1))
+                .log(anyLong(), anyLong(), eq(METHOD), eq(Status.UNIMPLEMENTED.getCode()));
     }
 
     @Test
@@ -101,9 +101,9 @@ public class GrpcExecutionHandlerTest {
                                 })
                                 .methodDescriptor(TimeseriesGrpc.getStoreMethod()).build());
         assertThrows(StorageException.class, run);
-        verify(grpcLogEntryQueue, times(1))
-                .insertElementInQueue(anyLong(), anyLong(), eq(METHOD), eq(Status.UNAVAILABLE.getCode()));
-        clearInvocations(grpcLogEntryQueue);
+        verify(cloudLogService, times(1))
+                .log(anyLong(), anyLong(), eq(METHOD), eq(Status.UNAVAILABLE.getCode()));
+        clearInvocations(cloudLogService);
 
         run = () -> grpcHandler.executeRpcCall(GrpcExecutionHandler.GrpcCall.builder()
                 .callToExecute(() -> {
@@ -114,8 +114,8 @@ public class GrpcExecutionHandlerTest {
                 .methodDescriptor(TimeseriesGrpc.getStoreMethod())
                 .build());
         assertThrows(StorageException.class, run);
-        verify(grpcLogEntryQueue, times(1))
-                .insertElementInQueue(anyLong(), anyLong(), eq(METHOD), eq(Status.UNAVAILABLE.getCode()));
+        verify(cloudLogService, times(1))
+                .log(anyLong(), anyLong(), eq(METHOD), eq(Status.UNAVAILABLE.getCode()));
     }
 
 }

@@ -37,6 +37,8 @@
             <cm:property name="grpc.truststore" value="" />
             <cm:property name="tsaas.batchSize" value="1000"/>
             <cm:property name="tsaas.maxBatchWaitTimeInMilliSeconds" value="5000" />
+            <cm:property name="cloudLogService.runningPeriod" value="60" />
+            <cm:property name="cloudLogService.batchSize" value="1000"/>
         </cm:default-properties>
     </cm:property-placeholder>
 
@@ -83,24 +85,26 @@
     <bean id="houseKeeper" class="org.opennms.plugins.cloud.config.Housekeeper"
           destroy-method="destroy" init-method="init">
         <argument ref="cloudConfigManager"/>
+        <argument ref="cloudLogServiceConfig"/>
         <argument ref="configStore"/>
         <argument ref="runtimeInfo"/>
+        <argument ref="cloudLogService"/>
     </bean>
     <service ref="houseKeeper" interface="org.opennms.plugins.cloud.util.RunnerWrapper" />
 
-    <bean id="grpcLogEntryQueue" class="org.opennms.plugins.cloud.grpc.GrpcLogEntryQueue">
-    </bean>
-
     <bean id="grpcHandler" class="org.opennms.plugins.cloud.grpc.GrpcExecutionHandler" >
-        <argument ref="grpcLogEntryQueue" />
+        <argument ref="cloudLogService" />
     </bean>
 
-    <bean id="cloudLogService" class="org.opennms.plugins.cloud.grpc.CloudLogService"
-          destroy-method="destroy" init-method="init">
-        <argument ref="grpcLogEntryQueue"/>
-        <argument ref="grpcHandler"/>
+    <bean id="cloudLogService" class="org.opennms.plugins.cloud.grpc.CloudLogService">
+        <argument ref="cloudLogServiceConfig"/>
     </bean>
-    <service ref="cloudLogService" interface="org.opennms.plugins.cloud.util.RunnerWrapper" />
+    <service ref="cloudLogService" interface="org.opennms.plugins.cloud.grpc.CloudLogService" />
+
+    <bean id="cloudLogServiceConfig" class="org.opennms.plugins.cloud.grpc.CloudLogServiceConfig">
+        <argument value="${cloudLogService.runningPeriod}"/>
+        <argument value="${cloudLogService.batchSize}"/>
+    </bean>
 
     <!-- HEALTH -->
     <bean id="cloudHealthCheck" class="org.opennms.plugins.cloud.srv.tsaas.CloudHealthCheck">
