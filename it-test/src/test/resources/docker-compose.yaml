@@ -48,6 +48,10 @@ services:
     volumes:
       # we overlay folder with kar into maven repo. It contains the plugin jars and dependencies:
       - ../../../../assembly/kar/target/opennms-plugin-cloud.kar:/usr/share/opennms/.m2/repository/org/opennms/plugins/cloud/assembly/org.opennms.plugins.cloud.assembly.kar/${PLUGIN_VERSION}/org.opennms.plugins.cloud.assembly.kar-${PLUGIN_VERSION}.kar:ro
+      # prevent opennms default values
+      - /dev/null:/etc/confd/templates/timeseries.properties.tpl
+      # force to load for checking
+      - ../../../../assembly/common-resources/etc/examples/opennms.properties.d:/opt/opennms-etc-overlay/opennms.properties.d
     command: ["-s"]
     ports:
       - "8101:8101/tcp" # ssh port for karaf console

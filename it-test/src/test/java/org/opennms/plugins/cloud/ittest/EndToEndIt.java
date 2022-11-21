@@ -34,20 +34,27 @@ import static org.opennms.plugins.cloud.ittest.MockCloudMain.MOCK_CLOUD_PORT;
 import static org.opennms.plugins.cloud.testserver.FileUtil.classpathFileToString;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.time.Duration;
+import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.Container;
 import org.testcontainers.containers.ContainerState;
 import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
@@ -63,6 +70,9 @@ import org.testcontainers.utility.MountableFile;
 public class EndToEndIt {
 
     private static final Logger LOG = LoggerFactory.getLogger(EndToEndIt.class);
+    private static final Pattern OFFHEAPLOG_PATTERN = Pattern.compile(".*OffheapTimeSeriesWriter: .*[Bb]ufferSize: "
+            + "(?<BUFFERSIZE>\\d+), numWriterThreads: (?<WRITERTHREAD>\\d+), batchSize: (?<BATCHSIZE>\\d+), "
+            + "path: (?<PATH>[^,]+), maxFileSize: (?<MAXFILESIZE>\\d+)");
 
     public static DockerComposeContainer<?> environment;
 
@@ -111,7 +121,8 @@ public class EndToEndIt {
 
     @Test
     @SuppressWarnings("java:S2699") // no assertions because we are an integration test and test against karaf shell
-    public void canInstallAndStartPlugin() {
+    public void canInstallAndStartPlugin() throws IOException, InterruptedException {
+        checkProperties();
         installAndStartPluginInOpenNms();
         installAndStartPluginInSentinel();
     }
@@ -185,6 +196,30 @@ public class EndToEndIt {
                 container,
                 containerName,
                 containerName);
+    }
+
+    private void checkProperties() throws IOException, InterruptedException {
+        Properties p = readTimeseriesProperties();
+        Container.ExecResult result = environment.getContainerByServiceName("horizon_1").get()
+                .execInContainer("grep", "OffheapTimeSeriesWriter", "logs/eventd.log");
+        Assert.assertEquals(0, result.getExitCode());
+        Matcher matcher = OFFHEAPLOG_PATTERN.matcher(result.getStdout());
+        Assert.assertTrue(matcher.find());
+        Assert.assertEquals(p.getProperty("org.opennms.timeseries.config.writer_threads"), matcher.group("WRITERTHREAD"));
+        Assert.assertEquals(p.getProperty("org.opennms.timeseries.config.buffer_size"), matcher.group("BUFFERSIZE"));
+        Assert.assertEquals(p.getProperty("org.opennms.timeseries.config.offheap.batch_size"), matcher.group("BATCHSIZE"));
+        Assert.assertEquals(p.getProperty("org.opennms.timeseries.config.offheap.path"), matcher.group("PATH"));
+        String strMaxFileSize = p.getProperty("org.opennms.timeseries.config.offheap.max_file_size");
+        strMaxFileSize = "-1".equals(strMaxFileSize) ? String.valueOf(Long.MAX_VALUE) : strMaxFileSize;
+        Assert.assertEquals(strMaxFileSize, matcher.group("MAXFILESIZE"));
+    }
+
+    private Properties readTimeseriesProperties() throws IOException {
+        try (InputStream input = new FileInputStream("../assembly/common-resources/etc/examples/opennms.properties.d/timeseries.properties")) {
+            Properties prop = new Properties();
+            prop.load(input);
+            return prop;
+        }
     }
 
     @AfterClass
