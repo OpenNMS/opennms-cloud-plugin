@@ -132,6 +132,11 @@
             <artifactId>telemetry-gateway-grpc</artifactId>
             <version>${telemetryGatewayVersion}</version>
         </dependency>
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.15</version>
+        </dependency>
 
         <!-- Test -->
         <dependency>

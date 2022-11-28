@@ -49,7 +49,7 @@ public interface CloudLogServiceTestUtil {
     default void fillOutLogEntryQueueCloudLog(int batchSize, CloudLogService cloudLogService) {
         IntStream.range(0, batchSize).forEach(el -> {
             try {
-                cloudLogService.log(0, ThreadLocalRandom.current().nextInt(1, 100), createMethodDescriptor(), Status.Code.OK);
+                cloudLogService.log(0, ThreadLocalRandom.current().nextInt(1, 100), createMethodDescriptor(), Status.Code.OK, EMPTY, EMPTY);
             } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
                 throw new RuntimeException(e);
             }

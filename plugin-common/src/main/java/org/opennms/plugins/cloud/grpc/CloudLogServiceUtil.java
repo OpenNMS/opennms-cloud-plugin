@@ -28,10 +28,15 @@
 
 package org.opennms.plugins.cloud.grpc;
 
+import static java.util.Objects.nonNull;
+import static org.opennms.tsaas.telemetry.GatewayOuterClass.TraceStatus.UNRECOGNIZED;
+import static org.opennms.tsaas.telemetry.GatewayOuterClass.TraceStatus.forNumber;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.opennms.tsaas.telemetry.GatewayOuterClass;
+import org.opennms.tsaas.telemetry.GatewayOuterClass.TraceStatus;
 
 import com.google.protobuf.Timestamp;
 
@@ -44,9 +49,16 @@ public final class CloudLogServiceUtil {
         return logEntryList.stream().map(logEntry -> GatewayOuterClass.LatencyTrace.newBuilder()
                 .setStartTime(convertToTimestamp(logEntry.getStartTime()))
                 .setEndTime(convertToTimestamp(logEntry.getEndTime()))
-                .setTraceId(logEntry.getMethodInvoked().getFullMethodName())
-                .setStatusCode(logEntry.getReturnCode().value())
+                .setSpanName(logEntry.getMethodInvoked().getFullMethodName())
+                .setTraceId(logEntry.getTraceParentHeader())
+                .setStatusCode(convertToTraceStatus(logEntry))
+                .setStatusMessage(logEntry.getOptionalErrorMsg())
                 .build()).collect(Collectors.toList());
+    }
+
+    public static TraceStatus convertToTraceStatus(LogEntry logEntry) {
+        TraceStatus traceStatus = forNumber(logEntry.getReturnCode().value());
+        return nonNull(traceStatus) ? traceStatus : UNRECOGNIZED;
     }
 
     public static Timestamp convertToTimestamp(long time) {

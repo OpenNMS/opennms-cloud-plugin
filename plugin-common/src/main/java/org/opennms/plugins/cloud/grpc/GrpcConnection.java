@@ -28,6 +28,10 @@
 
 package org.opennms.plugins.cloud.grpc;
 
+import static java.util.Objects.isNull;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
+import static org.opennms.plugins.cloud.grpc.TraceParentHeaderGenerator.generateTraceParentHeaderMetadata;
+
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
@@ -46,6 +50,7 @@ import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.ClientInterceptor;
+import io.grpc.Context;
 import io.grpc.ForwardingClientCall;
 import io.grpc.ManagedChannel;
 import io.grpc.Metadata;
@@ -58,11 +63,14 @@ import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
 import io.grpc.stub.AbstractBlockingStub;
+import lombok.NoArgsConstructor;
 
 public class GrpcConnection<T extends AbstractBlockingStub<T>> implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(GrpcConnection.class);
     // 100M sync with cortex server
     private static final int MAX_MESSAGE_SIZE = 104857600;
+    public static final Context.Key<Metadata> TRACE_PARENT_HEADER_CONTEXT = Context.key("traceParentHeader");
+
     @VisibleForTesting
     public final ManagedChannel managedChannel;
     private final T clientStub;
@@ -82,7 +90,7 @@ public class GrpcConnection<T extends AbstractBlockingStub<T>> implements AutoCl
                 .build();
         clientStub = stubCreator.apply(managedChannel)
                 .withCompression("gzip") // ZstdGrpcCodec.ZSTD
-                .withInterceptors(new TokenAddingInterceptor(config.getTokenKey(), config.getTokenValue()));
+                .withInterceptors(new TokenAddingInterceptor(config.getTokenKey(), config.getTokenValue()), new TraceParentHeaderInterceptor());
     }
 
     public GrpcConnection(T clientStub, ManagedChannel managedChannel) {
@@ -129,6 +137,23 @@ public class GrpcConnection<T extends AbstractBlockingStub<T>> implements AutoCl
         }
     }
 
+    @NoArgsConstructor
+    private static class TraceParentHeaderInterceptor implements ClientInterceptor {
+
+        @Override
+        public <I, O> ClientCall<I, O> interceptCall(MethodDescriptor<I, O> method,
+                                                     CallOptions callOptions, Channel next) {
+            return new ForwardingClientCall.SimpleForwardingClientCall<>(next.newCall(method, callOptions)) {
+                @Override
+                public void start(final Listener<O> responseListener, final Metadata headers) {
+                    headers.merge(isNull(TRACE_PARENT_HEADER_CONTEXT.get()) ? generateTraceParentHeaderMetadata() :
+                            TRACE_PARENT_HEADER_CONTEXT.get());
+                    super.start(responseListener, headers);
+                }
+            };
+        }
+    }
+
     private static class TokenAddingInterceptor implements ClientInterceptor {
 
         final String tokenKey;
@@ -152,9 +177,6 @@ public class GrpcConnection<T extends AbstractBlockingStub<T>> implements AutoCl
                 }
             };
         }
-
-        private static boolean isNotEmpty(String s) {
-            return s != null && !s.isBlank();
-        }
     }
+
 }
