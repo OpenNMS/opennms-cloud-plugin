@@ -33,7 +33,6 @@ import static org.apache.commons.lang3.StringUtils.contains;
 import static org.opennms.plugins.cloud.grpc.CloudLogServiceUtil.convertToLatencyTraceList;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
@@ -99,7 +98,7 @@ public class CloudLogService implements GrpcService {
         }
     }
 
-    public void log(long startTime, long endTime, MethodDescriptor<?, ?> methodInvoked, Status.Code returnCode) {
+    public void log(long startTime, long endTime, MethodDescriptor<?, ?> methodInvoked, Status.Code returnCode, String traceParentHeader, String optionalErrorMsg) {
         LOG.debug("received cloud log with startTime={}, endTime={}, methodInvoked={}, returnCode={}",
                 startTime, endTime, methodInvoked.getFullMethodName(), returnCode);
 
@@ -108,7 +107,10 @@ public class CloudLogService implements GrpcService {
                     .startTime(startTime)
                     .endTime(endTime)
                     .methodInvoked(methodInvoked)
-                    .returnCode(returnCode).build());
+                    .returnCode(returnCode)
+                    .optionalErrorMsg(optionalErrorMsg)
+                    .traceParentHeader(traceParentHeader)
+                    .build());
         }
     }
 

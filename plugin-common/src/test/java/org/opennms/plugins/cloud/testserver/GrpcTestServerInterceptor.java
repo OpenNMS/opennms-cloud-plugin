@@ -28,6 +28,9 @@
 
 package org.opennms.plugins.cloud.testserver;
 
+import org.apache.commons.lang3.StringUtils;
+import org.opennms.plugins.cloud.config.ConfigStore;
+
 import io.grpc.Context;
 import io.grpc.Contexts;
 import io.grpc.Metadata;
@@ -45,8 +48,11 @@ public class GrpcTestServerInterceptor implements ServerInterceptor {
     public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> serverCall, Metadata metadata, ServerCallHandler<ReqT, RespT> serverCallHandler) {
         String clientId = metadata.get(TOKEN);
         Status status;
-        if (clientId == null &&  isTokenNeeded(serverCall.getMethodDescriptor().getFullMethodName())) {
+        if (clientId == null && isTokenNeeded(serverCall.getMethodDescriptor().getFullMethodName())) {
             status = Status.UNAUTHENTICATED.withDescription("Client token is missing or invalid");
+        } else if (isTraceParentHeaderNeeded(serverCall.getMethodDescriptor().getFullMethodName()) &&
+                !metadata.containsKey(Metadata.Key.of("traceparent", Metadata.ASCII_STRING_MARSHALLER))) {
+            status = Status.FAILED_PRECONDITION.withDescription("Traceparent Header is missing or invalid");
         } else {
             Context ctx = Context.current().withValue(CLIENT_ID, clientId);
             return Contexts.interceptCall(ctx, serverCall, metadata, serverCallHandler);
@@ -59,9 +65,13 @@ public class GrpcTestServerInterceptor implements ServerInterceptor {
 
     private boolean isTokenNeeded(final String methodName) {
         // the following calls don't need a token, all others do:
-        return ! ("org.opennms.dataplatform.access.Authenticate/AuthenticateKey".equals(methodName)
+        return !("org.opennms.dataplatform.access.Authenticate/AuthenticateKey".equals(methodName)
                 || "org.opennms.dataplatform.access.Authenticate/GetServices".equals(methodName)
                 || "org.opennms.dataplatform.access.Authenticate/GetAccessToken".equals(methodName)
                 || "org.opennms.dataplatform.access.Authenticate/RenewCertificate".equals(methodName));
+    }
+
+    private boolean isTraceParentHeaderNeeded(final String methodName) {
+        return StringUtils.equals(methodName, "org.opennms.tsaas.Timeseries/Store");
     }
 }

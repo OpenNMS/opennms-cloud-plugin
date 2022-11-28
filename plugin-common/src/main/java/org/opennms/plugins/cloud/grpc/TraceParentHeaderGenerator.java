@@ -28,25 +28,32 @@
 
 package org.opennms.plugins.cloud.grpc;
 
+import static org.apache.commons.codec.binary.Hex.encodeHexString;
 
-import io.grpc.MethodDescriptor;
-import io.grpc.Status.Code;
-import lombok.Builder;
-import lombok.Data;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
-@Data
-@Builder
-public class LogEntry {
+public class TraceParentHeaderGenerator {
 
-    private long startTime;
+    private static final int TRACE_ID_BYTE_LENGTH = 16;
+    private static final int PARENT_ID_BYTE_LENGTH = 8;
+    private static final String VERSION = "00";
+    private static final String TRACE_FLAGS = "01";
 
-    private long endTime;
 
-    private MethodDescriptor<?, ?> methodInvoked;
+    public static TraceParentHeader generateTraceParentHeader() {
+        return TraceParentHeader.builder()
+                .version(VERSION)
+                .traceId(encodeHexString(byteGenerator(TRACE_ID_BYTE_LENGTH)))
+                .parentId(encodeHexString(byteGenerator(PARENT_ID_BYTE_LENGTH)))
+                .traceFlags(TRACE_FLAGS)
+                .build();
+    }
 
-    private Code returnCode;
-
-    private String optionalErrorMsg;
-
-    private String traceParentHeader;
+    private static byte[] byteGenerator(int length) {
+        Random random = ThreadLocalRandom.current();
+        byte[] r = new byte[length];
+        random.nextBytes(r);
+        return r;
+    }
 }
