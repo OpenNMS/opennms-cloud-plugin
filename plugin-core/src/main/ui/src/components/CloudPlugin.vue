@@ -2,16 +2,20 @@
 import { FeatherButton } from "@featherds/button";
 import { FeatherTextarea } from '@featherds/textarea'
 import { FeatherSnackbar } from '@featherds/snackbar'
+import { FeatherDialog } from "@featherds/dialog";
 import { onMounted, ref } from "vue";
 import Toggle from './Toggle.vue'
+import StatusBar from './StatusBar.vue';
 
 const active = ref(false);
+const activated = ref(false);
 const toggle = () => active.value = !active.value
 const status = ref({});
 const notification = ref({});
 const show = ref(false);
 const key = ref('');
 const keyDisabled = ref(false);
+const visible = ref(false);
 
 
 /**
@@ -61,6 +65,15 @@ const tryToSubmit = () => {
   // show.value = true;
   submitKey();
 }
+const tryToDeactivate = () => {
+  console.log('deactivating');
+  //submitKey();
+}
+
+const cancel = () => {
+  console.log('cancel');
+  //route to previous page if router is available
+};
 
 onMounted(async () => {
   // notification.value = 'Plugin Mounted. Faking API Status call';
@@ -78,19 +91,38 @@ onMounted(async () => {
     </template>
   </FeatherSnackbar>
   <div class="center">
-    <h1>Cloud Services</h1>
+    <h1>
+      OpenNMS Cloud Services
+      <StatusBar :status="status" />
+    </h1>
+  
     <p class="margin-bottom">Activate OpenNMS cloud-hosted services including 
       <a target="_blank" href="https://docs.opennms.com/horizon/latest/deployment/time-series-storage/timeseries/hosted-tss.html">time series storage</a>.
     </p>
     <Toggle :active="active" :toggle="toggle" activeText="Cloud Services Activated"
       disabledText="Cloud Services Deactivated" />
-    <div class="key-entry" v-if="active">
+    <div class="key-entry" v-if="active && !activated">
       <p class="smaller">To activate, generate a key in the OpenNMS Portal and paste it here.</p>
-      <FeatherTextarea :disabled="keyDisabled" label="Enter Activation Key" rows="5" :modelValue="key"
-        @update:modelValue="(val: string) => key = val" />
-      <FeatherButton primary @click="tryToSubmit">Activate</FeatherButton>
+      <div v-if="!activated">
+        <FeatherTextarea :disabled="keyDisabled" label="Enter Activation Key" rows="5" :modelValue="key"
+          @update:modelValue="(val: string) => key = val" />
+        <FeatherButton text @click="cancel">Cancel</FeatherButton>
+        <FeatherButton primary @click="tryToSubmit">Activate</FeatherButton>
+      </div>
+      <div v-if="activated">
+        <FeatherButton text @click="cancel">Return to Dashboard</FeatherButton>
+        <FeatherButton primary @click="tryToDeactivate">Deactivate Cloud Services</FeatherButton>
+      </div>
     </div>
   </div>
+  <FeatherDialog>
+      <p class="my-content">A message from the Dialog</p>
+      <template v-slot:footer>
+        <FeatherButton primary @click="visible = false"
+          >Close Dialog</FeatherButton
+        >
+      </template>
+  </FeatherDialog>
 </template>
 
 
