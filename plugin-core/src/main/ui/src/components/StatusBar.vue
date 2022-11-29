@@ -1,22 +1,25 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { FeatherIcon } from "@featherds/icon";
 import CheckCircle from '@featherds/icon/action/CheckCircle';
 import Cancel from '@featherds/icon/action/Cancel';
 import Cycle from '@featherds/icon/action/Cycle';
-const status = ref('activated');
+
+const props = defineProps({
+    status: { type: String, default: 'activating' }
+});
 
 </script>
 
 <template>
-    <div v-if="status === 'deactivated'" class="deactivated statusbar">
-        <FeatherIcon :icon="Cancel" />Not activated
-    </div>
-    <div v-if="status === 'activating'" class="activating statusbar">
-        <FeatherIcon :icon="Cycle"/>Activating...
-    </div>
     <div v-if="status === 'activated'" class="activated statusbar">
         <FeatherIcon :icon="CheckCircle"/>
         Activated
+    </div>
+    <div v-else-if="status === 'activating'" class="activating statusbar">
+        <FeatherIcon :icon="Cycle"/>Activating...
+    </div>
+    <div v-else class="deactivated statusbar">
+        <FeatherIcon :icon="Cancel" />Not activated
     </div>
 </template>
 
@@ -54,6 +57,8 @@ const status = ref('activated');
     font-weight: 500;
     font-size: 12px;
     line-height: 15px;
+    margin-left: 20px;
+    margin-top: 8px;
 
     /* identical to box height */
     font-feature-settings: 'tnum' on, 'lnum' on, 'cv05' on;
