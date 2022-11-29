@@ -6,16 +6,24 @@ import { FeatherDialog } from "@featherds/dialog";
 import { onMounted, ref } from "vue";
 import Toggle from './Toggle.vue'
 import StatusBar from './StatusBar.vue';
+import router from "../router";
 
 const active = ref(false);
 const activated = ref(false);
 const toggle = () => active.value = !active.value
-const status = ref({});
+const status = ref('deactivated');
 const notification = ref({});
 const show = ref(false);
 const key = ref('');
 const keyDisabled = ref(false);
 const visible = ref(false);
+const loading = ref(false);
+const displayDialog = ref(false);
+
+const labels = {
+  title: 'Important',
+  close: 'Close'
+}
 
 
 /**
@@ -23,9 +31,12 @@ const visible = ref(false);
  * Should notify on error, but silent on success (will just display the values)
  */
 const updateStatus = async () => {
+  loading.value = true;
+  console.log('loading initial');
   const val = await fetch('/opennms/rest/plugin/cloud/config/status', { method: 'GET' })
   try {
     const jsonResponse = await val.json();
+    console.log('setting status to', jsonResponse)
     status.value = jsonResponse;
     notification.value = jsonResponse;
     show.value = true;
@@ -33,6 +44,7 @@ const updateStatus = async () => {
     notification.value = e as {};
     show.value = true;
   }
+  loading.value = false;
 }
 
 /**
@@ -40,6 +52,9 @@ const updateStatus = async () => {
  * Will notify on error, but otherwise is silent.
  */
 const submitKey = async () => {
+  status.value = 'activating';
+  console.log('activating (submitKey)');
+  loading.value = true;
   const val = await fetch('/opennms/rest/plugin/cloud/config/activationkey', { method: 'PUT', body: JSON.stringify({ key: key }) })
   try {
     const jsonResponse = await val.json();
@@ -53,6 +68,7 @@ const submitKey = async () => {
     notification.value = e as {};
     show.value = true;
   }
+  loading.value = false;
 
 }
 
@@ -63,17 +79,30 @@ const tryToSubmit = () => {
   // console.log('Trying to submit the key', key, 'WHEN API IS READY, REMOVE THIS AND UNCOMMENT LINE BELOW')
   // notification.value = 'Fake API for now. Your key is:' + key.value;
   // show.value = true;
-  submitKey();
-}
-const tryToDeactivate = () => {
-  console.log('deactivating');
+  
+
   //submitKey();
+  loading.value = true;
+  status.value = 'activating';
+  console.log('activating (tryToSubmit)');
+  //testing switchover
+  setTimeout(() => { status.value = 'activated';}, 5000); 
+  
+  displayDialog.value = true;
 }
 
-const cancel = () => {
-  console.log('cancel');
-  //route to previous page if router is available
+const showDeactivationDialog = () => {
+  displayDialog.value = true;
 };
+
+const tryToDeactivate = () => {
+  console.log('deactivating');
+  visible.value = false;
+  //submitKey();
+  loading.value = true;
+  setTimeout(() => {status.value = 'deactivated', 5000});
+}
+
 
 onMounted(async () => {
   // notification.value = 'Plugin Mounted. Faking API Status call';
@@ -91,36 +120,61 @@ onMounted(async () => {
     </template>
   </FeatherSnackbar>
   <div class="center">
-    <h1>
-      OpenNMS Cloud Services
+    <div class = "header-breakout">
+      <h1>
+        OpenNMS Cloud Services
+      </h1>
       <StatusBar :status="status" />
-    </h1>
-  
-    <p class="margin-bottom">Activate OpenNMS cloud-hosted services including 
-      <a target="_blank" href="https://docs.opennms.com/horizon/latest/deployment/time-series-storage/timeseries/hosted-tss.html">time series storage</a>.
-    </p>
-    <Toggle :active="active" :toggle="toggle" activeText="Cloud Services Activated"
-      disabledText="Cloud Services Deactivated" />
-    <div class="key-entry" v-if="active && !activated">
-      <p class="smaller">To activate, generate a key in the OpenNMS Portal and paste it here.</p>
-      <div v-if="!activated">
-        <FeatherTextarea :disabled="keyDisabled" label="Enter Activation Key" rows="5" :modelValue="key"
-          @update:modelValue="(val: string) => key = val" />
-        <FeatherButton text @click="cancel">Cancel</FeatherButton>
-        <FeatherButton primary @click="tryToSubmit">Activate</FeatherButton>
-      </div>
-      <div v-if="activated">
-        <FeatherButton text @click="cancel">Return to Dashboard</FeatherButton>
-        <FeatherButton primary @click="tryToDeactivate">Deactivate Cloud Services</FeatherButton>
+    </div>
+    <div class="main-content">
+      <h3 class="subheader">{{activated ? 'Manage' : 'Activate'}} OpenNMS Cloud-Hosted Services</h3>
+      Activating cloud services enables the OpenNMS Time Series DB to store and persist performance metrics that OpenNMS collects to the cloud.
+      <div  class="key-entry">
+        <div style="display: flex; flex-direction: row;">
+          <FeatherTextarea 
+            v-if="!activated"
+            :disabled="keyDisabled"
+            style="width: 391px"
+            label="Enter Activation Key"
+            rows="5" 
+            :modelValue="key"
+            @update:modelValue="(val: string) => key = val" 
+          />
+          <div style="margin-left: 25px">
+            You need an activation key to connect with OpenNMS cloud services. <a href="https://portal.opennms.com" target="_blank">Log in to the OpenNMS Portal</a> to get this activation key, copy it, and then paste it into the field here.
+          </div>
+        </div>
+        <FeatherButton id="cancel" text href="/">{{ activated ? 'Return to Dashboard' : 'Cancel' }}</FeatherButton>
+        <FeatherButton 
+          id="activate" 
+          v-if="!activated" 
+          primary 
+          @click="tryToSubmit"
+        >
+          {{loading ? 'Activating' : 'Activate Cloud Services'}}
+        </FeatherButton>
+        <FeatherButton 
+          id="deactivate" 
+          v-if="activated" 
+          primary
+          @click="showDeactivationDialog"
+        >
+          Deactivate Cloud Services
+        </FeatherButton>
       </div>
     </div>
   </div>
-  <FeatherDialog>
-      <p class="my-content">A message from the Dialog</p>
+  <FeatherDialog style="width: 688px" v-model="displayDialog" :labels="labels">
+      <div>
+        Deactivating cloud services requires you to restart OpenNMS. After deactivation and restart, your data will persist to RRD storage. You will no longer be able to access the data stored in the cloud or view it in the Portal.
+      </div>      
       <template v-slot:footer>
-        <FeatherButton primary @click="visible = false"
-          >Close Dialog</FeatherButton
-        >
+        <FeatherButton text @click="displayDialog = false">
+          Cancel
+        </FeatherButton>
+        <FeatherButton primary @click="tryToDeactivate">
+          Confirm Deactivation
+        </FeatherButton>
       </template>
   </FeatherDialog>
 </template>
@@ -160,5 +214,29 @@ p.smaller {
 }
 .margin-bottom {
   margin-bottom:24px;
+}
+
+.main-content {
+  //position: absolute;
+  width: 696px;
+  //height: 370px;
+  //left: 648px;
+  //top: 204px;
+  background: #FFFFFF;
+  box-shadow: inset 0px 0px 0px 1px rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  padding: 15px;
+  padding-bottom: 24px;
+}
+
+.header-breakout {
+  display: flex;
+  align-items: left;
+  margin-bottom: 20px;
+}
+
+.subheader {
+  color: var(--feather-primary);
+  margin-bottom: 1rem;
 }
 </style>
