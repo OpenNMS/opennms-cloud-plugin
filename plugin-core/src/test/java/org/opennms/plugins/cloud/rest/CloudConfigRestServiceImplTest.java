@@ -34,6 +34,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.CONFIGURED;
+import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.DEACTIVATED;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.FAILED;
 
 import javax.ws.rs.core.Response;
@@ -92,4 +93,28 @@ public class CloudConfigRestServiceImplTest {
         assertEquals(FAILED.name(), json.get("status"));
         assertEquals("ohoh", json.get("message"));
     }
+
+    Test
+    public void shouldPutDeactivateKey() {
+        when(cm.getStatus()).thenReturn(CONFIGURED);
+        Response response = new CloudConfigRestServiceImpl(cm)
+                .putDeactivateKey(API_KEY_JSON);
+        assertEquals(200, response.getStatus());
+        String entity = (String) response.getEntity();
+        JSONObject json = new JSONObject(entity);
+        assertEquals(DEACTIVATED.name(), json.get("status"));
+    }
+
+    // @Test
+    // public void shouldPutActivationKeyWithException() {
+    //     doThrow(new NullPointerException("ohoh")).when(cm).initConfiguration(anyString());
+    //     when(cm.getStatus()).thenReturn(FAILED);
+    //     Response response = new CloudConfigRestServiceImpl(cm)
+    //             .putActivationKey(API_KEY_JSON);
+    //     assertEquals(500, response.getStatus());
+    //     String entity = (String) response.getEntity();
+    //     JSONObject json = new JSONObject(entity);
+    //     assertEquals(FAILED.name(), json.get("status"));
+    //     assertEquals("ohoh", json.get("message"));
+    // }
 }
