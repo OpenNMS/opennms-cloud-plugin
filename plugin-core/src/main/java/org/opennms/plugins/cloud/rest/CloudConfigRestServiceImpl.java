@@ -58,6 +58,23 @@ public class CloudConfigRestServiceImpl implements CloudConfigRestService {
         return getStatus();
     }
 
+    @Override
+    public Response putDeactivateKey(final String keyJson) {
+        try {
+            String key = extractKey(keyJson);
+            //this.cm.initConfiguration(key);
+            //this.cm.configure();
+            this.cm.deactivateKeyConfiguration(key);
+            
+        } catch (Exception e) {
+            return Response
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(exceptionToJson(e))
+                    .build();
+        }
+        return getStatus();
+    }
+
     String extractKey(final String json) {
         return new JSONObject(json)
                 .getJSONObject("key")
