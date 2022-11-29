@@ -94,7 +94,7 @@ public class CloudConfigRestServiceImplTest {
         assertEquals("ohoh", json.get("message"));
     }
 
-    Test
+    @Test
     public void shouldPutDeactivateKey() {
         when(cm.getStatus()).thenReturn(CONFIGURED);
         Response response = new CloudConfigRestServiceImpl(cm)
