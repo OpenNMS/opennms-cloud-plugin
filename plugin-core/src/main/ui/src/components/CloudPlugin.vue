@@ -6,7 +6,6 @@ import { FeatherDialog } from "@featherds/dialog";
 import { FeatherSpinner } from "@featherds/progress";
 import { onMounted, ref } from "vue";
 import StatusBar from './StatusBar.vue';
-import router from "../router";
 
 const status = ref('deactivated');
 const notification = ref({});
@@ -41,7 +40,7 @@ const updateStatus = async () => {
 }
 
 const routeToHome = () => {
-  router.push('/');
+  window.location.href = window.location.hostname + '/';
 }
 
 /**
@@ -49,7 +48,7 @@ const routeToHome = () => {
  * Will notify on error, but otherwise is silent.
  */
 const submit = async (deactivate?: boolean) => {
-  status.value = 'activating';
+  const prevStatus = status.value;
   loading.value = true;
   status.value = 'activating';
   const path = deactivate ? '/opennms/rest/plugin/cloud/config/deactivatekey' : '/opennms/rest/plugin/cloud/config/activationkey';
@@ -59,9 +58,9 @@ const submit = async (deactivate?: boolean) => {
     console.log('response!', jsonResponse);
     //{ "message": "UNAVAILABLE: Unable to resolve host access.production.prod.dataservice.opennms.com", "status": "FAILED" } 
     if(!deactivate)
-      status.value = jsonResponse.status ? 'activated' : 'error';
+      status.value = jsonResponse.status !== 'FAILED' ? 'activated' : 'error';
     else {
-      status.value = jsonResponse.status ? 'deactivated' : 'error';
+      status.value = jsonResponse.status !== 'FAILED' ? 'deactivated' : 'error';
     }
     notification.value = jsonResponse.status;
     show.value = true;
@@ -71,6 +70,7 @@ const submit = async (deactivate?: boolean) => {
         show.value = true;
     }
   } catch (e: any) {
+    status.value = prevStatus;
     notification.value = e?.status || e;
     show.value = true;
   }
@@ -122,7 +122,14 @@ onMounted(async () => {
           </div>
         </div>
         <div style="display: flex">
-          <FeatherButton id="cancel" text @click="routeToHome">{{ status === 'activated' ? 'Return to Dashboard' : 'Cancel' }}</FeatherButton>
+          <FeatherButton 
+            id="cancel"
+            :disabled="loading === true"
+            text 
+            @click="routeToHome"
+          >
+            {{ status === 'activated' ? 'Return to Dashboard' : 'Cancel' }}
+          </FeatherButton>
           <FeatherButton 
             id="activate" 
             v-if="status !== 'activated'" 
@@ -139,8 +146,7 @@ onMounted(async () => {
           >
             Deactivate Cloud Services
           </FeatherButton>
-          <!-- <FeatherSpinner v-if="loading === true"/> -->
-          <FeatherSpinner/>
+          <FeatherSpinner v-if="loading === true"/>
         </div>
       </div>
     </div>
@@ -228,10 +234,5 @@ p.smaller {
 
 .spinner-container {
   margin-left: 10px;
-}
-
-.spinner {
-  height: 2rem;
-  width: 2rem;
 }
 </style>
