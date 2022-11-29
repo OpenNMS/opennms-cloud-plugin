@@ -30,8 +30,6 @@ const updateStatus = async () => {
   try {
     const jsonResponse = await val.json();
     status.value = jsonResponse.status;
-    notification.value = jsonResponse.status;
-    show.value = true;
   } catch (e: any) {
     notification.value = e?.status || e;
     show.value = true;
