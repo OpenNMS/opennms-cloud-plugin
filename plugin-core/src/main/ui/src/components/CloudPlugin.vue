@@ -3,20 +3,16 @@ import { FeatherButton } from "@featherds/button";
 import { FeatherTextarea } from '@featherds/textarea'
 import { FeatherSnackbar } from '@featherds/snackbar'
 import { FeatherDialog } from "@featherds/dialog";
+import { FeatherSpinner } from "@featherds/progress";
 import { onMounted, ref } from "vue";
-import Toggle from './Toggle.vue'
 import StatusBar from './StatusBar.vue';
 import router from "../router";
 
-const active = ref(false);
-const activated = ref(false);
-const toggle = () => active.value = !active.value
 const status = ref('deactivated');
 const notification = ref({});
 const show = ref(false);
 const key = ref('');
 const keyDisabled = ref(false);
-const visible = ref(false);
 const loading = ref(false);
 const displayDialog = ref(false);
 
@@ -28,79 +24,58 @@ const labels = {
 
 /**
  * Attempts to GET the Plugin Status from the Server.
- * Should notify on error, but silent on success (will just display the values)
  */
 const updateStatus = async () => {
   loading.value = true;
-  console.log('loading initial');
   const val = await fetch('/opennms/rest/plugin/cloud/config/status', { method: 'GET' })
   try {
     const jsonResponse = await val.json();
-    console.log('setting status to', jsonResponse)
-    status.value = jsonResponse;
-    notification.value = jsonResponse;
+    status.value = jsonResponse.status;
+    notification.value = jsonResponse.status;
     show.value = true;
-  } catch (e) {
-    notification.value = e as {};
+  } catch (e: any) {
+    notification.value = e?.status || e;
     show.value = true;
   }
   loading.value = false;
+}
+
+const routeToHome = () => {
+  router.push('/');
 }
 
 /**
  * Attempts to PUT the activation key over to the server.
  * Will notify on error, but otherwise is silent.
  */
-const submitKey = async () => {
+const submit = async (deactivate?: boolean) => {
   status.value = 'activating';
-  console.log('activating (submitKey)');
   loading.value = true;
-  const val = await fetch('/opennms/rest/plugin/cloud/config/activationkey', { method: 'PUT', body: JSON.stringify({ key: key }) })
+  status.value = 'activating';
+  const path = deactivate ? '/opennms/rest/plugin/cloud/config/deactivatekey' : '/opennms/rest/plugin/cloud/config/activationkey';
+  const val = await fetch(path, { method: 'PUT', body: JSON.stringify({ key: key }) })
   try {
     const jsonResponse = await val.json();
-    status.value = jsonResponse;
-    notification.value = jsonResponse;
+    console.log('response!', jsonResponse);
+    //{ "message": "UNAVAILABLE: Unable to resolve host access.production.prod.dataservice.opennms.com", "status": "FAILED" } 
+    if(!deactivate)
+      status.value = jsonResponse.status ? 'activated' : 'error';
+    else {
+      status.value = jsonResponse.status ? 'deactivated' : 'error';
+    }
+    notification.value = jsonResponse.status;
     show.value = true;
     if (jsonResponse.success) {
         // do something
+        status.value = jsonResponse.status;
+        show.value = true;
     }
-  } catch (e) {
-    notification.value = e as {};
+  } catch (e: any) {
+    notification.value = e?.status || e;
     show.value = true;
   }
+  displayDialog.value = false;
   loading.value = false;
-
-}
-
-/**
- * Interim method until the API is ready. We can probably call submitKey directly when its ready.
- */
-const tryToSubmit = () => {
-  // console.log('Trying to submit the key', key, 'WHEN API IS READY, REMOVE THIS AND UNCOMMENT LINE BELOW')
-  // notification.value = 'Fake API for now. Your key is:' + key.value;
-  // show.value = true;
-  
-
-  //submitKey();
-  loading.value = true;
-  status.value = 'activating';
-  console.log('activating (tryToSubmit)');
-  //testing switchover
-  setTimeout(() => { status.value = 'activated';}, 5000); 
-  
-  displayDialog.value = true;
-}
-
-const showDeactivationDialog = () => {
-  displayDialog.value = true;
-};
-
-const tryToDeactivate = () => {
-  console.log('deactivating');
-  visible.value = false;
-  //submitKey();
-  loading.value = true;
-  setTimeout(() => {status.value = 'deactivated', 5000});
 }
 
 
@@ -127,12 +102,14 @@ onMounted(async () => {
       <StatusBar :status="status" />
     </div>
     <div class="main-content">
-      <h3 class="subheader">{{activated ? 'Manage' : 'Activate'}} OpenNMS Cloud-Hosted Services</h3>
+      <h3 class="subheader">{{status === 'activated' ? 'Manage' : 'Activate'}} OpenNMS Cloud-Hosted Services</h3>
       Activating cloud services enables the OpenNMS Time Series DB to store and persist performance metrics that OpenNMS collects to the cloud.
       <div  class="key-entry">
-        <div style="display: flex; flex-direction: row;">
-          <FeatherTextarea 
-            v-if="!activated"
+        <div 
+          v-if="status !== 'activated'"
+          style="display: flex; flex-direction: row;"
+        >
+          <FeatherTextarea
             :disabled="keyDisabled"
             style="width: 391px"
             label="Enter Activation Key"
@@ -144,38 +121,47 @@ onMounted(async () => {
             You need an activation key to connect with OpenNMS cloud services. <a href="https://portal.opennms.com" target="_blank">Log in to the OpenNMS Portal</a> to get this activation key, copy it, and then paste it into the field here.
           </div>
         </div>
-        <FeatherButton id="cancel" text href="/">{{ activated ? 'Return to Dashboard' : 'Cancel' }}</FeatherButton>
-        <FeatherButton 
-          id="activate" 
-          v-if="!activated" 
-          primary 
-          @click="tryToSubmit"
-        >
-          {{loading ? 'Activating' : 'Activate Cloud Services'}}
-        </FeatherButton>
-        <FeatherButton 
-          id="deactivate" 
-          v-if="activated" 
-          primary
-          @click="showDeactivationDialog"
-        >
-          Deactivate Cloud Services
-        </FeatherButton>
+        <div style="display: flex">
+          <FeatherButton id="cancel" text @click="routeToHome">{{ status === 'activated' ? 'Return to Dashboard' : 'Cancel' }}</FeatherButton>
+          <FeatherButton 
+            id="activate" 
+            v-if="status !== 'activated'" 
+            primary 
+            @click="submit()"
+          >
+            {{loading ? 'Activating' : 'Activate Cloud Services'}}
+          </FeatherButton>
+          <FeatherButton 
+            id="deactivate" 
+            v-if="status === 'activated'" 
+            primary
+            @click="displayDialog = true"
+          >
+            Deactivate Cloud Services
+          </FeatherButton>
+          <!-- <FeatherSpinner v-if="loading === true"/> -->
+          <FeatherSpinner/>
+        </div>
       </div>
     </div>
   </div>
-  <FeatherDialog style="width: 688px" v-model="displayDialog" :labels="labels">
-      <div>
-        Deactivating cloud services requires you to restart OpenNMS. After deactivation and restart, your data will persist to RRD storage. You will no longer be able to access the data stored in the cloud or view it in the Portal.
-      </div>      
-      <template v-slot:footer>
-        <FeatherButton text @click="displayDialog = false">
-          Cancel
-        </FeatherButton>
-        <FeatherButton primary @click="tryToDeactivate">
-          Confirm Deactivation
-        </FeatherButton>
-      </template>
+  <FeatherDialog
+    v-model="displayDialog"
+    :labels="labels"
+  >
+    <div style="width: 630px;">
+      Deactivating cloud services requires you to restart OpenNMS. After deactivation and restart, your data will persist to RRD storage.
+      You will no longer be able to access the data stored in the cloud or view it in the Portal.
+    </div>      
+    <template v-slot:footer>
+      <FeatherButton text @click="displayDialog = false">
+        Cancel
+      </FeatherButton>
+      <FeatherButton primary @click="submit(true)">
+        Confirm Deactivation
+      </FeatherButton>
+      <FeatherSpinner v-if="loading"/>
+    </template>
   </FeatherDialog>
 </template>
 
@@ -238,5 +224,14 @@ p.smaller {
 .subheader {
   color: var(--feather-primary);
   margin-bottom: 1rem;
+}
+
+.spinner-container {
+  margin-left: 10px;
+}
+
+.spinner {
+  height: 2rem;
+  width: 2rem;
 }
 </style>

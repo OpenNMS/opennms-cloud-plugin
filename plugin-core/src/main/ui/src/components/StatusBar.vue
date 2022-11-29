@@ -12,14 +12,13 @@ const props = defineProps({
 
 <template>
     <div v-if="status === 'activated'" class="activated statusbar">
-        <FeatherIcon :icon="CheckCircle"/>
-        Activated
+        <FeatherIcon :icon="CheckCircle"/> Activated
     </div>
     <div v-else-if="status === 'activating'" class="activating statusbar">
-        <FeatherIcon :icon="Cycle"/>Activating...
+        <FeatherIcon :icon="Cycle"/> Activating...
     </div>
     <div v-else class="deactivated statusbar">
-        <FeatherIcon :icon="Cancel" />Not activated
+        <FeatherIcon :icon="Cancel" /> Not activated
     </div>
 </template>
 
@@ -58,10 +57,14 @@ const props = defineProps({
     font-size: 12px;
     line-height: 15px;
     margin-left: 20px;
-    margin-top: 8px;
+    margin-top: 6px;
 
     /* identical to box height */
     font-feature-settings: 'tnum' on, 'lnum' on, 'cv05' on;
+}
+
+FeatherIcon { 
+  margin-right: 10px;
 }
 
 </style>
