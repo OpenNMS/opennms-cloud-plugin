@@ -38,7 +38,7 @@ const updateStatus = async () => {
 }
 
 const routeToHome = () => {
-  window.location.href = window.location.hostname + '/';
+  window.location.href = window.location.origin + '/opennms';
 }
 
 /**
@@ -63,7 +63,6 @@ const submit = async (deactivate?: boolean) => {
     notification.value = jsonResponse.status;
     show.value = true;
     if (jsonResponse.success) {
-        // do something
         status.value = jsonResponse.status;
         show.value = true;
     }
