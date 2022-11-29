@@ -62,8 +62,8 @@ public class CloudConfigRestServiceImpl implements CloudConfigRestService {
     public Response putDeactivateKey(final String keyJson) {
         try {
             String key = extractKey(keyJson);
-            //this.cm.initConfiguration(key);
-            //this.cm.configure();
+            this.cm.initConfiguration(key);
+            this.cm.configure();
             this.cm.deactivateKeyConfiguration(key);
             
         } catch (Exception e) {
