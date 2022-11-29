@@ -11,10 +11,11 @@ const status = ref('deactivated');
 const notification = ref({});
 const show = ref(false);
 const key = ref('');
+const keyError = ref('');
 const keyDisabled = ref(false);
 const loading = ref(false);
 const displayDialog = ref(false);
-
+const initialLoad = ref(false);
 const labels = {
   title: 'Important',
   close: 'Close'
@@ -35,6 +36,8 @@ const updateStatus = async () => {
     show.value = true;
   }
   loading.value = false;
+  //We set this to avoid rendering issues before feather appears to be properly loaded.
+  initialLoad.value = true;
 }
 
 const routeToHome = () => {
@@ -46,6 +49,12 @@ const routeToHome = () => {
  * Will notify on error, but otherwise is silent.
  */
 const submit = async (deactivate?: boolean) => {
+  if(!deactivate && !key.value){
+    keyError.value = "Key is Required.";
+    return;
+  } else if(keyError.value && key.value){
+    keyError.value = "";
+  }
   const prevStatus = status.value;
   loading.value = true;
   status.value = 'activating';
@@ -53,7 +62,6 @@ const submit = async (deactivate?: boolean) => {
   const val = await fetch(path, { method: 'PUT', body: JSON.stringify({ key: key }) })
   try {
     const jsonResponse = await val.json();
-    console.log('response!', jsonResponse);
     //{ "message": "UNAVAILABLE: Unable to resolve host access.production.prod.dataservice.opennms.com", "status": "FAILED" } 
     if(!deactivate)
       status.value = jsonResponse.status !== 'FAILED' ? 'activated' : 'error';
@@ -96,7 +104,7 @@ onMounted(async () => {
       <h1>
         OpenNMS Cloud Services
       </h1>
-      <StatusBar :status="status" />
+      <StatusBar v-if="initialLoad" :status="status" />
     </div>
     <div class="main-content">
       <h3 class="subheader">{{status === 'activated' ? 'Manage' : 'Activate'}} OpenNMS Cloud-Hosted Services</h3>
@@ -108,6 +116,7 @@ onMounted(async () => {
         >
           <FeatherTextarea
             :disabled="keyDisabled"
+            :error="keyError"
             style="width: 391px"
             label="Enter Activation Key"
             rows="5" 
