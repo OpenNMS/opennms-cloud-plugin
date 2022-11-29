@@ -112,7 +112,7 @@ public class CloudConfigRestServiceImplTest {
         Response response = new CloudConfigRestServiceImpl(cm)
                 .putDeactivateKey(API_KEY_JSON);
         //This temporarily comes back as 200 but should be 500
-        assertEquals(200, response.getStatus());
+        assertEquals(500, response.getStatus());
         String entity = (String) response.getEntity();
         JSONObject json = new JSONObject(entity);
         assertEquals(FAILED.name(), json.get("status"));
