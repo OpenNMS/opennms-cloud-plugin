@@ -105,16 +105,16 @@ public class CloudConfigRestServiceImplTest {
         assertEquals(DEACTIVATED.name(), json.get("status"));
     }
 
-    // @Test
-    // public void shouldPutActivationKeyWithException() {
-    //     doThrow(new NullPointerException("ohoh")).when(cm).initConfiguration(anyString());
-    //     when(cm.getStatus()).thenReturn(FAILED);
-    //     Response response = new CloudConfigRestServiceImpl(cm)
-    //             .putActivationKey(API_KEY_JSON);
-    //     assertEquals(500, response.getStatus());
-    //     String entity = (String) response.getEntity();
-    //     JSONObject json = new JSONObject(entity);
-    //     assertEquals(FAILED.name(), json.get("status"));
-    //     assertEquals("ohoh", json.get("message"));
-    // }
+    @Test
+    public void shouldPutDeactivateKeyWithException() {
+        doThrow(new NullPointerException("failed_deactivate")).when(cm).initConfiguration(anyString());
+        when(cm.getStatus()).thenReturn(FAILED);
+        Response response = new CloudConfigRestServiceImpl(cm)
+                .putDeactivateKey(API_KEY_JSON);
+        assertEquals(500, response.getStatus());
+        String entity = (String) response.getEntity();
+        JSONObject json = new JSONObject(entity);
+        assertEquals(FAILED.name(), json.get("status"));
+        assertEquals("failed_deactivate", json.get("message"));
+    }
 }
