@@ -96,7 +96,7 @@ public class CloudConfigRestServiceImplTest {
 
     @Test
     public void shouldPutDeactivateKey() {
-        when(cm.getStatus()).thenReturn(CONFIGURED);
+        when(cm.getStatus()).thenReturn(DEACTIVATED);
         Response response = new CloudConfigRestServiceImpl(cm)
                 .putDeactivateKey(API_KEY_JSON);
         assertEquals(200, response.getStatus());
