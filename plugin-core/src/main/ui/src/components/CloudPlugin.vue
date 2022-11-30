@@ -162,8 +162,12 @@ onMounted(async () => {
     :labels="labels"
   >
     <div style="width: 630px;">
-      Deactivating cloud services requires you to restart OpenNMS. After deactivation and restart, your data will persist to RRD storage.
-      You will no longer be able to access the data stored in the cloud or view it in the Portal.
+      Deactivating cloud services requires you to perform two extra tasks:
+      <ol type="1">
+        <li>Remove <em>/opt/opennms/etc/opennms.properties.d/hosted_tsdb.timeseries.properties</em> from your OpenNMS system</li>
+        <li>Restart OpenNMS</li>
+      </ol>
+      <strong>Caution:</strong> Once you deactivate cloud services and restart OpenNMS your data will persist to RRD storage unless otherwise configured.  You will <strong>no longer</strong> be able to access the data stored in the cloud or view the status of this system in the OpenNMS Portal.
     </div>      
     <template v-slot:footer>
       <FeatherButton text @click="displayDialog = false">
