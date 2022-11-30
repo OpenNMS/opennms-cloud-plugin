@@ -28,25 +28,28 @@
 
 package org.opennms.plugins.cloud.grpc;
 
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
-import io.grpc.MethodDescriptor;
-import io.grpc.Status.Code;
-import lombok.Builder;
-import lombok.Data;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
+import org.junit.Test;
 
-@Data
-@Builder
-public class LogEntry {
+public class TraceIdGeneratorTest {
 
-    private long startTime;
+    @Test
+    public void traceParentHeaderShouldBeCorrectlyFormed() throws DecoderException {
 
-    private long endTime;
+        // When
+        TraceParentHeader traceParentHeader = TraceParentHeaderGenerator.generateTraceParentHeader();
 
-    private MethodDescriptor<?, ?> methodInvoked;
-
-    private Code returnCode;
-
-    private String optionalErrorMsg;
-
-    private String traceParentHeader;
+        // Then
+        assertNotEquals(EMPTY, traceParentHeader.createTraceParentHeaderAsString());
+        assertEquals(3, traceParentHeader.createTraceParentHeaderAsString().codePoints().filter(st -> st == '-').count());
+        assertEquals("00", traceParentHeader.getVersion());
+        assertEquals("01", traceParentHeader.getTraceFlags());
+        assertEquals(16, Hex.decodeHex(traceParentHeader.getTraceId()).length);
+        assertEquals(8, Hex.decodeHex(traceParentHeader.getParentId()).length);
+    }
 }

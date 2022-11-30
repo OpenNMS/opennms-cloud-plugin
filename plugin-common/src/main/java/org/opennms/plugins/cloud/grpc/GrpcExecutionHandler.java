@@ -33,6 +33,10 @@ import static io.grpc.Status.Code.OK;
 import static io.grpc.Status.Code.RESOURCE_EXHAUSTED;
 import static io.grpc.Status.Code.UNAUTHENTICATED;
 import static io.grpc.Status.Code.UNAVAILABLE;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.opennms.plugins.cloud.grpc.GrpcConnection.TRACE_PARENT_HEADER_CONTEXT;
+import static org.opennms.plugins.cloud.grpc.TraceParentHeaderGenerator.generateTraceParentHeader;
+import static org.opennms.plugins.cloud.grpc.TraceParentHeaderGenerator.generateTraceParentHeaderMetadata;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -45,6 +49,7 @@ import org.opennms.integration.api.v1.timeseries.StorageException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.grpc.Context;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 import io.grpc.Status.Code;
@@ -63,6 +68,7 @@ import lombok.Data;
 public class GrpcExecutionHandler {
 
     private final CloudLogService cloudLogService;
+
     private static final Logger LOG = LoggerFactory.getLogger(GrpcExecutionHandler.class);
     private static final Set<Code> RECOVERABLE_EXCEPTIONS = new HashSet<>(Arrays.asList(
             DEADLINE_EXCEEDED,
@@ -79,12 +85,18 @@ public class GrpcExecutionHandler {
         Objects.requireNonNull(callToExecute.getMethodDescriptor());
         Objects.requireNonNull(callToExecute.getMapper());
         Objects.requireNonNull(callToExecute.getDefaultFunction());
+        String optionalErrorMsg = EMPTY;
         Status.Code status = OK;
+        String traceParentHeader = generateTraceParentHeader().createTraceParentHeaderAsString();
+        Context context = Context.current().withValue(TRACE_PARENT_HEADER_CONTEXT,
+                generateTraceParentHeaderMetadata(traceParentHeader));
+        final Context previousContext = context.attach();
         long startTime = System.currentTimeMillis();
         try {
             T result = callToExecute.getCallToExecute().get();
             return callToExecute.getMapper().apply(result);
         } catch (StatusRuntimeException ex) {
+            optionalErrorMsg = ex.getMessage();
             status = ex.getStatus().getCode();
             if (OK == status) {
                 // should not happen but just to be safe...
@@ -98,7 +110,8 @@ public class GrpcExecutionHandler {
                 return callToExecute.getDefaultFunction().get();
             }
         } finally {
-            cloudLogService.log(startTime, System.currentTimeMillis(), callToExecute.getMethodDescriptor(), status);
+            cloudLogService.log(startTime, System.currentTimeMillis(), callToExecute.getMethodDescriptor(), status, traceParentHeader, optionalErrorMsg);
+            context.detach(previousContext);
         }
     }
 

@@ -37,6 +37,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import org.opennms.tsaas.telemetry.GatewayOuterClass;
 
@@ -75,7 +76,8 @@ public class LogEntryUtilTest implements CloudLogServiceTestUtil {
         assertEquals(2, latencyTraces.size());
         latencyTraces.forEach(latencyTrace -> {
             assertNotNull(latencyTrace.getTraceId());
-            assertEquals(Status.Code.OK.value(), latencyTrace.getStatusCode());
+            assertEquals(Status.Code.OK.value(), latencyTrace.getStatusCode().getNumber());
+            assertEquals(StringUtils.EMPTY, latencyTrace.getStatusMessage());
         });
     }
 }

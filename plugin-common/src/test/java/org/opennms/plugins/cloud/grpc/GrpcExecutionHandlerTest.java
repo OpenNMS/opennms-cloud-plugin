@@ -30,6 +30,7 @@ package org.opennms.plugins.cloud.grpc;
 
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
@@ -75,7 +76,7 @@ public class GrpcExecutionHandlerTest {
                         .methodDescriptor(METHOD)
                         .build());
         verify(cloudLogService, times(1))
-                .log(anyLong(), anyLong(), eq(METHOD), eq(Status.UNIMPLEMENTED.getCode()));
+                .log(anyLong(), anyLong(), eq(METHOD), eq(Status.UNIMPLEMENTED.getCode()), anyString(), anyString());
         clearInvocations(cloudLogService);
 
         grpcHandler.executeRpcCall(GrpcExecutionHandler.GrpcCall.builder()
@@ -87,7 +88,7 @@ public class GrpcExecutionHandlerTest {
                 .methodDescriptor(METHOD)
                 .build());
         verify(cloudLogService, times(1))
-                .log(anyLong(), anyLong(), eq(METHOD), eq(Status.UNIMPLEMENTED.getCode()));
+                .log(anyLong(), anyLong(), eq(METHOD), eq(Status.UNIMPLEMENTED.getCode()), anyString(), anyString());
     }
 
     @Test
@@ -102,7 +103,7 @@ public class GrpcExecutionHandlerTest {
                                 .methodDescriptor(TimeseriesGrpc.getStoreMethod()).build());
         assertThrows(StorageException.class, run);
         verify(cloudLogService, times(1))
-                .log(anyLong(), anyLong(), eq(METHOD), eq(Status.UNAVAILABLE.getCode()));
+                .log(anyLong(), anyLong(), eq(METHOD), eq(Status.UNAVAILABLE.getCode()), anyString(), anyString());
         clearInvocations(cloudLogService);
 
         run = () -> grpcHandler.executeRpcCall(GrpcExecutionHandler.GrpcCall.builder()
@@ -115,7 +116,7 @@ public class GrpcExecutionHandlerTest {
                 .build());
         assertThrows(StorageException.class, run);
         verify(cloudLogService, times(1))
-                .log(anyLong(), anyLong(), eq(METHOD), eq(Status.UNAVAILABLE.getCode()));
+                .log(anyLong(), anyLong(), eq(METHOD), eq(Status.UNAVAILABLE.getCode()), anyString(), anyString());
     }
 
 }
