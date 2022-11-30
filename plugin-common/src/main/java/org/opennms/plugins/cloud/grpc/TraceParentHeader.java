@@ -28,25 +28,24 @@
 
 package org.opennms.plugins.cloud.grpc;
 
-
-import io.grpc.MethodDescriptor;
-import io.grpc.Status.Code;
 import lombok.Builder;
 import lombok.Data;
 
 @Data
 @Builder
-public class LogEntry {
+public class TraceParentHeader {
 
-    private long startTime;
+    private static final String TRACE_PARENT_HEADER_FORMAT = "%s-%s-%s-%s";
 
-    private long endTime;
+    private final String version;
 
-    private MethodDescriptor<?, ?> methodInvoked;
+    private final String traceId;
 
-    private Code returnCode;
+    private final String parentId;
 
-    private String optionalErrorMsg;
+    private final String traceFlags;
 
-    private String traceParentHeader;
+    public String createTraceParentHeaderAsString() {
+        return String.format(TRACE_PARENT_HEADER_FORMAT, version, traceId, parentId, traceFlags);
+    }
 }
