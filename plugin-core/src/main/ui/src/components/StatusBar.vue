@@ -11,7 +11,7 @@ const props = defineProps({
 </script>
 
 <template>
-    <div v-if="status === 'activated'" class="activated statusbar">
+    <div v-if="status === 'activated' || status === 'CONFIGURED'" class="activated statusbar">
         <FeatherIcon :icon="CheckCircle"/> Activated
     </div>
     <div v-else-if="status === 'activating'" class="activating statusbar">
