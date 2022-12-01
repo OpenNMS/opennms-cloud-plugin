@@ -17,4 +17,4 @@ if [ -f "$OPENNMS_HOME/etc/featuresBoot.d/plugin-cloud.boot" ]; then
 fi
 
 echo "Please make sure org.opennms.timeseries.strategy=integration"
-echo "Example config is located at $OPENNMS_HOME/etc/examples/opennms.properties.d/timeseries.properties"
+echo "Example config is located at $OPENNMS_HOME/etc/examples/opennms.properties.d/hosted_tsdb.timeseries.properties"

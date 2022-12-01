@@ -95,8 +95,8 @@
                         <configuration>
                             <fileSets>
                                 <file>
-                                    <sourceFile>../common-resources/etc/examples/opennms.properties.d/timeseries.properties</sourceFile>
-                                    <destinationFile>${project.build.directory}/deb/usr/share/opennms/etc/examples/opennms.properties.d/timeseries.properties</destinationFile>
+                                    <sourceFile>../common-resources/etc/examples/opennms.properties.d/hosted_tsdb.timeseries.properties</sourceFile>
+                                    <destinationFile>${project.build.directory}/deb/usr/share/opennms/etc/examples/opennms.properties.d/hosted_tsdb.timeseries.properties</destinationFile>
                                 </file>
                                 <file>
                                     <sourceFile>../common-resources/etc/featuresBoot.d/plugin-cloud.boot</sourceFile>

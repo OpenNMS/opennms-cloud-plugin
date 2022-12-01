@@ -215,7 +215,7 @@ public class EndToEndIt {
     }
 
     private Properties readTimeseriesProperties() throws IOException {
-        try (InputStream input = new FileInputStream("../assembly/common-resources/etc/examples/opennms.properties.d/timeseries.properties")) {
+        try (InputStream input = new FileInputStream("../assembly/common-resources/etc/examples/opennms.properties.d/hosted_tsdb.timeseries.properties")) {
             Properties prop = new Properties();
             prop.load(input);
             return prop;
