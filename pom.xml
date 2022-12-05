@@ -51,7 +51,7 @@
         <opennms.api.version.max>2.0.0</opennms.api.version.max><!-- exclusive ver. allowed for packages dependency rpm & deb-->
         <osgi.version>6.0.0</osgi.version>
         <slf4j-api.version>1.7.32</slf4j-api.version>
-        <protobufVersion>3.19.4</protobufVersion>
+        <protobufVersion>3.21.10</protobufVersion>
         <grpcVersion>1.44.0</grpcVersion>
         <guavaVersion>30.1-jre</guavaVersion>
         <failureAccessVersion>1.0.1</failureAccessVersion>
