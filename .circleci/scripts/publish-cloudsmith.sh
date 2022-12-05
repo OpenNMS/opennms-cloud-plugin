@@ -11,6 +11,9 @@ if [ -n "${CIRCLE_TAG}" ]; then
 else
   # only put release-1.0.0 into common, the release-1.x will still in common-testing
   case "${CIRCLE_BRANCH}" in
+    *-package)
+      REPO="common-testing"
+      ;;
     main)
       REPO="common-testing"
       ;;
