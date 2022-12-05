@@ -32,6 +32,7 @@ import static org.opennms.plugins.cloud.config.ConfigStore.Key.truststore;
 import static org.opennms.plugins.cloud.config.ConfigStore.TOKEN_KEY;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.AUTHENTCATED;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.CONFIGURED;
+import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.DEACTIVATED;
 import static org.opennms.plugins.cloud.config.PrerequisiteChecker.checkAndLogContainer;
 import static org.opennms.plugins.cloud.config.PrerequisiteChecker.checkAndLogSystemId;
 
@@ -78,7 +79,11 @@ public class ConfigurationManager {
         /**
          * The cloud plugin is configured but the configuration failed.
          */
-        FAILED
+        FAILED,
+        /**
+         * The cloud plugin is successfully deactivated (After previously being activated).
+         */
+        DEACTIVATED,
     }
 
     private static final Logger LOG = LoggerFactory.getLogger(ConfigurationManager.class);
@@ -159,6 +164,13 @@ public class ConfigurationManager {
             LOG.error("Initialization failed. Used config:\n{}", pasConfigTls, e);
             throw e;
         }
+    }
+
+    /**
+    * This is a placeholder and doesn't currently deactivate on the backend
+    */
+    public void deactivateKeyConfiguration(final String key) {
+        this.currentStatus = DEACTIVATED;
     }
 
     public void renewCerts() throws CertificateException {

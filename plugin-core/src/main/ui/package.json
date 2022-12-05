@@ -20,6 +20,8 @@
   "dependencies": {
     "@featherds/button": "0.11.1",
     "@featherds/icon": "0.11.1",
+    "@featherds/dialog": "0.11.1",
+    "@featherds/progress": "0.11.1",
     "@featherds/snackbar": "0.11.1",
     "@featherds/styles": "0.11.1",
     "@featherds/textarea": "0.11.1",
