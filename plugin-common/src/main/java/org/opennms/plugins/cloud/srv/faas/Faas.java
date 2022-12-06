@@ -36,4 +36,9 @@ public class Faas implements GrpcService {
     public void initGrpc(final GrpcConnectionConfig grpcConfig) {
         // Freddy, implement me :-)
     }
+
+    @Override
+    public void destroy() {
+        // Freddy, implement me :-)
+    }
 }
