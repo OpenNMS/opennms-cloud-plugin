@@ -35,6 +35,9 @@ import javax.ws.rs.core.Response;
 import org.json.JSONObject;
 import org.opennms.plugins.cloud.config.ConfigurationManager;
 
+import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.CONFIGURED;
+import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.AUTHENTCATED;
+
 public class CloudConfigRestServiceImpl implements CloudConfigRestService {
 
     private final ConfigurationManager cm;
@@ -61,11 +64,15 @@ public class CloudConfigRestServiceImpl implements CloudConfigRestService {
     @Override
     public Response putDeactivateKey(final String keyJson) {
         try {
-            String key = extractKey(keyJson);
-            this.cm.initConfiguration(key);
-            this.cm.configure();
-            this.cm.deactivateKeyConfiguration(key);
-            
+            if (this.cm.getStatus() == AUTHENTCATED || this.cm.getStatus() == CONFIGURED) {
+                this.cm.deactivateKeyConfiguration();
+            } else {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(new JSONObject()
+                                .put("message", "OpenNMS Cloud Services are not Activated.")
+                                .toString())
+                        .build();
+            }
         } catch (Exception e) {
             return Response
                     .status(Response.Status.INTERNAL_SERVER_ERROR)

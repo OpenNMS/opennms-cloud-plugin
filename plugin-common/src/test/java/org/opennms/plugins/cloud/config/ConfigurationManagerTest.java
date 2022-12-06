@@ -29,6 +29,7 @@
 package org.opennms.plugins.cloud.config;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -43,14 +44,17 @@ import static org.opennms.plugins.cloud.config.ConfigStore.Key.grpchost;
 import static org.opennms.plugins.cloud.config.ConfigStore.Key.truststore;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.AUTHENTCATED;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.CONFIGURED;
+import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.DEACTIVATED;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.FAILED;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.NOT_ATTEMPTED;
 import static org.opennms.plugins.cloud.testserver.FileUtil.classpathFileToString;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
+import io.grpc.StatusRuntimeException;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -199,5 +203,32 @@ public class ConfigurationManagerTest {
                 Collections.singletonList(grpc));
         assertEquals(CONFIGURED, cm.getStatus());
         verify(grpc, times(1)).initGrpc(any()); // this is done in configure()
+    }
+
+    @Test
+    public void shouldAbleToDeactive() {
+        GrpcExecutionHandler grpcHandler = new GrpcExecutionHandler(new CloudLogService(cloudLogServiceConfig));
+        TsaasStorage grpc = spy(new TsaasStorage(new TsaasConfig(1, 1), grpcHandler));
+        List<GrpcService> serviceList = Collections.singletonList(grpc);
+        ConfigurationManager cm = new ConfigurationManager(config, clientConfig, clientConfig, mock(RegistrationManager.class),
+                info,
+                serviceList);
+        cm.initConfiguration("something");
+        cm.configure();
+        // should be normal
+        cm.checkConnection();
+
+        cm.deactivateKeyConfiguration();
+
+        assertEquals(DEACTIVATED, cm.getStatus());
+        Exception statusException = null;
+        try {
+            // throw StatusRuntimeException
+            cm.checkConnection();
+        } catch (StatusRuntimeException e) {
+            statusException = e;
+        }
+        assertNotNull(statusException);
+        assertEquals(StatusRuntimeException.class, statusException.getClass());
     }
 }

@@ -140,4 +140,8 @@ public class CloudLogService implements GrpcService {
         LOG.debug("Removing from log entry queue {} elements.", getLogEntryQueueSize());
         logEntryQueue.clear();
     }
+
+    public void destroy() {
+        CloseUtil.close(this.grpc);
+    }
 }

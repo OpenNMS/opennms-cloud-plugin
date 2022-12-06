@@ -49,6 +49,7 @@ import org.opennms.dataplatform.access.AuthenticateGrpc;
 import org.opennms.integration.api.v1.runtime.RuntimeInfo;
 import org.opennms.plugins.cloud.config.ConfigStore.Key;
 import org.opennms.plugins.cloud.grpc.CloseUtil;
+import org.opennms.plugins.cloud.grpc.CloudLogService;
 import org.opennms.plugins.cloud.grpc.GrpcConnection;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.srv.GrpcService;
@@ -167,10 +168,12 @@ public class ConfigurationManager {
     }
 
     /**
-    * This is a placeholder and doesn't currently deactivate on the backend
+    * It will set the db config status = DEACTIVATED and also stop existing services
     */
-    public void deactivateKeyConfiguration(final String key) {
+    public void deactivateKeyConfiguration() {
         this.currentStatus = DEACTIVATED;
+        this.config.putProperty(Key.configstatus, DEACTIVATED.name());
+        this.destroyGrpcServices();
     }
 
     public void renewCerts() throws CertificateException {
@@ -282,6 +285,22 @@ public class ConfigurationManager {
         for (GrpcService service : grpcServices) {
             try {
                 service.initGrpc(config);
+            } catch (Exception e) {
+                LOG.error("could not initGrpc", e);
+            }
+        }
+    }
+
+    private void destroyGrpcServices() {
+        for (GrpcService service : grpcServices) {
+            try {
+                if (service instanceof TsaasStorage) {
+                    ((TsaasStorage) service).destroy();
+                } else if (service instanceof CloudLogService) {
+                    ((CloudLogService) service).destroy();
+                } else {
+                    LOG.warn("Unknown service: {} unable to stop.", service);
+                }
             } catch (Exception e) {
                 LOG.error("could not initGrpc", e);
             }
