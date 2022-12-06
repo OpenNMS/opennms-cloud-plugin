@@ -40,6 +40,8 @@ import static org.mockito.Mockito.when;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.CONFIGURED;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.DEACTIVATED;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.FAILED;
+import static org.opennms.plugins.cloud.rest.CloudConfigRestServiceImpl.MESSAGE_KEY;
+import static org.opennms.plugins.cloud.rest.CloudConfigRestServiceImpl.STATUS_KEY;
 
 import javax.ws.rs.core.Response;
 
@@ -65,8 +67,8 @@ public class CloudConfigRestServiceImplTest {
         when(cm.getStatus()).thenReturn(CONFIGURED);
         String jsonString = new CloudConfigRestServiceImpl(cm).exceptionToJson(new NullPointerException("myProblem"));
         JSONObject json = new JSONObject(jsonString);
-        assertEquals(CONFIGURED.name(), json.get("status"));
-        assertEquals("myProblem", json.get("message"));
+        assertEquals(CONFIGURED.name(), json.get(STATUS_KEY));
+        assertEquals("myProblem", json.get(MESSAGE_KEY));
     }
 
     @Test
@@ -82,7 +84,7 @@ public class CloudConfigRestServiceImplTest {
         assertEquals(200, response.getStatus());
         String entity = (String) response.getEntity();
         JSONObject json = new JSONObject(entity);
-        assertEquals(CONFIGURED.name(), json.get("status"));
+        assertEquals(CONFIGURED.name(), json.get(STATUS_KEY));
     }
 
     @Test
@@ -94,8 +96,8 @@ public class CloudConfigRestServiceImplTest {
         assertEquals(500, response.getStatus());
         String entity = (String) response.getEntity();
         JSONObject json = new JSONObject(entity);
-        assertEquals(FAILED.name(), json.get("status"));
-        assertEquals("ohoh", json.get("message"));
+        assertEquals(FAILED.name(), json.get(STATUS_KEY));
+        assertEquals("ohoh", json.get(MESSAGE_KEY));
     }
 
     @Test
@@ -110,7 +112,7 @@ public class CloudConfigRestServiceImplTest {
         JSONObject json = new JSONObject(entity);
         verify(cm, times(1)).deactivateKeyConfiguration();
 
-        assertTrue(json.has("status"));
+        assertTrue(json.has(STATUS_KEY));
     }
 
     @Test
@@ -123,7 +125,7 @@ public class CloudConfigRestServiceImplTest {
         assertEquals(500, response.getStatus());
         String entity = (String) response.getEntity();
         JSONObject json = new JSONObject(entity);
-        assertEquals(FAILED.name(), json.get("status"));
-        assertEquals("failed_deactivate", json.get("message"));
+        assertEquals(FAILED.name(), json.get(STATUS_KEY));
+        assertEquals("failed_deactivate", json.get(MESSAGE_KEY));
     }
 }
