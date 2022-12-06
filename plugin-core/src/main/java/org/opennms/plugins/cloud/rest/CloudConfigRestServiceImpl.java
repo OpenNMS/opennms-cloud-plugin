@@ -35,9 +35,6 @@ import javax.ws.rs.core.Response;
 import org.json.JSONObject;
 import org.opennms.plugins.cloud.config.ConfigurationManager;
 
-import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.CONFIGURED;
-import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.AUTHENTCATED;
-
 public class CloudConfigRestServiceImpl implements CloudConfigRestService {
     public static final String STATUS_KEY = "status";
     public static final String MESSAGE_KEY = "message";
@@ -65,14 +62,13 @@ public class CloudConfigRestServiceImpl implements CloudConfigRestService {
 
     @Override
     public Response putDeactivateKey() {
-        if (this.cm.getStatus() == AUTHENTCATED || this.cm.getStatus() == CONFIGURED) {
+        try {
             this.cm.deactivateKeyConfiguration();
-        } else {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(new JSONObject()
-                            .put(STATUS_KEY, cm.getStatus().name())
-                            .put(MESSAGE_KEY, "failed_deactivate")
-                            .toString())
+
+        } catch (Exception e) {
+            return Response
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(exceptionToJson(e))
                     .build();
         }
 

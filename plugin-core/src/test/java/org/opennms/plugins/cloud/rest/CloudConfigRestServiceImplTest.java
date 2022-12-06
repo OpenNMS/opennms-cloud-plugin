@@ -116,7 +116,7 @@ public class CloudConfigRestServiceImplTest {
 
     @Test
     public void shouldPutDeactivateKeyWithException() {
-        doThrow(new NullPointerException("failed_deactivate")).when(cm).initConfiguration(anyString());
+        doThrow(new NullPointerException("failed_deactivate")).when(cm).deactivateKeyConfiguration();
         when(cm.getStatus()).thenReturn(FAILED);
         Response response = new CloudConfigRestServiceImpl(cm).putDeactivateKey();
         //This temporarily comes back as 200 but should be 500
