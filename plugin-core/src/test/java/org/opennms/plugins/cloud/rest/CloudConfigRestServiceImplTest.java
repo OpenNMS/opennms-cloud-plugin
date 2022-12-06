@@ -29,9 +29,13 @@
 package org.opennms.plugins.cloud.rest;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.CONFIGURED;
 import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus.DEACTIVATED;
@@ -96,13 +100,17 @@ public class CloudConfigRestServiceImplTest {
 
     @Test
     public void shouldPutDeactivateKey() {
-        when(cm.getStatus()).thenReturn(DEACTIVATED);
+        when(cm.getStatus()).thenReturn(CONFIGURED);
+        doNothing().when(cm).deactivateKeyConfiguration();
+
         Response response = new CloudConfigRestServiceImpl(cm)
                 .putDeactivateKey(API_KEY_JSON);
         assertEquals(200, response.getStatus());
         String entity = (String) response.getEntity();
         JSONObject json = new JSONObject(entity);
-        assertEquals(DEACTIVATED.name(), json.get("status"));
+        verify(cm, times(1)).deactivateKeyConfiguration();
+
+        assertTrue(json.has("status"));
     }
 
     @Test

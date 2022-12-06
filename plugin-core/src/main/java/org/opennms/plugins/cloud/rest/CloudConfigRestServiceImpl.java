@@ -63,22 +63,17 @@ public class CloudConfigRestServiceImpl implements CloudConfigRestService {
 
     @Override
     public Response putDeactivateKey(final String keyJson) {
-        try {
-            if (this.cm.getStatus() == AUTHENTCATED || this.cm.getStatus() == CONFIGURED) {
-                this.cm.deactivateKeyConfiguration();
-            } else {
-                return Response.status(Response.Status.BAD_REQUEST)
-                        .entity(new JSONObject()
-                                .put("message", "OpenNMS Cloud Services are not Activated.")
-                                .toString())
-                        .build();
-            }
-        } catch (Exception e) {
-            return Response
-                    .status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(exceptionToJson(e))
+        if (this.cm.getStatus() == AUTHENTCATED || this.cm.getStatus() == CONFIGURED) {
+            this.cm.deactivateKeyConfiguration();
+        } else {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new JSONObject()
+                            .put("status", cm.getStatus().name())
+                            .put("message", "failed_deactivate")
+                            .toString())
                     .build();
         }
+
         return getStatus();
     }
 
