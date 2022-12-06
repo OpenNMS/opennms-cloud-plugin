@@ -167,10 +167,12 @@ public class ConfigurationManager {
     }
 
     /**
-    * This is a placeholder and doesn't currently deactivate on the backend
+    * It will set the db config status = DEACTIVATED and also stop existing services
     */
-    public void deactivateKeyConfiguration(final String key) {
+    public void deactivateKeyConfiguration() {
         this.currentStatus = DEACTIVATED;
+        this.config.putProperty(Key.configstatus, DEACTIVATED.name());
+        this.destroyGrpcServices();
     }
 
     public void renewCerts() throws CertificateException {
@@ -285,6 +287,12 @@ public class ConfigurationManager {
             } catch (Exception e) {
                 LOG.error("could not initGrpc", e);
             }
+        }
+    }
+
+    private void destroyGrpcServices() {
+        for (GrpcService service : grpcServices) {
+            service.destroy();
         }
     }
 

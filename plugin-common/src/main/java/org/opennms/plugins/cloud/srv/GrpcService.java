@@ -37,4 +37,6 @@ public interface GrpcService {
      * This method can be called multiple times.
      */
     void initGrpc(final GrpcConnectionConfig grpcConfig);
+
+    void destroy();
 }
