@@ -212,7 +212,7 @@ public class ConfigurationManagerTest {
         GrpcExecutionHandler grpcHandler = new GrpcExecutionHandler(new CloudLogService(cloudLogServiceConfig));
         TsaasStorage grpc = spy(new TsaasStorage(new TsaasConfig(1, 1), grpcHandler));
         Faas faas = spy(new Faas());
-        CloudLogService cloudLogService = spy(new CloudLogService(new CloudLogServiceConfig (1, 1)));
+        CloudLogService cloudLogService = spy(new CloudLogService(new CloudLogServiceConfig(1, 1)));
         List<GrpcService> serviceList = Arrays.asList(grpc, faas, cloudLogService);
         ConfigurationManager cm = new ConfigurationManager(config, clientConfig, clientConfig, mock(RegistrationManager.class),
                 info,
