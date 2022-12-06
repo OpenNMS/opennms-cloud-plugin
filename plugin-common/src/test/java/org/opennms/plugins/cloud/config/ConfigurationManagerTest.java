@@ -50,6 +50,7 @@ import static org.opennms.plugins.cloud.config.ConfigurationManager.ConfigStatus
 import static org.opennms.plugins.cloud.testserver.FileUtil.classpathFileToString;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -66,6 +67,7 @@ import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
 import org.opennms.plugins.cloud.grpc.GrpcExecutionHandler;
 import org.opennms.plugins.cloud.srv.GrpcService;
 import org.opennms.plugins.cloud.srv.RegistrationManager;
+import org.opennms.plugins.cloud.srv.faas.Faas;
 import org.opennms.plugins.cloud.srv.tsaas.TsaasConfig;
 import org.opennms.plugins.cloud.srv.tsaas.TsaasStorage;
 import org.opennms.plugins.cloud.testserver.MockCloud;
@@ -209,7 +211,9 @@ public class ConfigurationManagerTest {
     public void shouldAbleToDeactivate() {
         GrpcExecutionHandler grpcHandler = new GrpcExecutionHandler(new CloudLogService(cloudLogServiceConfig));
         TsaasStorage grpc = spy(new TsaasStorage(new TsaasConfig(1, 1), grpcHandler));
-        List<GrpcService> serviceList = Collections.singletonList(grpc);
+        Faas faas = spy(new Faas());
+        CloudLogService cloudLogService = spy(new CloudLogService(new CloudLogServiceConfig (1, 1)));
+        List<GrpcService> serviceList = Arrays.asList(grpc, faas, cloudLogService);
         ConfigurationManager cm = new ConfigurationManager(config, clientConfig, clientConfig, mock(RegistrationManager.class),
                 info,
                 serviceList);

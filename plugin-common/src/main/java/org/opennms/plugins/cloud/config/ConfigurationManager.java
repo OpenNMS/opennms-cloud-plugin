@@ -293,11 +293,7 @@ public class ConfigurationManager {
 
     private void destroyGrpcServices() {
         for (GrpcService service : grpcServices) {
-            try {
-                service.destroy();
-            } catch (Exception e) {
-                LOG.error("could not initGrpc", e);
-            }
+            service.destroy();
         }
     }
 
