@@ -44,7 +44,7 @@ public interface CloudConfigRestService {
 
     @PUT
     @Path("/deactivatekey")
-    Response putDeactivateKey(final String key);
+    Response putDeactivateKey();
 
     @GET
     @Path("/status")

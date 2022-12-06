@@ -105,8 +105,7 @@ public class CloudConfigRestServiceImplTest {
         when(cm.getStatus()).thenReturn(CONFIGURED);
         doNothing().when(cm).deactivateKeyConfiguration();
 
-        Response response = new CloudConfigRestServiceImpl(cm)
-                .putDeactivateKey(API_KEY_JSON);
+        Response response = new CloudConfigRestServiceImpl(cm).putDeactivateKey();
         assertEquals(200, response.getStatus());
         String entity = (String) response.getEntity();
         JSONObject json = new JSONObject(entity);
@@ -119,8 +118,7 @@ public class CloudConfigRestServiceImplTest {
     public void shouldPutDeactivateKeyWithException() {
         doThrow(new NullPointerException("failed_deactivate")).when(cm).initConfiguration(anyString());
         when(cm.getStatus()).thenReturn(FAILED);
-        Response response = new CloudConfigRestServiceImpl(cm)
-                .putDeactivateKey(API_KEY_JSON);
+        Response response = new CloudConfigRestServiceImpl(cm).putDeactivateKey();
         //This temporarily comes back as 200 but should be 500
         assertEquals(500, response.getStatus());
         String entity = (String) response.getEntity();

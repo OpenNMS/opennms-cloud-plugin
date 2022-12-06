@@ -294,13 +294,7 @@ public class ConfigurationManager {
     private void destroyGrpcServices() {
         for (GrpcService service : grpcServices) {
             try {
-                if (service instanceof TsaasStorage) {
-                    ((TsaasStorage) service).destroy();
-                } else if (service instanceof CloudLogService) {
-                    ((CloudLogService) service).destroy();
-                } else {
-                    LOG.warn("Unknown service: {} unable to stop.", service);
-                }
+                service.destroy();
             } catch (Exception e) {
                 LOG.error("could not initGrpc", e);
             }

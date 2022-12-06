@@ -64,7 +64,7 @@ public class CloudConfigRestServiceImpl implements CloudConfigRestService {
     }
 
     @Override
-    public Response putDeactivateKey(final String keyJson) {
+    public Response putDeactivateKey() {
         if (this.cm.getStatus() == AUTHENTCATED || this.cm.getStatus() == CONFIGURED) {
             this.cm.deactivateKeyConfiguration();
         } else {

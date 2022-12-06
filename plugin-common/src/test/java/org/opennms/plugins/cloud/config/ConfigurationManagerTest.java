@@ -206,7 +206,7 @@ public class ConfigurationManagerTest {
     }
 
     @Test
-    public void shouldAbleToDeactive() {
+    public void shouldAbleToDeactivate() {
         GrpcExecutionHandler grpcHandler = new GrpcExecutionHandler(new CloudLogService(cloudLogServiceConfig));
         TsaasStorage grpc = spy(new TsaasStorage(new TsaasConfig(1, 1), grpcHandler));
         List<GrpcService> serviceList = Collections.singletonList(grpc);
@@ -221,14 +221,6 @@ public class ConfigurationManagerTest {
         cm.deactivateKeyConfiguration();
 
         assertEquals(DEACTIVATED, cm.getStatus());
-        Exception statusException = null;
-        try {
-            // throw StatusRuntimeException
-            cm.checkConnection();
-        } catch (StatusRuntimeException e) {
-            statusException = e;
-        }
-        assertNotNull(statusException);
-        assertEquals(StatusRuntimeException.class, statusException.getClass());
+        assertThrows(StatusRuntimeException.class, () -> cm.checkConnection());
     }
 }
