@@ -64,7 +64,7 @@ const submit = async (deactivate?: boolean) => {
     const jsonResponse = await val.json();
     //{ "message": "UNAVAILABLE: Unable to resolve host access.production.prod.dataservice.opennms.com", "status": "FAILED" } 
     if(!deactivate)
-      status.value = jsonResponse.status !== 'FAILED' ? 'activated' : 'error';
+      status.value = jsonResponse.status !== 'FAILED' ? 'CONFIGURED' : 'error';
     else {
       status.value = jsonResponse.status !== 'FAILED' ? 'deactivated' : 'error';
     }
@@ -107,11 +107,11 @@ onMounted(async () => {
       <StatusBar v-if="initialLoad" :status="status" />
     </div>
     <div class="main-content">
-      <h3 class="subheader">{{status === 'activated' ? 'Manage' : 'Activate'}} OpenNMS Cloud-Hosted Services</h3>
+      <h3 class="subheader">{{status === 'CONFIGURED' ? 'Manage' : 'Activate'}} OpenNMS Cloud-Hosted Services</h3>
       Activating cloud services enables the OpenNMS Time Series DB to store and persist performance metrics that OpenNMS collects to the cloud.
       <div  class="key-entry">
         <div 
-          v-if="status !== 'activated'"
+          v-if="status !== 'CONFIGURED'"
           style="display: flex; flex-direction: row;"
         >
           <FeatherTextarea
@@ -124,7 +124,9 @@ onMounted(async () => {
             @update:modelValue="(val: string) => key = val" 
           />
           <div style="margin-left: 25px">
-            You need an activation key to connect with OpenNMS cloud services. <a href="https://portal.opennms.com" target="_blank">Log in to the OpenNMS Portal</a> to get this activation key, copy it, and then paste it into the field here.
+            You need an activation key to connect with OpenNMS cloud services. 
+            <a href="https://portal.opennms.com" target="_blank">Log in to the OpenNMS Portal</a>
+             to get this activation key, copy it, and then paste it into the field here.
           </div>
         </div>
         <div style="display: flex">
@@ -134,11 +136,11 @@ onMounted(async () => {
             text 
             @click="routeToHome"
           >
-            {{ status === 'activated' ? 'Return to Dashboard' : 'Cancel' }}
+            {{ status === 'CONFIGURED' ? 'Return to Dashboard' : 'Cancel' }}
           </FeatherButton>
           <FeatherButton 
             id="activate" 
-            v-if="status !== 'activated'" 
+            v-if="status !== 'CONFIGURED'" 
             primary 
             @click="submit()"
           >
@@ -146,7 +148,7 @@ onMounted(async () => {
           </FeatherButton>
           <FeatherButton 
             id="deactivate" 
-            v-if="status === 'activated'" 
+            v-if="status === 'CONFIGURED'" 
             primary
             @click="displayDialog = true"
           >
