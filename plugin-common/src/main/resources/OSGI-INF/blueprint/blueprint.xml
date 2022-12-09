@@ -102,8 +102,8 @@
     <service ref="cloudLogService" interface="org.opennms.plugins.cloud.grpc.CloudLogService" />
 
     <bean id="cloudLogServiceConfig" class="org.opennms.plugins.cloud.grpc.CloudLogServiceConfig">
-        <argument value="${cloudLogService.runningPeriod}"/>
         <argument value="${cloudLogService.batchSize}"/>
+        <argument value="${cloudLogService.runningPeriod}"/>
     </bean>
 
     <!-- HEALTH -->
