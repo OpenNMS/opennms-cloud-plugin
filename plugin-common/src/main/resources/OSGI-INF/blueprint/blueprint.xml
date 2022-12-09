@@ -28,10 +28,10 @@
     <cm:property-placeholder id="tsaas-pocPluginProperties" persistent-id="org.opennms.plugins.cloud"
                              update-strategy="reload">
         <cm:default-properties>
-            <cm:property name="pas.tls.host" value="access.production.prod.dataservice.opennms.com"/>
+            <cm:property name="pas.tls.host" value="access.onms-dp-prod.production.prod.dataservice.opennms.com"/>
             <cm:property name="pas.tls.port" value="443"/>
             <cm:property name="pas.tls.security" value ="TLS" />
-            <cm:property name="pas.mtls.host" value="auth.access.production.prod.dataservice.opennms.com"/>
+            <cm:property name="pas.mtls.host" value="auth.access.onms-dp-prod.production.prod.dataservice.opennms.com"/>
             <cm:property name="pas.mtls.port" value="443"/>
             <cm:property name="pas.mtls.security" value ="MTLS" />
             <cm:property name="grpc.truststore" value="" />
@@ -103,8 +103,8 @@
     <service ref="cloudLogService" interface="org.opennms.plugins.cloud.grpc.CloudLogService" />
 
     <bean id="cloudLogServiceConfig" class="org.opennms.plugins.cloud.grpc.CloudLogServiceConfig">
-        <argument value="${cloudLogService.runningPeriod}"/>
         <argument value="${cloudLogService.batchSize}"/>
+        <argument value="${cloudLogService.runningPeriod}"/>
     </bean>
 
     <!-- HEALTH -->
