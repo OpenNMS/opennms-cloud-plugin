@@ -73,6 +73,7 @@
             <list>
                 <ref component-id="timeSeriesStorage" />
                 <ref component-id="faas" />
+                <ref component-id="cloudLogService" />
             </list>
         </argument>
     </bean>
