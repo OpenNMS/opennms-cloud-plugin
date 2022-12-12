@@ -14,9 +14,9 @@
         <pluginManagement>
             <plugins>
                 <plugin>
-                    <groupId>net.sf.debian-maven</groupId>
+                    <groupId>com.github.fracpete</groupId>
                     <artifactId>debian-maven-plugin</artifactId>
-                    <version>1.0.6</version>
+                    <version>${debian.maven.plugin.version}</version>
                     <executions>
                         <execution>
                             <id>generate-deb</id>
@@ -40,6 +40,7 @@
                         <maintainerName>Freddy</maintainerName>
                         <maintainerEmail>fchu@opennms.com</maintainerEmail>
                         <excludeAllArtifacts>true</excludeAllArtifacts>
+                        <compressionType>gzip</compressionType><!-- compatible for old debian -->
                     </configuration>
                 </plugin>
             </plugins>
@@ -105,7 +106,7 @@
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>net.sf.debian-maven</groupId>
+                        <groupId>com.github.fracpete</groupId>
                         <artifactId>debian-maven-plugin</artifactId>
                     </plugin>
                 </plugins>

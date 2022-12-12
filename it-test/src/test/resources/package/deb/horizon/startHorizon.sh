@@ -1,9 +1,13 @@
 #!/bin/bash
 
-mkdir -p /run/opennms
-
 OPENNMS_HOME=/usr/share/opennms
-chown opennms $OPENNMS_HOME/etc/opennms-datasources.xml /run/opennms
+OPENNMS_VAR=/var/run/opennms
+
+if [ ! -d "$OPENNMS_VAR" ]; then
+  mkdir -p $OPENNMS_VAR
+fi
+
+chown opennms $OPENNMS_HOME/etc/opennms-datasources.xml $OPENNMS_VAR
 
 cd $OPENNMS_HOME
 bin/install -dis
