@@ -40,6 +40,7 @@
                         <maintainerName>Freddy</maintainerName>
                         <maintainerEmail>fchu@opennms.com</maintainerEmail>
                         <excludeAllArtifacts>true</excludeAllArtifacts>
+                        <compressionType>gzip</compressionType><!-- compatible for old debian -->
                     </configuration>
                 </plugin>
             </plugins>

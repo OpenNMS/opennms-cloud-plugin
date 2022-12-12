@@ -41,6 +41,7 @@
                         <maintainerEmail>fchu@opennms.com</maintainerEmail>
                         <excludeAllArtifacts>true</excludeAllArtifacts>
                         <useDefaultFixPermissions>true</useDefaultFixPermissions>
+                        <compressionType>gzip</compressionType><!-- compatible for old debian -->
                     </configuration>
                 </plugin>
             </plugins>
