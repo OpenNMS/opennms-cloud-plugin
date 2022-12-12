@@ -16,7 +16,7 @@
                 <plugin>
                     <groupId>com.github.fracpete</groupId>
                     <artifactId>debian-maven-plugin</artifactId>
-                    <version>1.0.20</version>
+                    <version>${debian.maven.plugin.version}</version>
                     <executions>
                         <execution>
                             <id>generate-deb</id>
