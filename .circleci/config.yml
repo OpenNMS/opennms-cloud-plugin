@@ -103,6 +103,10 @@ jobs:
             if [[ -z "<< pipeline.git.tag >>" ]]; then
               MVN_OPTIONS="-Psnapshot"
             else
+              if [ "$(grep -c -- -SNAPSHOT pom.xml)" -gt 0 ]; then
+                echo 'ERROR: building from a tag, but pom.xml still contains a -SNAPSHOT version!'
+                exit 1
+              fi
               MVN_OPTIONS="-Prelease"
               BUILD_NUMBER=1
             fi
