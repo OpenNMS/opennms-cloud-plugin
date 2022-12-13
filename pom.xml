@@ -229,26 +229,25 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.0.0-M5</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.0.0-M5</version>
                 <configuration>
-                    <excludes>
-                        <exclude>**/*It.java</exclude>
-                    </excludes>
+                    <systemPropertyVariables>
+                        <pomVersion>${project.version}</pomVersion>
+                    </systemPropertyVariables>
+                    <includes>
+                        <include>**/*It.java</include>
+                    </includes>
                 </configuration>
                 <executions>
                     <execution>
-                        <id>integration-test</id>
                         <goals>
-                            <goal>test</goal>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
                         </goals>
-                        <phase>integration-test</phase>
-                        <configuration>
-                            <excludes>
-                                <exclude>none</exclude>
-                            </excludes>
-                            <includes>
-                                <include>**/*It.java</include>
-                            </includes>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
