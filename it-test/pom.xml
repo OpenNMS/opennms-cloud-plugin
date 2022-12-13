@@ -11,6 +11,13 @@
   <name>OpenNMS :: Plugins :: Cloud Plugin :: Integration Test</name>
 
   <build>
+    <testResources>
+        <testResource>
+            <directory>src/test/resources</directory>
+            <filtering>true</filtering>
+        </testResource>
+    </testResources>
+
     <plugins>
       <plugin><!-- make fat jar to run MockCloud in container -->
         <groupId>org.apache.maven.plugins</groupId>
