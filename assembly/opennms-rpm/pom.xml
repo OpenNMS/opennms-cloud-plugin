@@ -34,7 +34,8 @@
                     <configuration>
                         <name>opennms-plugin-cloud</name><!-- align with other plugin name -->
                         <summary>OpenNMS :: Plugins :: Cloud Plugin</summary>
-                        <description>OpenNMS cloud plugin</description>
+                        <description>OpenNMS Cloud Services Connector - An extension to OpenNMS Meridian and Horizon that lets customers connect to OpenNMS-hosted cloud services (available via subscription), such as OpenNMS Time Series DB.
+                            OpenNMS Portal provides an activation key that you can use with the cloud services connector. This allows you to link your installations of Meridian to the cloud services in OpenNMS Portal.</description>
                         <license>AGPL v3</license>
                         <group>Applications/System</group>
                         <defaultDirmode>755</defaultDirmode>
