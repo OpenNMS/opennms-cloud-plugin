@@ -31,7 +31,8 @@
                         <packageVersion>${package.version}-${package.buildNumber}</packageVersion>
                         <packageSection>contrib/net</packageSection>
                         <packageTitle>OpenNMS :: Plugins :: Cloud Plugin</packageTitle>
-                        <packageDescription>sentinel-plugin-cloud</packageDescription>
+                        <packageDescription>OpenNMS Cloud Services Connector - An extension to OpenNMS Sentinel that lets customers connect to OpenNMS-hosted cloud services (available via subscription), such as OpenNMS Time Series DB.  
+                            This plug will use the same activation key that is generated for the core OpenMS instance this sentinel is associated with.</packageDescription>
                         <packageDependencies> 
                             <packageDependency>opennms-sentinel</packageDependency>
                             <packageDependency>opennms-plugin-api (&gt;= ${opennms.api.version})</packageDependency>

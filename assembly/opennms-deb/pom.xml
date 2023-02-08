@@ -31,7 +31,8 @@
                         <packageVersion>${package.version}-${package.buildNumber}</packageVersion>
                         <packageSection>contrib/net</packageSection>
                         <packageTitle>OpenNMS :: Plugins :: Cloud Plugin</packageTitle>
-                        <packageDescription>opennms-plugin-cloud</packageDescription>
+                        <packageDescription>OpenNMS Cloud Services Connector - An extension to OpenNMS Meridian and Horizon that lets customers connect to OpenNMS-hosted cloud services (available via subscription), such as OpenNMS Time Series DB.
+                            OpenNMS Portal provides an activation key that you can use with the cloud services connector. This allows you to link your installations of Meridian to the cloud services in OpenNMS Portal.</packageDescription>
                         <packageDependencies>
                             <packageDependency>opennms-server</packageDependency>
                             <packageDependency>opennms-plugin-api (&gt;= ${opennms.api.version})</packageDependency>
