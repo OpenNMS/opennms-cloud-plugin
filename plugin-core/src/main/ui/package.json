@@ -19,15 +19,15 @@
   },
   "dependencies": {
     "@featherds/button": "0.11.1",
-    "@featherds/icon": "0.11.1",
     "@featherds/dialog": "0.11.1",
+    "@featherds/icon": "0.11.1",
     "@featherds/progress": "0.11.1",
     "@featherds/snackbar": "0.11.1",
     "@featherds/styles": "0.11.1",
     "@featherds/textarea": "0.11.1",
     "@featherds/utils": "0.11.1",
     "pinia": "2.0.14",
-    "vite-plugin-externals": "^0.5.0",
+    "vite-plugin-externals": "^0.6.2",
     "vue": "3.2.37",
     "vue-router": "^4.0.16"
   },
