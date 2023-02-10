@@ -65,7 +65,9 @@ workflows:
                 - main
                 - /release-.*/
       - deploy-packages:
-          context: "OpenNMS Build"
+          context: 
+            - OpenNMS Build
+            - cloudsmith-publish-account
           requires:
             - tests
             - build-debian
