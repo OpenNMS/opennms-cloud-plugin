@@ -34,7 +34,7 @@
                     <configuration>
                         <name>sentinel-plugin-cloud</name><!-- align with other plugin name -->
                         <summary>Sentinel :: Plugins :: Cloud Plugin</summary>
-                        <description>Sentinel cloud plugin</description>
+                        <description>${package.sentinel.description}</description>
                         <license>AGPL v3</license>
                         <group>Applications/System</group>
                         <defaultDirmode>755</defaultDirmode>

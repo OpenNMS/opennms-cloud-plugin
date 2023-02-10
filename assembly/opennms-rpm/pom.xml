@@ -34,7 +34,7 @@
                     <configuration>
                         <name>opennms-plugin-cloud</name><!-- align with other plugin name -->
                         <summary>OpenNMS :: Plugins :: Cloud Plugin</summary>
-                        <description>OpenNMS cloud plugin</description>
+                        <description>${package.opennms.description}</description>
                         <license>AGPL v3</license>
                         <group>Applications/System</group>
                         <defaultDirmode>755</defaultDirmode>
