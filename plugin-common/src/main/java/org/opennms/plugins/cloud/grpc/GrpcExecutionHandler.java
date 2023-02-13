@@ -84,7 +84,6 @@ public class GrpcExecutionHandler {
         Objects.requireNonNull(callToExecute);
         Objects.requireNonNull(callToExecute.getMethodDescriptor());
         Objects.requireNonNull(callToExecute.getMapper());
-        Objects.requireNonNull(callToExecute.getDefaultFunction());
         String optionalErrorMsg = EMPTY;
         Status.Code status = OK;
         String traceParentHeader = generateTraceParentHeader().createTraceParentHeaderAsString();
@@ -100,14 +99,23 @@ public class GrpcExecutionHandler {
             status = ex.getStatus().getCode();
             if (OK == status) {
                 // should not happen but just to be safe...
-                return callToExecute.getDefaultFunction().get();
+                LOG.warn("An odd error happened during the RPC call--got an exception but status==OK", status, ex);
+                if (!Objects.isNull(callToExecute.getDefaultFunction())) {
+                    return callToExecute.getDefaultFunction().get();
+                } else {
+                    throw ex;
+                }
             } else if (RECOVERABLE_EXCEPTIONS.contains(status)) {
                 // network errors => recoverable => propagate error so OpenNMS can try later again.
                 throw new StorageException(String.format("Network problem %s", status), ex);
             } else {
                 // all other errors: we can't fix them => log and forget...
                 LOG.warn("An error happened during the RPC call: {}", status, ex);
-                return callToExecute.getDefaultFunction().get();
+                if (!Objects.isNull(callToExecute.getDefaultFunction())) {
+                    return callToExecute.getDefaultFunction().get();
+                } else {
+                    throw ex;
+                }
             }
         } finally {
             cloudLogService.log(startTime, System.currentTimeMillis(), callToExecute.getMethodDescriptor(), status, traceParentHeader, optionalErrorMsg);
