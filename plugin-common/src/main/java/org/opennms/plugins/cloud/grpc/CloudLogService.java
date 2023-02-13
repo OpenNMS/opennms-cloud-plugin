@@ -29,7 +29,6 @@
 package org.opennms.plugins.cloud.grpc;
 
 import static java.util.Objects.requireNonNull;
-import static org.apache.commons.lang3.StringUtils.contains;
 import static org.opennms.plugins.cloud.grpc.CloudLogServiceUtil.convertToLatencyTraceList;
 
 import java.util.List;
@@ -54,8 +53,6 @@ public class CloudLogService implements GrpcService {
     private final ConcurrentLinkedQueue<LogEntry> logEntryQueue;
 
     private final CloudLogServiceConfig cloudLogServiceConfig;
-
-    private static final String SEND_TRACES_METHOD = "Gateway/SendTraces";
 
     private static final Logger LOG = LoggerFactory.getLogger(CloudLogService.class);
 
@@ -82,7 +79,7 @@ public class CloudLogService implements GrpcService {
         if (isQueueEmpty()) {
             LOG.debug("The logs queue is empty, nothing to report.");
         } else {
-            while (isQueueNotEmpty()) {
+            do {
                 List<LogEntry> logEntryList = getQueueBatch(cloudLogServiceConfig.getBatchSize());
                 LOG.debug("Sending {} batch of elements to grpc endpoint", logEntryList.size());
                 GatewayOuterClass.SendTracesRequest sendTracesRequest = GatewayOuterClass.SendTracesRequest.newBuilder()
@@ -94,7 +91,7 @@ public class CloudLogService implements GrpcService {
                         .build());
 
                 removeBatch(logEntryList);
-            }
+            } while (logEntryQueue.size() > 1); // there will always be a one new item for our SendTraces call
         }
     }
 
@@ -102,16 +99,14 @@ public class CloudLogService implements GrpcService {
         LOG.debug("received cloud log with startTime={}, endTime={}, methodInvoked={}, returnCode={}, traceParentHeader={}",
                 startTime, endTime, methodInvoked.getFullMethodName(), returnCode, traceParentHeader);
 
-        if (!contains(methodInvoked.getFullMethodName(), SEND_TRACES_METHOD)) {
-            logEntryQueue.add(LogEntry.builder()
-                    .startTime(startTime)
-                    .endTime(endTime)
-                    .methodInvoked(methodInvoked)
-                    .returnCode(returnCode)
-                    .optionalErrorMsg(optionalErrorMsg)
-                    .traceParentHeader(traceParentHeader)
-                    .build());
-        }
+        logEntryQueue.add(LogEntry.builder()
+                .startTime(startTime)
+                .endTime(endTime)
+                .methodInvoked(methodInvoked)
+                .returnCode(returnCode)
+                .optionalErrorMsg(optionalErrorMsg)
+                .traceParentHeader(traceParentHeader)
+                .build());
     }
 
     public int getLogEntryQueueSize() {
