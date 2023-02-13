@@ -99,8 +99,8 @@ public class CloudLogService implements GrpcService {
     }
 
     public void log(long startTime, long endTime, MethodDescriptor<?, ?> methodInvoked, Status.Code returnCode, String traceParentHeader, String optionalErrorMsg) {
-        LOG.debug("received cloud log with startTime={}, endTime={}, methodInvoked={}, returnCode={}",
-                startTime, endTime, methodInvoked.getFullMethodName(), returnCode);
+        LOG.debug("received cloud log with startTime={}, endTime={}, methodInvoked={}, returnCode={}, traceParentHeader={}",
+                startTime, endTime, methodInvoked.getFullMethodName(), returnCode, traceParentHeader);
 
         if (!contains(methodInvoked.getFullMethodName(), SEND_TRACES_METHOD)) {
             logEntryQueue.add(LogEntry.builder()
