@@ -52,7 +52,7 @@ workflows:
                 - main
                 - /release-.*/
       - build-debian:
-          context: "OpenNMS Build"
+          context: "gpg-signing"
           requires:
             - build
             - tests
@@ -66,7 +66,7 @@ workflows:
                 - /release-.*/
       - deploy-packages:
           context: 
-            - OpenNMS Build
+            - gpg-signing
             - cloudsmith-publish-account
           requires:
             - tests
