@@ -43,8 +43,6 @@ import org.opennms.tsaas.telemetry.GatewayOuterClass;
 
 import com.google.protobuf.Timestamp;
 
-import io.grpc.Status;
-
 public class LogEntryUtilTest implements CloudLogServiceTestUtil {
 
     @Test
@@ -76,7 +74,7 @@ public class LogEntryUtilTest implements CloudLogServiceTestUtil {
         assertEquals(2, latencyTraces.size());
         latencyTraces.forEach(latencyTrace -> {
             assertNotNull(latencyTrace.getTraceId());
-            assertEquals(Status.Code.OK.value(), latencyTrace.getStatusCode().getNumber());
+            assertEquals(GatewayOuterClass.TraceStatus.OK, latencyTrace.getStatusCode());
             assertEquals(StringUtils.EMPTY, latencyTrace.getStatusMessage());
         });
     }
