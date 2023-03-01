@@ -36,8 +36,9 @@ import org.opennms.tsaas.telemetry.GatewayOuterClass.TraceStatus;
 
 import com.google.protobuf.Timestamp;
 
-public final class CloudLogServiceUtil {
+import io.grpc.Status;
 
+public final class CloudLogServiceUtil {
     private CloudLogServiceUtil() {
     }
 
@@ -49,6 +50,7 @@ public final class CloudLogServiceUtil {
                 .setTraceId(logEntry.getTraceParentHeader())
                 .setStatusCode(convertToTraceStatus(logEntry))
                 .setStatusMessage(logEntry.getOptionalErrorMsg())
+                .setGrpcStatusCode(logEntry.getReturnCode().value())
                 .build()).collect(Collectors.toList());
     }
 
