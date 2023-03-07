@@ -7,7 +7,7 @@ PROJECT="opennms"
 REPO=""
 
 if [ -n "${CIRCLE_TAG}" ]; then
-  REPO="stable"
+  REPO="common"
 else
   # only put release-1.0.0 into common, the release-1.x will still in common-testing
   case "${CIRCLE_BRANCH}" in
@@ -21,7 +21,7 @@ else
       REPO="common-testing"
       ;;
     release-*)
-      REPO="common"
+      REPO="common-testing"
       ;;
     *)
       echo "This branch is not eligible for deployment: ${CIRCLE_BRANCH}"

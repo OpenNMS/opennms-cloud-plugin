@@ -34,7 +34,7 @@
                     <configuration>
                         <name>opennms-plugin-cloud</name><!-- align with other plugin name -->
                         <summary>OpenNMS :: Plugins :: Cloud Plugin</summary>
-                        <description>OpenNMS cloud plugin</description>
+                        <description>${package.opennms.description}</description>
                         <license>AGPL v3</license>
                         <group>Applications/System</group>
                         <defaultDirmode>755</defaultDirmode>
@@ -44,7 +44,6 @@
                         <version>${package.version}</version>
                         <release>${package.buildNumber}</release>
                         <requires>
-                            <require>opennms-core</require>
                             <require>opennms-plugin-api &gt;= ${opennms.api.version}</require>
                             <require>opennms-plugin-api &lt; ${opennms.api.version.max}</require>
                         </requires>
