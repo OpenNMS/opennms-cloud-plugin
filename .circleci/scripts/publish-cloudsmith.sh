@@ -17,9 +17,6 @@ else
     main)
       REPO="common-testing"
       ;;
-    release-*x)
-      REPO="common-testing"
-      ;;
     release-*)
       REPO="common-testing"
       ;;
