@@ -65,10 +65,7 @@ workflows:
               only:
                 - main
                 - /release-.*/
-      - deploy-packages:
-          context: 
-            - gpg-signing
-            - cloudsmith-publish-account
+      - test-packages:
           requires:
             - build
             - build-debian
@@ -82,20 +79,23 @@ workflows:
                 - /release-.*/
                 - /.*-package/
       - deploy-packages:
-          context: "OpenNMS Build"
+          context: 
+            - gpg-signing
+            - cloudsmith-publish-account
           requires:
-            - tests
+            - tests 
             - build-debian
             - test-packages
           filters:
             tags:
               only:
-                - /release-.*/
+                - /^v.*/
             branches:
               only:
                 - main
                 - /release-.*/
                 - /.*-package/
+
 jobs:
   build:
     executor: build-executor
