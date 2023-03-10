@@ -80,11 +80,11 @@ workflows:
                 - /release-.*/
                 - /.*-package/
       - deploy-packages:
-          context: 
+          context:
             - gpg-signing
             - cloudsmith-publish-account
           requires:
-            - tests 
+            - tests
             - build-debian
             - test-packages
           filters:
@@ -214,7 +214,7 @@ jobs:
 
       - run:
           name: Install fakeroot
-          command: sudo apt install -y fakeroot 
+          command: sudo apt install -y fakeroot
 
       - run:
           name: Build Debian packages
