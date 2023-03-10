@@ -32,7 +32,6 @@
         <feature version="${project.version}">opennms-plugin-cloud-common</feature>
         <feature>sentinel-api-layer</feature>
         <feature>sentinel-jsonstore-postgres</feature>
-        <feature>fst</feature><!-- temp fix package test remove after NMS-15502 released -->
     </feature>
 
 </features>
