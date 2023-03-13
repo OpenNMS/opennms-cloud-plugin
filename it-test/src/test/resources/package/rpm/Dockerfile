@@ -1,8 +1,9 @@
 FROM redhat/ubi8
 
 RUN dnf install -y curl sudo gnupg2 && \
-    curl -1sLf 'https://packages.opennms.com/public/common/setup.rpm.sh' | sudo -E bash && \
-    curl -1sLf 'https://packages.opennms.com/public/develop/setup.rpm.sh' | sudo -E bash
+    curl -1sLf 'https://packages.opennms.com/public/develop/setup.rpm.sh' | sudo -E bash && \
+    curl -1sLf 'https://packages.opennms.com/public/common-testing/setup.rpm.sh' | sudo -E bash
+
 
 COPY opennms-plugin-cloud.rpm /tmp/opennms-plugin-cloud.rpm
 COPY sentinel-plugin-cloud.rpm /tmp/sentinel-plugin-cloud.rpm

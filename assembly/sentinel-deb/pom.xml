@@ -31,7 +31,7 @@
                         <packageVersion>${package.version}-${package.buildNumber}</packageVersion>
                         <packageSection>contrib/net</packageSection>
                         <packageTitle>OpenNMS :: Plugins :: Cloud Plugin</packageTitle>
-                        <packageDescription>sentinel-plugin-cloud</packageDescription>
+                        <packageDescription>${package.sentinel.description}</packageDescription>
                         <packageDependencies> 
                             <packageDependency>opennms-sentinel</packageDependency>
                             <packageDependency>opennms-plugin-api (&gt;= ${opennms.api.version})</packageDependency>

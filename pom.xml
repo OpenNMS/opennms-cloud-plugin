@@ -67,6 +67,10 @@
         <package.version>${project.version}</package.version>
         <package.buildNumber>${maven.build.timestamp}</package.buildNumber><!-- rpm > release  deb > bundle in version -->
         <maven.build.timestamp.format>yyyyMMdd.HHmm</maven.build.timestamp.format>
+        <package.opennms.description>OpenNMS Cloud Services Connector - An extension to OpenNMS Meridian and Horizon that lets customers connect to OpenNMS-hosted cloud services (available via subscription), such as OpenNMS Time Series DB.
+ OpenNMS Portal provides an activation key that you can use with the cloud services connector. This allows you to link your installations of Meridian to the cloud services in OpenNMS Portal.</package.opennms.description>
+        <package.sentinel.description>OpenNMS Cloud Services Connector - An extension to OpenNMS Sentinel that lets customers connect to OpenNMS-hosted cloud services (available via subscription), such as OpenNMS Time Series DB.
+ This plug will use the same activation key that is generated for the core OpenMS instance this sentinel is associated with.</package.sentinel.description>
     </properties>
 
     <dependencyManagement>
@@ -232,25 +236,28 @@
                 <version>3.0.0-M5</version>
                 <configuration>
                     <excludes>
-                        <exclude>**/*It.java</exclude>
                         <exclude>**/*PackageTest.java</exclude><!-- only run test before publish to cloudsmith -->
                     </excludes>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.0.0-M5</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <pomVersion>${project.version}</pomVersion>
+                    </systemPropertyVariables>
+                    <includes>
+                        <include>**/*It.java</include>
+                    </includes>
+                </configuration>
                 <executions>
                     <execution>
-                        <id>integration-test</id>
                         <goals>
-                            <goal>test</goal>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
                         </goals>
-                        <phase>integration-test</phase>
-                        <configuration>
-                            <excludes>
-                                <exclude>none</exclude>
-                            </excludes>
-                            <includes>
-                                <include>**/*It.java</include>
-                            </includes>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>

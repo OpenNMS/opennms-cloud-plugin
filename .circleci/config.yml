@@ -23,36 +23,44 @@ workflows:
     jobs:
       - build:
           context:
-            - OpenNMS Build
+            - gpg-signing
+          filters:
+            tags:
+              only:
+                - /^v.*/
       - tests:
           requires:
             - build
           context:
             - SonarCloud
+          filters:
+            tags:
+              only:
+                - /^v.*/
       - deploy:
           context:
             - OSSRH Principal
-            - OpenNMS Build
+            - gpg-signing
           requires:
             - tests
           filters:
             tags:
               only:
-                - /release-.*/
+                - /^v.*/
             branches:
               only:
                 - main
                 - /release-.*/
                 - /.*-package/
       - build-debian:
-          context: "OpenNMS Build"
+          context: "gpg-signing"
           requires:
             - build
             - tests
           filters:
             tags:
               only:
-                - /release-.*/
+                - /^v.*/
             branches:
               only:
                 - main
@@ -65,14 +73,16 @@ workflows:
           filters:
             tags:
               only:
-                - /release-.*/
+                - /^v.*/
             branches:
               only:
                 - main
                 - /release-.*/
                 - /.*-package/
       - deploy-packages:
-          context: "OpenNMS Build"
+          context:
+            - gpg-signing
+            - cloudsmith-publish-account
           requires:
             - tests
             - build-debian
@@ -80,12 +90,13 @@ workflows:
           filters:
             tags:
               only:
-                - /release-.*/
+                - /^v.*/
             branches:
               only:
                 - main
                 - /release-.*/
                 - /.*-package/
+
 jobs:
   build:
     executor: build-executor
@@ -103,21 +114,23 @@ jobs:
             # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
       - run:
-          name: Compile source without tests
+          name: Compile source and RPMs without tests
           command: |
             mvn -version
-            # avoid release-[0-9].x go into release
-            if [[ ! << pipeline.git.branch >> =~ ^release-[0-9.]*$ ]]; then
+            BUILD_NUMBER="0.${CIRCLE_BUILD_NUM}"
+            # only build tags as a release
+            if [[ -z "<< pipeline.git.tag >>" ]]; then
               MVN_OPTIONS="-Psnapshot"
             else
-              MVN_OPTIONS="-Prelease"
-              BUILD_NUMBER=$(echo '<< pipeline.git.branch >>' | sed -e 's/release-[^-]*-*//')
-              if [[ -z "$BUILD_NUMBER" ]]; then
-                BUILD_NUMBER=1
+              if [ "$(grep -c -- -SNAPSHOT pom.xml)" -gt 0 ]; then
+                echo 'ERROR: building from a tag, but pom.xml still contains a -SNAPSHOT version!'
+                exit 1
               fi
-              MVN_OPTIONS="${MVN_OPTIONS} -DbuildNumber=${BUILD_NUMBER}"
+              MVN_OPTIONS="-Prelease -Ddisable.checkstyle=true"
+              BUILD_NUMBER=1
             fi
-            mvn $MVN_OPTIONS -DskipITs=true -DskipTests=true -Dbuild.packages clean install
+            MVN_OPTIONS="${MVN_OPTIONS} -DbuildNumber=${BUILD_NUMBER}"
+            mvn ${MVN_OPTIONS} -DskipITs=true -DskipTests=true -Dbuild.packages clean install
       - save_cache:
           paths:
             - ~/.m2
@@ -149,7 +162,11 @@ jobs:
       - run:
           name: Run unit and integration tests
           command: |
-            mvn -DskipITs=false -DskipTests=false clean org.jacoco:jacoco-maven-plugin:prepare-agent install integration-test org.jacoco:jacoco-maven-plugin:report sonar:sonar -Dsonar.projectKey=OpenNMS_opennms-cloud-plugin
+            MVN_OPTIONS=""
+            if [[ -n "<< pipeline.git.tag >>" ]]; then
+              MVN_OPTIONS="-Ddisable.checkstyle=true"
+            fi
+            mvn ${MVN_OPTIONS} -DskipITs=false -DskipTests=false clean org.jacoco:jacoco-maven-plugin:prepare-agent install integration-test org.jacoco:jacoco-maven-plugin:report sonar:sonar -Dsonar.projectKey=OpenNMS_opennms-cloud-plugin
       - run:
           name: Save test results
           command: |
@@ -172,9 +189,9 @@ jobs:
       - sign-packages/setup-env:
           skip_if_forked_pr: true
       - run:
-          name: Upload snapshot
+          name: Deploy to Maven
           command: |
-            mvn -Prelease -s .circleci/.circleci.settings.xml -DskipTests -Dmaven.verify.skip=true -Dmaven.install.skip=true deploy
+            mvn -Prelease -s .circleci/.circleci.settings.xml -Ddisable.checkstyle=true -DskipTests -Dmaven.verify.skip=true -Dmaven.install.skip=true deploy
 
   build-debian:
     executor: build-debian-executor
@@ -197,22 +214,20 @@ jobs:
 
       - run:
           name: Install fakeroot
-          command: sudo apt install -y fakeroot 
+          command: sudo apt install -y fakeroot
 
       - run:
           name: Build Debian packages
           command: |
-            # avoid release-[0-9].x go into release
-            if [[ ! << pipeline.git.branch >> =~ ^release-[0-9.]*$ ]]; then
+            BUILD_NUMBER="0.${CIRCLE_BUILD_NUM}"
+            # only build tags as a release
+            if [[ -z "<< pipeline.git.tag >>" ]]; then
               MVN_OPTIONS="-Psnapshot"
             else
-              MVN_OPTIONS="-Prelease"
-              BUILD_NUMBER=$(echo '<< pipeline.git.branch >>' | sed -e 's/release-[^-]*-*//')
-              if [[ -z "$BUILD_NUMBER" ]]; then
-                BUILD_NUMBER=1
-              fi
-              MVN_OPTIONS="${MVN_OPTIONS} -DbuildNumber=${BUILD_NUMBER}"
+              MVN_OPTIONS="-Prelease -Ddisable.checkstyle=true"
+              BUILD_NUMBER=1
             fi
+            MVN_OPTIONS="${MVN_OPTIONS} -DbuildNumber=${BUILD_NUMBER}"
             mvn install ${MVN_OPTIONS} --projects org.opennms.plugins.cloud.assembly:org.opennms.plugins.cloud.assembly.opennms.deb,org.opennms.plugins.cloud.assembly:org.opennms.plugins.cloud.assembly.sentinel.deb --also-make -DskipTests=true -Dbuild.packages
 
       - run:
