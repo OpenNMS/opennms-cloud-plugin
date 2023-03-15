@@ -73,9 +73,9 @@ public class LogEntryUtilTest implements CloudLogServiceTestUtil {
         // Then
         assertEquals(2, latencyTraces.size());
         latencyTraces.forEach(latencyTrace -> {
-            assertNotNull(latencyTrace.getTraceId());
-            assertEquals(GatewayOuterClass.TraceStatus.OK, latencyTrace.getStatusCode());
-            assertEquals(StringUtils.EMPTY, latencyTrace.getStatusMessage());
+            assertNotNull("trace ID not null in latencyTrace " + latencyTrace, latencyTrace.getTraceId());
+            assertEquals("trace status OK in latencyTrace " + latencyTrace, GatewayOuterClass.TraceStatus.OK, latencyTrace.getStatusCode());
+            assertEquals("status message empty in latencyTrace " + latencyTrace, StringUtils.EMPTY, latencyTrace.getStatusMessage());
         });
     }
 }
