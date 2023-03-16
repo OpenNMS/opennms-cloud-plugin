@@ -182,7 +182,16 @@ public class TsaasStorage implements TimeSeriesStorage, GrpcService {
     }
 
     public Tsaas.CheckHealthResponse checkHealth() {
-        return this.grpc.get().checkHealth(Tsaas.CheckHealthRequest.newBuilder().build());
+        try {
+            return grpcHandler.executeRpcCall(
+                    GrpcCall.<Tsaas.CheckHealthResponse, Tsaas.CheckHealthResponse>builder()
+                            .callToExecute(() -> this.grpc.get().checkHealth(Tsaas.CheckHealthRequest.newBuilder().build()))
+                            .methodDescriptor(TimeseriesGrpc.getCheckHealthMethod())
+                            .mapper((a) -> a)
+                            .build());
+        } catch (StorageException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void destroy() {

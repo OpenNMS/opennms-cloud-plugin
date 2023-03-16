@@ -29,7 +29,6 @@
 package org.opennms.plugins.cloud.config;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -55,7 +54,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-import io.grpc.StatusRuntimeException;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -225,6 +223,6 @@ public class ConfigurationManagerTest {
         cm.deactivateKeyConfiguration();
 
         assertEquals(DEACTIVATED, cm.getStatus());
-        assertThrows(StatusRuntimeException.class, () -> cm.checkConnection());
+        assertThrows(RuntimeException.class, () -> cm.checkConnection());
     }
 }

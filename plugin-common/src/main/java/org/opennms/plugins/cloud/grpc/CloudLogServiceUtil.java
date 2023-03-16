@@ -28,10 +28,6 @@
 
 package org.opennms.plugins.cloud.grpc;
 
-import static java.util.Objects.nonNull;
-import static org.opennms.tsaas.telemetry.GatewayOuterClass.TraceStatus.UNRECOGNIZED;
-import static org.opennms.tsaas.telemetry.GatewayOuterClass.TraceStatus.forNumber;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,8 +36,9 @@ import org.opennms.tsaas.telemetry.GatewayOuterClass.TraceStatus;
 
 import com.google.protobuf.Timestamp;
 
-public final class CloudLogServiceUtil {
+import io.grpc.Status;
 
+public final class CloudLogServiceUtil {
     private CloudLogServiceUtil() {
     }
 
@@ -53,12 +50,16 @@ public final class CloudLogServiceUtil {
                 .setTraceId(logEntry.getTraceParentHeader())
                 .setStatusCode(convertToTraceStatus(logEntry))
                 .setStatusMessage(logEntry.getOptionalErrorMsg())
+                .setGrpcStatusCode(logEntry.getReturnCode().value())
                 .build()).collect(Collectors.toList());
     }
 
     public static TraceStatus convertToTraceStatus(LogEntry logEntry) {
-        TraceStatus traceStatus = forNumber(logEntry.getReturnCode().value());
-        return nonNull(traceStatus) ? traceStatus : UNRECOGNIZED;
+        if (logEntry.getReturnCode() == Status.Code.OK) {
+            return TraceStatus.OK;
+        } else {
+            return TraceStatus.ERROR;
+        }
     }
 
     public static Timestamp convertToTimestamp(long time) {

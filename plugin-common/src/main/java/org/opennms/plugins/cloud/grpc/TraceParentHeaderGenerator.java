@@ -33,6 +33,8 @@ import static org.apache.commons.codec.binary.Hex.encodeHexString;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 
 import java.security.SecureRandom;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -71,6 +73,16 @@ public class TraceParentHeaderGenerator {
         metadata.put(Metadata.Key.of(TRACEPARENT_KEY_NAME, ASCII_STRING_MARSHALLER),
                 StringUtils.isBlank(traceParentHeader) ? generateTraceParentHeader().createTraceParentHeaderAsString() :
                         traceParentHeader);
+
+        Pattern p = Pattern.compile("00-(.*?)-(.*?)-0([01])");
+        Matcher m = p.matcher(
+                StringUtils.isBlank(traceParentHeader) ? generateTraceParentHeader().createTraceParentHeaderAsString() :
+                        traceParentHeader);
+        if (m.matches()) {
+            metadata.put(Metadata.Key.of("x-b3-traceid", ASCII_STRING_MARSHALLER), m.group(1));
+            metadata.put(Metadata.Key.of("x-b3-spanid", ASCII_STRING_MARSHALLER), m.group(2));
+            metadata.put(Metadata.Key.of("x-b3-sampled", ASCII_STRING_MARSHALLER), m.group(3));
+	}
         return metadata;
     }
 
