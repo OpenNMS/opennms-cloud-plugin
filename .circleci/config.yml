@@ -1,8 +1,5 @@
 version: 2.1
 
-orbs:
-  branch-management: opennms/branch-management@2.3.0
-
 executors:
   build-executor:
     docker:
@@ -20,6 +17,7 @@ executors:
 orbs:
   cloudsmith: cloudsmith/cloudsmith@1.0.5
   sign-packages: opennms/sign-packages@2.3.0
+  branch-management: opennms/branch-management@2.3.0
 
 workflows:
   build-merge-deploy:
