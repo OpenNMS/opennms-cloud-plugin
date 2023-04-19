@@ -36,7 +36,6 @@
         <awaitilityVersion>4.0.3</awaitilityVersion>
         <hamcrest.version>1.3</hamcrest.version>
         <tsaasClientVersion>1.0.0</tsaasClientVersion><!-- tsaas via cloud gateway -->
-        <telemetryGatewayVersion>1.2.2</telemetryGatewayVersion>
         <pasClientVersion>0.8.0</pasClientVersion><!-- PAS service -->
         <java.version>11</java.version>
         <jsonVersion>20220924</jsonVersion>
@@ -61,6 +60,8 @@
         </sonar.coverage.exclusions>
         <jacocoVersion>0.8.8</jacocoVersion>
         <osgiJaxRsVersion>1.1.0.ONMS</osgiJaxRsVersion>
+        
+
 
         <!-- used in RPM/Debian packaging, overridden by the release profile -->
         <debian.maven.plugin.version>1.0.21</debian.maven.plugin.version>
@@ -71,6 +72,7 @@
  OpenNMS Portal provides an activation key that you can use with the cloud services connector. This allows you to link your installations of Meridian to the cloud services in OpenNMS Portal.</package.opennms.description>
         <package.sentinel.description>OpenNMS Cloud Services Connector - An extension to OpenNMS Sentinel that lets customers connect to OpenNMS-hosted cloud services (available via subscription), such as OpenNMS Time Series DB.
  This plug will use the same activation key that is generated for the core OpenMS instance this sentinel is associated with.</package.sentinel.description>
+            
     </properties>
 
     <dependencyManagement>
@@ -234,11 +236,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.0.0-M5</version>
-                <configuration>
-                    <excludes>
-                        <exclude>**/*PackageTest.java</exclude><!-- only run test before publish to cloudsmith -->
-                    </excludes>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

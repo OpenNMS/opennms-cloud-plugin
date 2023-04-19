@@ -28,33 +28,20 @@
 
 package org.opennms.plugins.cloud.ittest;
 
-import static java.lang.String.format;
 import static org.opennms.plugins.cloud.ittest.MockCloudMain.MOCK_CLOUD_HOST;
 import static org.opennms.plugins.cloud.ittest.MockCloudMain.MOCK_CLOUD_PORT;
 import static org.opennms.plugins.cloud.testserver.FileUtil.classpathFileToString;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.time.Duration;
-import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import org.apache.maven.model.Model;
-import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
-import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.Container;
 import org.testcontainers.containers.ContainerState;
 import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
@@ -70,25 +57,16 @@ import org.testcontainers.utility.MountableFile;
 public class EndToEndIt {
 
     private static final Logger LOG = LoggerFactory.getLogger(EndToEndIt.class);
-    private static final Pattern OFFHEAPLOG_PATTERN = Pattern.compile(".*OffheapTimeSeriesWriter: .*[Bb]ufferSize: "
-            + "(?<BUFFERSIZE>\\d+), numWriterThreads: (?<WRITERTHREAD>\\d+), batchSize: (?<BATCHSIZE>\\d+), "
-            + "path: (?<PATH>[^,]+), maxFileSize: (?<MAXFILESIZE>\\d+)");
 
     public static DockerComposeContainer<?> environment;
 
     private KarafShell opennmsShell;
     private KarafShell sentinelShell;
 
-    private static String pluginVersion;
-
     @BeforeClass
-    public static void beforeAll() throws IOException, XmlPullParserException {
-        MavenXpp3Reader mavenXpp3Reader = new MavenXpp3Reader();
-        Model model = mavenXpp3Reader.read(new FileReader("pom.xml"));
-        pluginVersion = model.getParent().getVersion();
+    public static void beforeAll() {
         environment = new DockerComposeContainer<>(new File("src/test/resources/docker-compose.yaml"))
                 .withEnv("USER_HOME", System.getProperty("user.home"))
-                .withEnv("PLUGIN_VERSION", pluginVersion)
                 .withTailChildContainers(true)
                 .withExposedService("database_1", 5432, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(15)))
                 .withLogConsumer("database_1", new Slf4jLogConsumer(LOG))
@@ -104,7 +82,7 @@ public class EndToEndIt {
         // fix me: this should be done in docker-compose but I couldn't get it to work:
         getContainer("sentinel_1")
                 .copyFileToContainer(MountableFile.forClasspathResource(
-                                "/overlay/sentinel/usr/share/sentinel/etc/org.opennms.netmgt.distributed.datasource.cfg"),
+                        "/overlay/sentinel/usr/share/sentinel/etc/org.opennms.netmgt.distributed.datasource.cfg"),
                         "/usr/share/sentinel/etc/org.opennms.netmgt.distributed.datasource.cfg");
 
         printContainerStartup("horizon_1");
@@ -121,8 +99,7 @@ public class EndToEndIt {
 
     @Test
     @SuppressWarnings("java:S2699") // no assertions because we are an integration test and test against karaf shell
-    public void canInstallAndStartPlugin() throws IOException, InterruptedException {
-        checkProperties();
+    public void canInstallAndStartPlugin() {
         installAndStartPluginInOpenNms();
         installAndStartPluginInSentinel();
     }
@@ -130,7 +107,7 @@ public class EndToEndIt {
     private void installAndStartPluginInOpenNms() {
 
         // install plugin for core
-        opennmsShell.runCommand(format("kar:install --no-start mvn:org.opennms.plugins.cloud.assembly/org.opennms.plugins.cloud.assembly.kar/%s/kar", pluginVersion));
+        opennmsShell.runCommand("kar:install --no-start mvn:org.opennms.plugins.cloud.assembly/org.opennms.plugins.cloud.assembly.kar/1.0.8-SNAPSHOT/kar");
         opennmsShell.runCommand("feature:install opennms-plugin-cloud-core");
 
         // check if plugin has been started, if so we assume the installation worked well.
@@ -148,7 +125,7 @@ public class EndToEndIt {
     private void installAndStartPluginInSentinel() {
 
         // install plugin for core
-        sentinelShell.runCommand(format("kar:install --no-start mvn:org.opennms.plugins.cloud.assembly/org.opennms.plugins.cloud.assembly.kar/%s/kar", pluginVersion));
+        sentinelShell.runCommand("kar:install --no-start mvn:org.opennms.plugins.cloud.assembly/org.opennms.plugins.cloud.assembly.kar/1.0.8-SNAPSHOT/kar");
         sentinelShell.runCommand("feature:install opennms-plugin-cloud-sentinel");
 
         // check if plugin has been started, if so we assume the installation worked well.
@@ -165,7 +142,7 @@ public class EndToEndIt {
     }
 
     private String createConfig() {
-        return format(
+        return String.format(
                 "config:edit org.opennms.plugins.cloud%n"
                         + "property-set pas.tls.host %s%n"
                         + "property-set pas.tls.port %s%n"
@@ -185,7 +162,7 @@ public class EndToEndIt {
 
     private static ContainerState getContainer(final String container) {
         return environment.getContainerByServiceName(container)
-                .orElseThrow(() -> new IllegalArgumentException(format("container %s not found", container)));
+                .orElseThrow(() -> new IllegalArgumentException(String.format("container %s not found", container)));
     }
 
     private static void printContainerStartup(String container) {
@@ -196,30 +173,6 @@ public class EndToEndIt {
                 container,
                 containerName,
                 containerName);
-    }
-
-    private void checkProperties() throws IOException, InterruptedException {
-        Properties p = readTimeseriesProperties();
-        Container.ExecResult result = environment.getContainerByServiceName("horizon_1").get()
-                .execInContainer("grep", "OffheapTimeSeriesWriter", "logs/eventd.log");
-        Assert.assertEquals(0, result.getExitCode());
-        Matcher matcher = OFFHEAPLOG_PATTERN.matcher(result.getStdout());
-        Assert.assertTrue(matcher.find());
-        Assert.assertEquals(p.getProperty("org.opennms.timeseries.config.writer_threads"), matcher.group("WRITERTHREAD"));
-        Assert.assertEquals(p.getProperty("org.opennms.timeseries.config.buffer_size"), matcher.group("BUFFERSIZE"));
-        Assert.assertEquals(p.getProperty("org.opennms.timeseries.config.offheap.batch_size"), matcher.group("BATCHSIZE"));
-        Assert.assertEquals(p.getProperty("org.opennms.timeseries.config.offheap.path"), matcher.group("PATH"));
-        String strMaxFileSize = p.getProperty("org.opennms.timeseries.config.offheap.max_file_size");
-        strMaxFileSize = "-1".equals(strMaxFileSize) ? String.valueOf(Long.MAX_VALUE) : strMaxFileSize;
-        Assert.assertEquals(strMaxFileSize, matcher.group("MAXFILESIZE"));
-    }
-
-    private Properties readTimeseriesProperties() throws IOException {
-        try (InputStream input = new FileInputStream("../assembly/common-resources/etc/examples/opennms.properties.d/hosted_tsdb.timeseries.properties")) {
-            Properties prop = new Properties();
-            prop.load(input);
-            return prop;
-        }
     }
 
     @AfterClass

@@ -61,10 +61,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.opennms.integration.api.v1.runtime.RuntimeInfo;
 import org.opennms.plugins.cloud.config.ConfigStore.Key;
-import org.opennms.plugins.cloud.grpc.CloudLogService;
-import org.opennms.plugins.cloud.grpc.CloudLogServiceConfig;
 import org.opennms.plugins.cloud.grpc.GrpcConnectionConfig;
-import org.opennms.plugins.cloud.grpc.GrpcExecutionHandler;
 import org.opennms.plugins.cloud.srv.GrpcService;
 import org.opennms.plugins.cloud.srv.RegistrationManager;
 import org.opennms.plugins.cloud.srv.faas.Faas;
@@ -84,7 +81,6 @@ public class ConfigurationManagerTest {
     private GrpcService grpc;
     private RuntimeInfo info;
     private GrpcConnectionConfig clientConfig;
-    private CloudLogServiceConfig cloudLogServiceConfig;
 
     @Before
     public void setUp() throws IOException {
@@ -93,13 +89,11 @@ public class ConfigurationManagerTest {
         info = mock(RuntimeInfo.class);
         when(info.getSystemId()).thenReturn(UUID.randomUUID().toString());
         clientConfig = cloud.getClientConfig();
-        this.cloudLogServiceConfig = new CloudLogServiceConfig(1000, 60);
     }
 
     @Test
     public void shouldGetCloudConfig() {
-        GrpcExecutionHandler grpcHandler = new GrpcExecutionHandler(new CloudLogService(cloudLogServiceConfig));
-        TsaasStorage grpc = spy(new TsaasStorage(new TsaasConfig(1, 1), grpcHandler));
+        TsaasStorage grpc = spy(new TsaasStorage(new TsaasConfig(1, 1)));
         ConfigurationManager cm = new ConfigurationManager(config, clientConfig, clientConfig, mock(RegistrationManager.class),
                 info,
                 Collections.singletonList(grpc));
@@ -175,15 +169,12 @@ public class ConfigurationManagerTest {
         assertEquals(FAILED, cm.getStatus()); // make sure the status is correct
     }
 
-    /**
-     * We expect the ConfigurationManager to start configuration() immediately after it was created if the status is
-     * already AUTHENTCATED or CONFIGURED.
-     */
+    /** We ecpect the ConfigurationManager to start configuration() immediately after it was created if the status is
+     * already AUTHENTCATED or CONFIGURED. */
     @Test
     public void shouldCallConfigureIfAuthenticatedOrConfigured() {
         // test prep: initialize already
-        GrpcExecutionHandler grpcHandler = new GrpcExecutionHandler(new CloudLogService(cloudLogServiceConfig));
-        TsaasStorage grpc = spy(new TsaasStorage(new TsaasConfig(1, 1), grpcHandler));
+        TsaasStorage grpc = spy(new TsaasStorage(new TsaasConfig(1, 1)));
         ConfigurationManager cm = new ConfigurationManager(config, clientConfig, clientConfig, mock(RegistrationManager.class),
                 info,
                 Collections.singletonList(grpc));
@@ -209,11 +200,9 @@ public class ConfigurationManagerTest {
 
     @Test
     public void shouldAbleToDeactivate() {
-        GrpcExecutionHandler grpcHandler = new GrpcExecutionHandler(new CloudLogService(cloudLogServiceConfig));
-        TsaasStorage grpc = spy(new TsaasStorage(new TsaasConfig(1, 1), grpcHandler));
+        TsaasStorage grpc = spy(new TsaasStorage(new TsaasConfig(1, 1)));
         Faas faas = spy(new Faas());
-        CloudLogService cloudLogService = spy(new CloudLogService(new CloudLogServiceConfig(1, 1)));
-        List<GrpcService> serviceList = Arrays.asList(grpc, faas, cloudLogService);
+        List<GrpcService> serviceList = Arrays.asList(grpc, faas);
         ConfigurationManager cm = new ConfigurationManager(config, clientConfig, clientConfig, mock(RegistrationManager.class),
                 info,
                 serviceList);

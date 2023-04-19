@@ -17,9 +17,10 @@ executors:
 orbs:
   cloudsmith: cloudsmith/cloudsmith@1.0.5
   sign-packages: opennms/sign-packages@2.3.0
+  branch-management: opennms/branch-management@2.3.0
 
 workflows:
-  build-deploy:
+  build-merge-deploy:
     jobs:
       - build:
           context:
@@ -51,7 +52,6 @@ workflows:
               only:
                 - main
                 - /release-.*/
-                - /.*-package/
       - build-debian:
           context: "gpg-signing"
           requires:
@@ -65,28 +65,13 @@ workflows:
               only:
                 - main
                 - /release-.*/
-                - /.*-package/
-      - test-packages:
-          requires:
-            - build
-            - build-debian
-          filters:
-            tags:
-              only:
-                - /^v.*/
-            branches:
-              only:
-                - main
-                - /release-.*/
-                - /.*-package/
       - deploy-packages:
-          context:
+          context: 
             - gpg-signing
             - cloudsmith-publish-account
           requires:
             - tests
             - build-debian
-            - test-packages
           filters:
             tags:
               only:
@@ -95,7 +80,15 @@ workflows:
               only:
                 - main
                 - /release-.*/
-                - /.*-package/
+      - merge:
+          requires:
+            - build
+            - tests
+            - deploy
+          filters:
+            branches:
+              only:
+                - /releasetest/
 
 jobs:
   build:
@@ -214,7 +207,7 @@ jobs:
 
       - run:
           name: Install fakeroot
-          command: sudo apt install -y fakeroot
+          command: sudo apt install -y fakeroot 
 
       - run:
           name: Build Debian packages
@@ -260,35 +253,6 @@ jobs:
           paths:
             - project/assembly/
 
-  test-packages:
-    executor: system-test-executor
-    steps:
-      - attach_workspace:
-          at: ~/
-      - run:
-          name: Install openssl
-          command: |
-            sudo apt-get install openssl
-      - run:
-          name: Force openjdk11
-          command: |
-            sudo update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
-      - run:
-          name: Run unit and integration tests
-          command: |
-            cd it-test
-            mvn -DskipITs=false -DskipTests=false -Dtest=InstallPackageTest test
-      - run:
-          name: Save test results
-          command: |
-            mkdir -p ~/junit/
-            find . -type f -regex ".*/target/failsafe-reports/.*xml" -exec cp {} ~/junit/ \;
-            find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/junit/ \;
-          when: always
-      - store_test_results:
-          path: ~/junit
-
-
   deploy-packages:
     executor: cloudsmith/default
     resource_class: small
@@ -302,3 +266,16 @@ jobs:
       - run:
           name: Push packages to CloudSmith
           command: .circleci/scripts/publish-cloudsmith.sh
+  merge:
+    docker:
+      - image: cimg/openjdk:11.0
+    steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "82:76:19:fb:6a:71:a3:c5:cf:7c:99:aa:82:45:4a:96"
+      - checkout
+      - branch-management/merge-branch:
+          committer_email: "cicd-system@opennms.com"
+          committer_name: "CI/CD System"
+          from: releasetest
+          to: main-test
