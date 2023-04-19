@@ -279,3 +279,6 @@ jobs:
           committer_name: "CI/CD System"
           from: releasetest
           to: main-test
+      - run:
+          name: "Push to Main"
+          command: git push --no-verify origin main-test
