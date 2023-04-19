@@ -29,13 +29,6 @@ workflows:
             tags:
               only:
                 - /^v.*/
-      - merge:
-          requires:
-            - build
-          filters:
-            branches:
-              only:
-                - /releasetest/
       - tests:
           requires:
             - build
@@ -87,6 +80,15 @@ workflows:
               only:
                 - main
                 - /release-.*/
+      - merge:
+          requires:
+            - build
+            - tests
+            - deploy
+          filters:
+            branches:
+              only:
+                - /releasetest/
 
 jobs:
   build:
