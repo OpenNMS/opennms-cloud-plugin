@@ -141,3 +141,5 @@ config:update
 2. The Cloud Plugin retrieves all enabled services from PAS.
 3. A JWT token is received from PAS.
 4. All enabled services are configured and enabled in OpenNMS.
+
+Update test
