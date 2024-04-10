@@ -59,7 +59,7 @@
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.coverage.exclusions>**/ittest/*.java<!-- sonar cannot measure the code coverage run in the integration test via docker container -->
         </sonar.coverage.exclusions>
-        <jacocoVersion>0.8.8</jacocoVersion>
+        <jacocoVersion>0.8.12</jacocoVersion>
         <osgiJaxRsVersion>1.1.0.ONMS</osgiJaxRsVersion>
 
         <!-- used in RPM/Debian packaging, overridden by the release profile -->
