@@ -5,7 +5,7 @@ updates:
     reviewers:
       - "opennms/dependabot-reviewers-maven"
     labels:
-      - "dependency update"
+      - "dependencies"
     commit-message:
       prefix: "build"
       include: "scope"
