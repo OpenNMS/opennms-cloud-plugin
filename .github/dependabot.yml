@@ -2,6 +2,7 @@ version: 2
 updates:
   - package-ecosystem: "maven"
     directory: "/"
+    target-branch: "release-1.x"
     reviewers:
       - "opennms/dependabot-reviewers-maven"
     labels:
