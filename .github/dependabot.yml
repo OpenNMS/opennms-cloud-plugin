@@ -12,3 +12,16 @@ updates:
       include: "scope"
     schedule:
       interval: "daily"
+
+  - package-ecosystem: "maven"
+    directory: "/checkstyle"
+    target-branch: "release-1.x"
+    reviewers:
+      - "OpenNMS/dependabot-reviewers-maven"
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "build"
+      include: "scope"
+    schedule:
+      interval: "daily"
