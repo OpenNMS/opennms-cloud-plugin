@@ -45,7 +45,7 @@
         <zstd.version>1.5.0-2</zstd.version>
         <junit.version>4.13.2</junit.version>
         <karaf.version>4.3.6</karaf.version>
-        <log4j.version>2.18.0</log4j.version>
+        <log4j.version>2.23.1</log4j.version>
         <mockito.version>2.18.0</mockito.version>
         <opennms.api.version>1.2.0</opennms.api.version>
         <opennms.api.version.max>2.0.0</opennms.api.version.max><!-- exclusive ver. allowed for packages dependency rpm & deb-->
